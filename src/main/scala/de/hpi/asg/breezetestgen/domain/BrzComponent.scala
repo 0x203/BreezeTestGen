@@ -12,8 +12,8 @@ object BrzComponent {
   * However, the components behaviour could be instantiated using multiple different states.
   *
   */
-abstract class BrzComponent[DT <: Data] {
-  type Behaviour <: ComponentBehaviour[DT, _, _]
+abstract class BrzComponent {
+  type Behaviour <: ComponentBehaviour[_, _]
   type C
   type D
 

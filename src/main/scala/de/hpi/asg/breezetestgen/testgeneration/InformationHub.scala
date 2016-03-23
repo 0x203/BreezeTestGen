@@ -12,7 +12,7 @@ import de.hpi.asg.breezetestgen.domain.ComponentBehaviour.Reaction
 class InformationHub(parentCollection: ConstraintCollection, testBuilder: TestBuilder) {
   var cc: ConstraintCollection = parentCollection.fork()
 
-  def handleReaction(reaction: Reaction[_]): Unit = {
+  def handleReaction(reaction: Reaction): Unit = {
     // cc = cc.addConstraints(reaction.cvs)
     // call testbuilder according to testop
     // extract coverage info from signals

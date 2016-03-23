@@ -14,18 +14,18 @@ class FetchSpec extends UnitTest {
   val activateId: Channel.Spec[SyncChannel[_]] = 1
   val inpId: Channel.Spec[PullChannel[_]] = 2
   val outId: Channel.Spec[PushChannel[_]] = 3
-  val fetch = new Fetch[Foo](activateId, inpId, outId)
+  val fetch = new Fetch(activateId, inpId, outId)
 
   "A Fetch component" should "have a behaviour" in {
     val fetchBehaviour = fetch.behaviour(None)
-    assert(fetchBehaviour.isInstanceOf[ComponentBehaviour[Foo, fetch.C, fetch.D]])
+    assert(fetchBehaviour.isInstanceOf[ComponentBehaviour[fetch.C, fetch.D]])
   }
 
   it should "respond to an request on activate with another request on inp" in {
     val fetchBehaviour = fetch.behaviour(None)
     val activateRequest = Request(activateId)
 
-    assertResult(Reaction[Foo](Set(Request(inpId)), None, Set.empty)) {
+    assertResult(Reaction(Set(Request(inpId)), None, Set.empty)) {
       fetchBehaviour.handleSignal(activateRequest)
     }
   }
@@ -43,19 +43,19 @@ class FetchSpec extends UnitTest {
     val fetchBehaviour = fetch.behaviour(None)
     val activateRequest = Request(activateId)
 
-    assertResult(Reaction[Foo](Set(Request(inpId)), None, Set.empty)) {
+    assertResult(Reaction(Set(Request(inpId)), None, Set.empty)) {
       fetchBehaviour.handleSignal(activateRequest)
     }
 
     val sampleData = Foo(5)
     val inpAck = DataAcknowledge(inpId, sampleData)
     //TODO: put something into ConstraintsNVariables Set if it will be defined
-    assertResult(Reaction[Foo](Set(DataRequest(outId, sampleData)), None, Set.empty)) {
+    assertResult(Reaction(Set(DataRequest(outId, sampleData)), None, Set.empty)) {
       fetchBehaviour.handleSignal(inpAck)
     }
 
     val outAck = Acknowledge(outId)
-    assertResult(Reaction[Foo](Set(Acknowledge(activateId)), None, Set.empty)) {
+    assertResult(Reaction(Set(Acknowledge(activateId)), None, Set.empty)) {
       fetchBehaviour.handleSignal(outAck)
     }
   }
@@ -70,7 +70,7 @@ class FetchSpec extends UnitTest {
 
     val sampleData = Foo(5)
     //TODO: put something into ConstraintsNVariables Set if it will be defined
-    assertResult(Reaction[Foo](Set(DataRequest(outId, sampleData)), None, Set.empty)) {
+    assertResult(Reaction(Set(DataRequest(outId, sampleData)), None, Set.empty)) {
       secondFetchB.handleSignal(DataAcknowledge(inpId, sampleData))
     }
   }

@@ -7,9 +7,9 @@ object Fetch {
   val breezeName = "BrzFetch"
 }
 
-class Fetch[DT <: Data](activate: Spec[SyncChannel[_]],
+class Fetch(activate: Spec[SyncChannel[_]],
                         inp: Spec[PullChannel[_]],
-                        out: Spec[PushChannel[_]]) extends BrzComponent[DT] {
+                        out: Spec[PushChannel[_]]) extends BrzComponent {
   type Behaviour = FetchBehaviour
   type C = FetchBehaviour.ControlState
   type D = Null
@@ -27,7 +27,7 @@ class Fetch[DT <: Data](activate: Spec[SyncChannel[_]],
     val freshState: ComponentState[ControlState, Null] = ComponentState(Idle, null)
   }
 
-  class FetchBehaviour(initState: ComponentState[C, D]) extends ComponentBehaviour[DT, C, D](initState) {
+  class FetchBehaviour(initState: ComponentState[C, D]) extends ComponentBehaviour[C, D](initState) {
     import FetchBehaviour._
 
     when(Idle) {
