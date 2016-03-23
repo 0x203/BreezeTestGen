@@ -53,9 +53,6 @@ class TestBuilder private(graph: mutable.Graph[TestEvent, DiEdge]) {
   /** add a succeeding event on a [[DataPort]] with a [[Variable]] instead of a concrete value */
   def addSuccessor(n: TestEvent, d: DataPort, v: Variable): TestEvent = addSubsequentIOEvent(n, IODataEventPlaceholder(d, v))
 
-  /** returned node can be succeeded by concurrent events */
-  def splitAfter(n: TestEvent): TestEvent = n
-
   /** returns a nodeId which represents a state where all given nodes are processed */
   def merge(ns: Set[TestEvent]) = {
     val m = new MergeEvent()
