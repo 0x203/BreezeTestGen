@@ -1,4 +1,4 @@
-package de.hpi.breezetestgen.baseclasses
+package de.hpi.asg.breezetestgen.baseclasses
 
 import org.scalatest.FlatSpec
 

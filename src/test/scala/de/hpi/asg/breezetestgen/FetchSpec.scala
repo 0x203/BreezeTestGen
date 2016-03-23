@@ -1,4 +1,4 @@
-package de.hpi.breezetestgen
+package de.hpi.asg.breezetestgen
 
 import baseclasses.UnitTest
 import de.hpi.asg.breezetestgen.domain
