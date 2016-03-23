@@ -1,11 +1,10 @@
 package de.hpi.asg.breezetestgen
 
 import baseclasses.UnitTest
-import de.hpi.asg.breezetestgen.domain
-import de.hpi.asg.breezetestgen.domain.ComponentBehaviour.Reaction
-import de.hpi.asg.breezetestgen.domain._
-import de.hpi.asg.breezetestgen.domain.components.Fetch
 import de.hpi.asg.breezetestgen.testing.{MergeEvent, TestEvent}
+import de.hpi.asg.breezetestgen.domain._
+import ComponentBehaviour.Reaction
+import components.Fetch
 
 class FetchSpec extends UnitTest {
   case class Foo(i: Int) extends domain.Data {
