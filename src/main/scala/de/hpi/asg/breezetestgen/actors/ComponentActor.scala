@@ -13,7 +13,7 @@ object ComponentActor {
 }
 
 class ComponentActor(component: ComponentBehaviour[_, _],
-                                 infoHub: ActorRef) extends FSM[ComponentActor.States, ChannelMap] {
+                     infoHub: ActorRef) extends FSM[ComponentActor.States, ChannelMap] {
   import ComponentActor._
 
   private def channels = stateData
