@@ -7,10 +7,6 @@ import ComponentBehaviour.Reaction
 import components.Fetch
 
 class FetchSpec extends UnitTest {
-  case class Foo(i: Int) extends domain.Data {
-    type Type = Int
-  }
-
   val activateId: Channel.Spec[SyncChannel[_]] = 1
   val inpId: Channel.Spec[PullChannel[_]] = 2
   val outId: Channel.Spec[PushChannel[_]] = 3
@@ -49,7 +45,7 @@ class FetchSpec extends UnitTest {
       fetchBehaviour.handleSignal(activateRequest, te)
     }
 
-    val sampleData = Foo(5)
+    val sampleData = Constant(5)
     val inpAck = DataAcknowledge(inpId, sampleData)
     //TODO: put something into ConstraintsNVariables Set if it will be defined
     assertResult(Reaction(Set(DataRequest(outId, sampleData)), None, Set.empty)) {
@@ -70,7 +66,7 @@ class FetchSpec extends UnitTest {
 
     val secondFetchB = fetch.behaviour(Some(state))
 
-    val sampleData = Foo(5)
+    val sampleData = Constant(5)
     //TODO: put something into ConstraintsNVariables Set if it will be defined
     assertResult(Reaction(Set(DataRequest(outId, sampleData)), None, Set.empty)) {
       secondFetchB.handleSignal(DataAcknowledge(inpId, sampleData), te)
