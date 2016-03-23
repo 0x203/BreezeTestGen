@@ -1,5 +1,6 @@
 package de.hpi.asg.breezetestgen.domain.components
 
+import de.hpi.asg.breezetestgen.constraintsolving.{Variable, BinaryConstraint}
 import de.hpi.asg.breezetestgen.domain._
 import Channel._
 
@@ -40,8 +41,7 @@ class Fetch(activate: Spec[SyncChannel[_]],
     when(WaitForInp) {
       case DataAck(`inp`, data, _) =>
         //info(s"read ${data.value}")
-        //TODO: add constraints for data
-        dataRequest(out, data)
+        dataRequest(out, data)  // no new constraint, because data is just passed through
         goto(WaitForOut)
     }
 

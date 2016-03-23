@@ -36,7 +36,7 @@ class ComponentActor(component: ComponentBehaviour[_, _],
     reaction.signals.foreach{s => receiverOf(s) ! s}
 
     // TODO: implement wiser handling of this
-    infoHub ! (reaction.testOp, reaction.cvs)
+    infoHub ! (reaction.testOp, reaction.constraintVariables)
   }
 
   private def receiverOf(signal: domain.Signal): ActorRef = signal match {

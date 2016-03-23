@@ -1,17 +1,17 @@
 package de.hpi.asg.breezetestgen.domain
 
+import de.hpi.asg.breezetestgen.constraintsolving.ConstraintVariable
 import de.hpi.asg.breezetestgen.testgeneration.TestOp
 import de.hpi.asg.breezetestgen.testing.TestEvent
 import de.hpi.asg.breezetestgen.util.FSM
 
 object ComponentBehaviour {
-  type ConstraintsNVariables = Int // TODO replace this with correct one
-
-  case class Reaction(signals: Set[Signal], testOp: Option[TestOp], cvs: Set[ConstraintsNVariables]) {
+  case class Reaction(signals: Set[Signal], testOp: Option[TestOp], constraintVariables: Set[ConstraintVariable]) {
     def addSignal(s: Signal): Reaction = copy(signals = signals + s)
     def setTestOp(op: TestOp):Reaction = copy(testOp = Option(op))
-    def addConstraint(cv: ConstraintsNVariables): Reaction = copy(cvs = cvs + cv)
-    def addConstraints(new_cvs: Traversable[ConstraintsNVariables]): Reaction = copy(cvs = cvs ++ new_cvs)
+    def addConstraint(cv: ConstraintVariable): Reaction = copy(constraintVariables = constraintVariables + cv)
+    def addConstraints(new_cvs: Traversable[ConstraintVariable]): Reaction =
+      copy(constraintVariables = constraintVariables ++ new_cvs)
   }
   object Reaction {
     def empty[DT <: Data]: Reaction = Reaction(Set.empty, None, Set.empty)
@@ -55,7 +55,8 @@ abstract class ComponentBehaviour[C, D] protected(initState: ComponentState[C, D
   protected def dataAcknowledge(channelId: Channel.Spec[PullChannel[_]], data: Data) = addSignal(DataAcknowledge(channelId, data))
 
   /** helper method for constraint addition */
-  protected def constrain(cv: ConstraintsNVariables*) = reaction = reaction.addConstraints(cv)
+  protected def constrain(cv: ConstraintVariable) = reaction = reaction.addConstraint(cv)
+  protected def constrain(cvs: Set[ConstraintVariable]) = reaction = reaction.addConstraints(cvs)
   /** helper method for setting testOp*/
   protected def testOp(op: TestOp) = reaction = reaction.setTestOp(op)
 
