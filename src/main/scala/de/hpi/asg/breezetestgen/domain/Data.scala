@@ -4,6 +4,10 @@ trait Data {
   def bitCount: Int
   def isSigned: Boolean
 
+  private val domainSize: Int =  math.pow(2, bitCount).toInt
+  val minValue: Int = if (isSigned) -domainSize/2 else 0
+  val maxValue: Int = if (isSigned) domainSize/2 - 1 else domainSize - 1
+
   def plus(o: Data): Data
   def minus(o: Data): Data
   def equals(o: Data): Data
@@ -29,10 +33,12 @@ trait Data {
   def orConst(o: Constant): Data
   def xorConst(o: Constant): Data
 
+  def constMinus(o: Constant): Data // this is needed for double dispatch
+
   def +(o: Data): Data = plus(o)
   def -(o: Data): Data = minus(o)
-  def ==(o: Data): Data = equals(o)
-  def !=(o: Data): Data = equalsNot(o)
+  def ===(o: Data): Data = equals(o)
+  def !==(o: Data): Data = equalsNot(o)
   def <(o: Data): Data = lessThen(o)
   def >(o: Data): Data = greaterThen(o)
   def <=(o: Data): Data = lessOrEqual(o)
