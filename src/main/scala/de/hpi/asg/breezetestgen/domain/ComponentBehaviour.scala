@@ -62,33 +62,33 @@ abstract class ComponentBehaviour[C, D] protected(initState: ComponentState[C, D
 
   // Message Event Extractors
   object Req {
-    def unapply(e: Event): Option[(Channel.Spec[NoPushChannel[_]], D, TestEvent)] = {
+    def unapply(e: Event): Option[(Channel.Spec[NoPushChannel[_]], D)] = {
       e match {
-        case FSM.Event((Request(c), te), i) => Some(c, i, te)
+        case FSM.Event((Request(c), _), i) => Some(c, i)
         case _ => None
       }
     }
   }
   object Ack {
-    def unapply(e: Event): Option[(Channel.Spec[NoPullChannel[_]], D, TestEvent)] = {
+    def unapply(e: Event): Option[(Channel.Spec[NoPullChannel[_]], D)] = {
       e match {
-        case FSM.Event((Acknowledge(c), te), i) => Some(c, i, te)
+        case FSM.Event((Acknowledge(c), _), i) => Some(c, i)
         case _ => None
       }
     }
   }
   object DataReq {
-    def unapply(e: Event): Option[(Channel.Spec[PushChannel[_]], Data, D, TestEvent)] = {
+    def unapply(e: Event): Option[(Channel.Spec[PushChannel[_]], Data, D)] = {
       e match {
-        case FSM.Event((DataRequest(c, d), te), i) => Some(c, d, i, te)
+        case FSM.Event((DataRequest(c, d), _), i) => Some(c, d, i)
         case _ => None
       }
     }
   }
   object DataAck {
-    def unapply(e: Event): Option[(Channel.Spec[PullChannel[_]], Data, D, TestEvent)] = {
+    def unapply(e: Event): Option[(Channel.Spec[PullChannel[_]], Data, D)] = {
       e match {
-        case FSM.Event((DataAcknowledge(c, d), te), i) => Some(c, d, i, te)
+        case FSM.Event((DataAcknowledge(c, d), _), i) => Some(c, d, i)
         case _ => None
       }
     }

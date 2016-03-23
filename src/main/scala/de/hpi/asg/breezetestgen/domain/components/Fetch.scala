@@ -31,14 +31,14 @@ class Fetch(activate: Spec[SyncChannel[_]],
     import FetchBehaviour._
 
     when(Idle) {
-      case Req(`activate`, _, _) =>
+      case Req(`activate`, _) =>
         //info("Activated")
         request(inp)
         goto(WaitForInp)
     }
 
     when(WaitForInp) {
-      case DataAck(`inp`, data, _, _) =>
+      case DataAck(`inp`, data, _) =>
         //info(s"read ${data.value}")
         //TODO: add constraints for data
         dataRequest(out, data)
@@ -46,7 +46,7 @@ class Fetch(activate: Spec[SyncChannel[_]],
     }
 
     when(WaitForOut) {
-      case Ack(`out`, _, _) =>
+      case Ack(`out`, _) =>
         //info("wrote")
         acknowledge(activate)
         goto(Idle)

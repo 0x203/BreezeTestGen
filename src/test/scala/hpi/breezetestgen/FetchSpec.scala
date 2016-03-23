@@ -5,6 +5,7 @@ import de.hpi.asg.breezetestgen.domain
 import de.hpi.asg.breezetestgen.domain.ComponentBehaviour.Reaction
 import de.hpi.asg.breezetestgen.domain._
 import de.hpi.asg.breezetestgen.domain.components.Fetch
+import de.hpi.asg.breezetestgen.testing.{MergeEvent, TestEvent}
 
 class FetchSpec extends UnitTest {
   case class Foo(i: Int) extends domain.Data {
@@ -14,6 +15,8 @@ class FetchSpec extends UnitTest {
   val activateId: Channel.Spec[SyncChannel[_]] = 1
   val inpId: Channel.Spec[PullChannel[_]] = 2
   val outId: Channel.Spec[PushChannel[_]] = 3
+  val te: TestEvent = new MergeEvent()
+
   val fetch = new Fetch(activateId, inpId, outId)
 
   "A Fetch component" should "have a behaviour" in {
@@ -26,7 +29,7 @@ class FetchSpec extends UnitTest {
     val activateRequest = Request(activateId)
 
     assertResult(Reaction(Set(Request(inpId)), None, Set.empty)) {
-      fetchBehaviour.handleSignal(activateRequest)
+      fetchBehaviour.handleSignal(activateRequest, te)
     }
   }
 
@@ -35,7 +38,7 @@ class FetchSpec extends UnitTest {
     val inpAcknowledge = Acknowledge(inpId)
 
     intercept[fetchBehaviour.UnhandledException] {
-      fetchBehaviour.handleSignal(inpAcknowledge)
+      fetchBehaviour.handleSignal(inpAcknowledge, te)
     }
   }
 
@@ -44,25 +47,25 @@ class FetchSpec extends UnitTest {
     val activateRequest = Request(activateId)
 
     assertResult(Reaction(Set(Request(inpId)), None, Set.empty)) {
-      fetchBehaviour.handleSignal(activateRequest)
+      fetchBehaviour.handleSignal(activateRequest, te)
     }
 
     val sampleData = Foo(5)
     val inpAck = DataAcknowledge(inpId, sampleData)
     //TODO: put something into ConstraintsNVariables Set if it will be defined
     assertResult(Reaction(Set(DataRequest(outId, sampleData)), None, Set.empty)) {
-      fetchBehaviour.handleSignal(inpAck)
+      fetchBehaviour.handleSignal(inpAck, te)
     }
 
     val outAck = Acknowledge(outId)
     assertResult(Reaction(Set(Acknowledge(activateId)), None, Set.empty)) {
-      fetchBehaviour.handleSignal(outAck)
+      fetchBehaviour.handleSignal(outAck, te)
     }
   }
 
   it should "be restorable from state" in {
     val firstFetchB = fetch.behaviour(None)
-    firstFetchB.handleSignal(Request(activateId))
+    firstFetchB.handleSignal(Request(activateId), te)
 
     val state = firstFetchB.state
 
@@ -71,7 +74,7 @@ class FetchSpec extends UnitTest {
     val sampleData = Foo(5)
     //TODO: put something into ConstraintsNVariables Set if it will be defined
     assertResult(Reaction(Set(DataRequest(outId, sampleData)), None, Set.empty)) {
-      secondFetchB.handleSignal(DataAcknowledge(inpId, sampleData))
+      secondFetchB.handleSignal(DataAcknowledge(inpId, sampleData), te)
     }
   }
 }
