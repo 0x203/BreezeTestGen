@@ -1,5 +1,7 @@
 package de.hpi.asg.breezetestgen.domain
 
+import de.hpi.asg.breezetestgen.testing.TestEvent
+
 sealed trait Signal {
   def channelId: Channel.Id
 }
