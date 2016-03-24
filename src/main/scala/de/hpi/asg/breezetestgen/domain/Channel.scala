@@ -4,6 +4,13 @@ package de.hpi.asg.breezetestgen.domain
 object Channel {
   type Id = Int
   type Spec[+Channel] = Id
+
+  sealed trait Endpoint
+  case class CompEndpoint(id: BrzComponent.Id) extends Endpoint
+  case class PortEndpoint(id: Port.Id) extends Endpoint
+
+  implicit def brzCompId2CompEndpoint(id: BrzComponent.Id): CompEndpoint = CompEndpoint(id)
+  implicit def portId2PortEndpoint(id: Port.Id): PortEndpoint = PortEndpoint(id)
 }
 
 sealed trait Channel[Comp] {
