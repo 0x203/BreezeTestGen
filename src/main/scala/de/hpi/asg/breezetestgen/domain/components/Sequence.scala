@@ -1,14 +1,15 @@
 package de.hpi.asg.breezetestgen.domain.components
 
 import de.hpi.asg.breezetestgen.domain._
+import BrzComponent.SyncSpec
 
 object Sequence {
   val breezeName = "BrzSequence"
 }
 
 class Sequence(id: HandshakeComponent.Id,
-               activate: Channel.Spec[SyncChannel[_]],
-               outs: Seq[Channel.Spec[SyncChannel[_]]]) extends BrzComponent(id) {
+               activate: SyncSpec,
+               outs: Seq[SyncSpec]) extends BrzComponent(id) {
   type Behaviour = SequenceBehaviour
   type C = SequenceBehaviour.ControlState
   type D = Option[Int]

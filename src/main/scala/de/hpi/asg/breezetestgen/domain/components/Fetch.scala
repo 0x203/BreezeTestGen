@@ -1,17 +1,16 @@
 package de.hpi.asg.breezetestgen.domain.components
 
-import de.hpi.asg.breezetestgen.constraintsolving.{Variable, BinaryConstraint}
 import de.hpi.asg.breezetestgen.domain._
-import Channel._
+import BrzComponent._
 
 object Fetch {
   val breezeName = "BrzFetch"
 }
 
 class Fetch(id: HandshakeComponent.Id,
-            activate: Spec[SyncChannel[_]],
-            inp: Spec[PullChannel[_]],
-            out: Spec[PushChannel[_]]) extends BrzComponent(id) {
+            activate: SyncSpec,
+            inp: PullSpec,
+            out: PushSpec) extends BrzComponent(id) {
   type Behaviour = FetchBehaviour
   type C = FetchBehaviour.ControlState
   type D = Null

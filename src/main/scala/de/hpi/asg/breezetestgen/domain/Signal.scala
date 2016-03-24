@@ -1,15 +1,13 @@
 package de.hpi.asg.breezetestgen.domain
 
-import de.hpi.asg.breezetestgen.testing.TestEvent
-
 sealed trait Signal {
-  def channelId: Channel.Id
+  def channelId: Channel.Spec[Channel[Channel.Endpoint]]
 }
 
 sealed trait SignalFromActive extends Signal
 sealed trait SignalFromPassive extends Signal
 
-case class Request(channelId: Channel.Spec[NoPushChannel[_]]) extends SignalFromActive
-case class Acknowledge(channelId: Channel.Spec[NoPullChannel[_]]) extends SignalFromPassive
-case class DataRequest(channelId: Channel.Spec[PushChannel[_]], data: Data) extends SignalFromActive
-case class DataAcknowledge(channelId: Channel.Spec[PullChannel[_]], data: Data) extends SignalFromPassive
+case class Request(channelId: Channel.Spec[NoPushChannel[Channel.Endpoint]]) extends SignalFromActive
+case class Acknowledge(channelId: Channel.Spec[NoPullChannel[Channel.Endpoint]]) extends SignalFromPassive
+case class DataRequest(channelId: Channel.Spec[PushChannel[Channel.Endpoint]], data: Data) extends SignalFromActive
+case class DataAcknowledge(channelId: Channel.Spec[PullChannel[Channel.Endpoint]], data: Data) extends SignalFromPassive

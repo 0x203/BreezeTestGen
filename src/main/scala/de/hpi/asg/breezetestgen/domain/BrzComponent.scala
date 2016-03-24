@@ -2,6 +2,12 @@ package de.hpi.asg.breezetestgen.domain
 
 import de.hpi.asg.breezetestgen.Loggable
 
+object BrzComponent {
+  type SyncSpec = Channel.Spec[SyncChannel[Channel.Endpoint]]
+  type PullSpec = Channel.Spec[PullChannel[Channel.Endpoint]]
+  type PushSpec = Channel.Spec[PushChannel[Channel.Endpoint]]
+}
+
 /** base class for Breeze components
   *
   * A Breeze handshake component with its wiring is represented by subclasses of this.
