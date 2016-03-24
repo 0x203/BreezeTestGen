@@ -20,13 +20,15 @@ object Port {
 }
 
 /** represents a Port of a Breeze Netlist */
-sealed abstract class Port(id: Port.Id, name: String, sense: Port.Sense, direction: Port.Direction)
+sealed abstract class Port {
+  def id: Port.Id
+  def name: String
+  def sense: Port.Sense
+  def direction: Port.Direction
+}
 
 /** a Nonput port, i.g. without data channels */
-case class SyncPort(id: Port.Id,
-                    name: String,
-                    sense: Port.Sense)
-  extends Port(id, name, sense, Port.Nonput)
+case class SyncPort(id: Port.Id, name: String, sense: Port.Sense) extends Port { val direction = Port.Nonput }
 
 /** an Input or Output port, thus having a bitCount for the data channel and a isSigned flag */
 case class DataPort(id: Port.Id,
@@ -35,4 +37,4 @@ case class DataPort(id: Port.Id,
                     direction: Port.Direction,
                     bitCount: Int = 8,
                     isSigned: Boolean = false)
-  extends Port(id, name, sense, direction)
+  extends Port
