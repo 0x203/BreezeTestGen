@@ -1,5 +1,6 @@
 package de.hpi.asg.breezetestgen.constraintsolving
 
+import de.hpi.asg.breezetestgen.domain.Constant
 import de.hpi.asg.breezetestgen.testgeneration.TestBuilder.VariableFixator
 import org.chocosolver.solver.Solver
 import org.chocosolver.solver.search.loop.monitors.SearchMonitorFactory
@@ -69,7 +70,7 @@ class ChocoSolver(cc: ConstraintCollection) extends Iterator[VariableFixator]{
   val isFeasible = hasNext
 
   def next = {
-    val vf: Map[Variable, Int] = variables.map{case (k, v) => k -> v.getValue}
+    val vf: Map[Variable, Constant] = variables.map{case (k, v) => k -> Constant(v.getValue, k.bitCount, k.isSigned)}
     hasNext = solver.nextSolution()
     vf
   }

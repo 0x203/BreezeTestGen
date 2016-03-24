@@ -1,7 +1,7 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
 import de.hpi.asg.breezetestgen.constraintsolving.Variable
-import de.hpi.asg.breezetestgen.domain.{SyncPort, Port, DataPort}
+import de.hpi.asg.breezetestgen.domain.{Constant, SyncPort, Port, DataPort}
 import de.hpi.asg.breezetestgen.testing._
 
 import scalax.collection._
@@ -10,7 +10,7 @@ import scalax.collection.GraphEdge._
 
 object TestBuilder {
   /** a function used to fixate a variable to a concrete value */
-  type VariableFixator = Variable => Int
+  type VariableFixator = Variable => Constant
 
 
   /** Used as unfixed-value placeholder for [[IODataEvent]]s during gathering of IOEvents
@@ -48,7 +48,7 @@ class TestBuilder private(graph: mutable.Graph[TestEvent, DiEdge]) {
   def addSuccessor(n: TestEvent, s: SyncPort): TestEvent = addSubsequentIOEvent(n, IOSyncEvent(s))
 
   /** add a succeeding event on a [[DataPort]] with a concrete value */
-  def addSuccessor(n: TestEvent, d: DataPort, v: Int): TestEvent = addSubsequentIOEvent(n, IODataEvent(d, v))
+  def addSuccessor(n: TestEvent, d: DataPort, v: Constant): TestEvent = addSubsequentIOEvent(n, IODataEvent(d, v))
 
   /** add a succeeding event on a [[DataPort]] with a [[Variable]] instead of a concrete value */
   def addSuccessor(n: TestEvent, d: DataPort, v: Variable): TestEvent = addSubsequentIOEvent(n, IODataEventPlaceholder(d, v))

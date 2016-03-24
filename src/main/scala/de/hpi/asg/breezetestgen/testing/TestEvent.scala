@@ -1,6 +1,6 @@
 package de.hpi.asg.breezetestgen.testing
 
-import de.hpi.asg.breezetestgen.domain.{DataPort, SyncPort, Port}
+import de.hpi.asg.breezetestgen.domain.{Constant, DataPort, SyncPort, Port}
 import scalax.collection.GraphEdge.DiEdge
 
 
@@ -15,6 +15,6 @@ trait IOEvent[P <: Port] extends TestEvent {
   val port: P
 }
 case class IOSyncEvent(port: SyncPort) extends IOEvent[SyncPort]
-case class IODataEvent(port: DataPort, value: Int) extends IOEvent[DataPort]
+case class IODataEvent(port: DataPort, value: Constant) extends IOEvent[DataPort]
 
 //TODO: differentiate between req und ack events (or justify why not)
