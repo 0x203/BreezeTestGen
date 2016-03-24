@@ -12,7 +12,7 @@ object BrzComponent {
   * However, the components behaviour could be instantiated using multiple different states.
   *
   */
-abstract class BrzComponent {
+abstract class BrzComponent(val id: BrzComponent.Id) {
   type Behaviour <: ComponentBehaviour[_, _]
   type C
   type D

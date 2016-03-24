@@ -12,7 +12,7 @@ class FetchSpec extends UnitTest {
   val outId: Channel.Spec[PushChannel[_]] = 3
   val te: TestEvent = new MergeEvent()
 
-  val fetch = new Fetch(activateId, inpId, outId)
+  val fetch = new Fetch(id = 0, activateId, inpId, outId)
 
   "A Fetch component" should "have a behaviour" in {
     val fetchBehaviour = fetch.behaviour(None)

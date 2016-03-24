@@ -8,9 +8,10 @@ object Fetch {
   val breezeName = "BrzFetch"
 }
 
-class Fetch(activate: Spec[SyncChannel[_]],
-                        inp: Spec[PullChannel[_]],
-                        out: Spec[PushChannel[_]]) extends BrzComponent {
+class Fetch(id: BrzComponent.Id,
+            activate: Spec[SyncChannel[_]],
+            inp: Spec[PullChannel[_]],
+            out: Spec[PushChannel[_]]) extends BrzComponent(id) {
   type Behaviour = FetchBehaviour
   type C = FetchBehaviour.ControlState
   type D = Null
