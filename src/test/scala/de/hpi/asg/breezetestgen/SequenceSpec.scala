@@ -2,8 +2,8 @@ package de.hpi.asg.breezetestgen
 
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour
 import de.hpi.asg.breezetestgen.domain._
+import de.hpi.asg.breezetestgen.domain.components.Component.Reaction
 import de.hpi.asg.breezetestgen.testing.{MergeEvent, TestEvent}
-import BrzComponentBehaviour.Reaction
 import de.hpi.asg.breezetestgen.domain.components.brzcomponents.Sequence
 
 

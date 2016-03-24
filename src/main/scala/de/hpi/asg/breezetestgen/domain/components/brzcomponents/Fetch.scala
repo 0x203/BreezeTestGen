@@ -1,7 +1,7 @@
 package de.hpi.asg.breezetestgen.domain.components.brzcomponents
 
 import de.hpi.asg.breezetestgen.domain.components.BrzComponent._
-import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, BrzComponentBehaviour, ComponentState, HandshakeComponent}
+import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, BrzComponentBehaviour, Component, HandshakeComponent}
 
 object Fetch {
   val breezeName = "BrzFetch"
@@ -15,7 +15,7 @@ class Fetch(id: HandshakeComponent.Id,
   type C = FetchBehaviour.ControlState
   type D = Null
 
-  def behaviour(state: Option[ComponentState[C, D]]): Behaviour =
+  def behaviour(state: Option[Component.State[C, D]]): Behaviour =
     new FetchBehaviour(state getOrElse FetchBehaviour.freshState)
 
 
@@ -25,10 +25,10 @@ class Fetch(id: HandshakeComponent.Id,
     case object WaitForInp extends ControlState
     case object WaitForOut extends ControlState
 
-    val freshState: ComponentState[ControlState, Null] = ComponentState(Idle, null)
+    val freshState: Component.State[ControlState, Null] = Component.State(Idle, null)
   }
 
-  class FetchBehaviour(initState: ComponentState[C, D]) extends BrzComponentBehaviour[C, D](initState) {
+  class FetchBehaviour(initState: Component.State[C, D]) extends BrzComponentBehaviour[C, D](initState) {
     import FetchBehaviour._
 
     info(s"Created FetchBehaviour with state: $initState")

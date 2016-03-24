@@ -21,5 +21,5 @@ abstract class BrzComponent(val id: HandshakeComponent.Id) extends HandshakeComp
   type C
   type D
 
-  def behaviour(option: Option[ComponentState[C, D]]): Behaviour
+  def behaviour(option: Option[Component.State[C, D]]): Behaviour
 }

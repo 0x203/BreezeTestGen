@@ -1,8 +1,7 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
 import de.hpi.asg.breezetestgen.constraintsolving.ConstraintCollection
-import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour
-import BrzComponentBehaviour.Reaction
+import de.hpi.asg.breezetestgen.domain.components.Component.Reaction
 import de.hpi.asg.breezetestgen.testing.TestEvent
 
 /** Central place for gathering information during a test/simulation run.
@@ -14,7 +13,7 @@ import de.hpi.asg.breezetestgen.testing.TestEvent
 class InformationHub(parentCollection: ConstraintCollection, testBuilder: TestBuilder) {
   var cc: ConstraintCollection = parentCollection.fork()
 
-  /** records reaction from [[BrzComponentBehaviour]]
+  /** records reaction from [[de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour]]
     *
     * @param reaction reaction from handshake component
     * @return a [[TestEvent]] for further building of tests, if a [[TestOp]] was specified

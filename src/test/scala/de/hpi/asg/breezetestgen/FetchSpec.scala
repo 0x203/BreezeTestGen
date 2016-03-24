@@ -4,7 +4,7 @@ import baseclasses.UnitTest
 import de.hpi.asg.breezetestgen.testing.{MergeEvent, TestEvent}
 import de.hpi.asg.breezetestgen.domain._
 import components.BrzComponentBehaviour
-import BrzComponentBehaviour.Reaction
+import de.hpi.asg.breezetestgen.domain.components.Component.Reaction
 import de.hpi.asg.breezetestgen.domain.components.brzcomponents.Fetch
 
 class FetchSpec extends UnitTest {

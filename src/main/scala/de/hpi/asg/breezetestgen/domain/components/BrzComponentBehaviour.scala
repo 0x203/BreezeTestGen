@@ -1,23 +1,11 @@
 package de.hpi.asg.breezetestgen.domain.components
 
 import de.hpi.asg.breezetestgen.constraintsolving.ConstraintVariable
+import de.hpi.asg.breezetestgen.domain.components.Component.{Reaction, State}
 import de.hpi.asg.breezetestgen.domain.{DataAcknowledge, PullChannel, _}
 import de.hpi.asg.breezetestgen.testgeneration.TestOp
 import de.hpi.asg.breezetestgen.testing.TestEvent
 import de.hpi.asg.breezetestgen.util.FSM
-
-object BrzComponentBehaviour {
-  case class Reaction(signals: Set[Signal], testOp: Option[TestOp], constraintVariables: Set[ConstraintVariable]) {
-    def addSignal(s: Signal): Reaction = copy(signals = signals + s)
-    def setTestOp(op: TestOp):Reaction = copy(testOp = Option(op))
-    def addConstraint(cv: ConstraintVariable): Reaction = copy(constraintVariables = constraintVariables + cv)
-    def addConstraints(new_cvs: Traversable[ConstraintVariable]): Reaction =
-      copy(constraintVariables = constraintVariables ++ new_cvs)
-  }
-  object Reaction {
-    def empty: Reaction = Reaction(Set.empty, None, Set.empty)
-  }
-}
 
 /** base class for the behaviour definiton of BrzComponents
   *
@@ -25,9 +13,8 @@ object BrzComponentBehaviour {
   * @tparam C control state
   * @tparam D data state
   */
-abstract class BrzComponentBehaviour[C, D] protected(initState: ComponentState[C, D])
+abstract class BrzComponentBehaviour[C, D] protected(initState: Component.State[C, D])
   extends FSM[C, D, (Signal, TestEvent)] {
-  import BrzComponentBehaviour._
   startWith(initState.controlState, initState.dataState)
 
   // reaction will be build up with helper methods during signal handling
@@ -45,7 +32,7 @@ abstract class BrzComponentBehaviour[C, D] protected(initState: ComponentState[C
   }
 
   /** returns complete current state of the FSM, which can be used for replicating the FSM */
-  def state = ComponentState(myState.stateName, myState.stateData)
+  def state = State(myState.stateName, myState.stateData)
 
   private def addSignal(s: Signal) = reaction = reaction.addSignal(s)
 
