@@ -1,5 +1,14 @@
 package de.hpi.asg.breezetestgen.domain
 
+object Signal {
+  def changeId(s: Signal, newChannelId: Channel.Id) = s match {
+    case r: Request => Request(newChannelId)
+    case a: Acknowledge => Acknowledge(newChannelId)
+    case dr: DataRequest => dr.copy(channelId = newChannelId)
+    case da: DataAcknowledge => da.copy(channelId = newChannelId)
+  }
+}
+
 sealed trait Signal {
   def channelId: Channel.Spec[Channel[Channel.Endpoint]]
 }
