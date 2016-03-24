@@ -1,7 +1,12 @@
 package de.hpi.asg.breezetestgen.domain
 
+object Netlist {
+  type Id = Int
+}
+
 /** data container for a whole Netlist */
-case class Netlist(ports: Set[Port],
+case class Netlist(id: Netlist.Id,
+                   ports: Set[Port],
                    channels: Set[Channel[Channel.Endpoint]],
                    components: Set[BrzComponent]) {
   /** returns all ports which are Active (as seen from the netlist itself (just POC for now*/

@@ -3,7 +3,7 @@ package de.hpi.asg.breezetestgen.actors
 import akka.actor.{ActorRef, FSM}
 import de.hpi.asg.breezetestgen.domain
 import de.hpi.asg.breezetestgen.testing.TestEvent
-import domain.Channel
+import domain.{Channel, Netlist}
 
 object HandshakeActor {
   type ChannelMap = Channel.Id => Channel[ActorRef]
@@ -13,7 +13,7 @@ object HandshakeActor {
   case object Uninitialized extends States
   case object Initialized extends States
 
-  case class Signal(domainSignal: domain.Signal, testEvent: TestEvent)
+  case class Signal(netlist: Netlist.Id, domainSignal: domain.Signal, testEvent: TestEvent)
 }
 
 abstract class HandshakeActor extends FSM[HandshakeActor.States, HandshakeActor.ChannelMap] {
@@ -27,12 +27,12 @@ abstract class HandshakeActor extends FSM[HandshakeActor.States, HandshakeActor.
   }
 
   when(Initialized) {
-    case Event(Signal(domainSignal, testEvent), _) =>
-      handleSignal(domainSignal.asInstanceOf[domain.Signal], testEvent)
+    case Event(Signal(netlist, domainSignal, testEvent), _) =>
+      handleSignal(netlist, domainSignal, testEvent)
       stay()
   }
 
   protected def channels: ChannelMap = stateData
 
-  protected def handleSignal(ds: domain.Signal, testEvent: TestEvent)
+  protected def handleSignal(netlist: Netlist.Id, ds: domain.Signal, testEvent: TestEvent)
 }
