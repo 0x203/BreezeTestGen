@@ -14,7 +14,7 @@ object ComponentBehaviour {
       copy(constraintVariables = constraintVariables ++ new_cvs)
   }
   object Reaction {
-    def empty[DT <: Data]: Reaction = Reaction(Set.empty, None, Set.empty)
+    def empty: Reaction = Reaction(Set.empty, None, Set.empty)
   }
 }
 

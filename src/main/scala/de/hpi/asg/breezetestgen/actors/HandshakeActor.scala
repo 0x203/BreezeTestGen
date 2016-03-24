@@ -9,5 +9,5 @@ object HandshakeActor {
   type ChannelMap = Channel.Id => Channel[ActorRef]
   case class SetChannels(channels: ChannelMap)
 
-  case class Signal[DT <: domain.Data](domainSignal: domain.Signal, testEvent: TestEvent)
+  case class Signal(domainSignal: domain.Signal, testEvent: TestEvent)
 }
