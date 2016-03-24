@@ -8,7 +8,7 @@ object Fetch {
   val breezeName = "BrzFetch"
 }
 
-class Fetch(id: BrzComponent.Id,
+class Fetch(id: HandshakeComponent.Id,
             activate: Spec[SyncChannel[_]],
             inp: Spec[PullChannel[_]],
             out: Spec[PushChannel[_]]) extends BrzComponent(id) {

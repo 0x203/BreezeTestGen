@@ -6,7 +6,7 @@ object Sequence {
   val breezeName = "BrzSequence"
 }
 
-class Sequence(id: BrzComponent.Id,
+class Sequence(id: HandshakeComponent.Id,
                activate: Channel.Spec[SyncChannel[_]],
                outs: Seq[Channel.Spec[SyncChannel[_]]]) extends BrzComponent(id) {
   type Behaviour = SequenceBehaviour

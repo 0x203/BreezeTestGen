@@ -2,11 +2,6 @@ package de.hpi.asg.breezetestgen.domain
 
 import de.hpi.asg.breezetestgen.Loggable
 
-
-object BrzComponent {
-  type Id = Int
-}
-
 /** base class for Breeze components
   *
   * A Breeze handshake component with its wiring is represented by subclasses of this.
@@ -14,7 +9,7 @@ object BrzComponent {
   * However, the components behaviour could be instantiated using multiple different states.
   *
   */
-abstract class BrzComponent(val id: BrzComponent.Id) extends Loggable {
+abstract class BrzComponent(val id: HandshakeComponent.Id) extends HandshakeComponent with Loggable {
   type Behaviour <: ComponentBehaviour[_, _]
   type C
   type D
