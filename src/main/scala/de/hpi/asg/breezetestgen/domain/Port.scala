@@ -15,6 +15,11 @@ object Port {
   case object Output extends Direction with DataDirection
   case object Nonput extends Direction
 
+  /** determines if a port is currently requested or not */
+  sealed trait State
+  case object Idle extends State
+  case object Requested extends State
+
   /** every Breeze netlist has an Activation port. here it is */
   def Activate = SyncPort(0, "activate", Passive)
 }
