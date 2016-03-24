@@ -6,7 +6,7 @@ import de.hpi.asg.breezetestgen.testgeneration.TestOp
 import de.hpi.asg.breezetestgen.testing.TestEvent
 import de.hpi.asg.breezetestgen.util.FSM
 
-object ComponentBehaviour {
+object BrzComponentBehaviour {
   case class Reaction(signals: Set[Signal], testOp: Option[TestOp], constraintVariables: Set[ConstraintVariable]) {
     def addSignal(s: Signal): Reaction = copy(signals = signals + s)
     def setTestOp(op: TestOp):Reaction = copy(testOp = Option(op))
@@ -25,9 +25,9 @@ object ComponentBehaviour {
   * @tparam C control state
   * @tparam D data state
   */
-abstract class ComponentBehaviour[C, D] protected(initState: ComponentState[C, D])
+abstract class BrzComponentBehaviour[C, D] protected(initState: ComponentState[C, D])
   extends FSM[C, D, (Signal, TestEvent)] {
-  import ComponentBehaviour._
+  import BrzComponentBehaviour._
   startWith(initState.controlState, initState.dataState)
 
   // reaction will be build up with helper methods during signal handling

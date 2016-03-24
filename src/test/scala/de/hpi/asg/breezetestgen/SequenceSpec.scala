@@ -1,9 +1,9 @@
 package de.hpi.asg.breezetestgen
 
-import de.hpi.asg.breezetestgen.domain.components.ComponentBehaviour
+import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour
 import de.hpi.asg.breezetestgen.domain._
 import de.hpi.asg.breezetestgen.testing.{MergeEvent, TestEvent}
-import ComponentBehaviour.Reaction
+import BrzComponentBehaviour.Reaction
 import de.hpi.asg.breezetestgen.domain.components.brzcomponents.Sequence
 
 
@@ -16,7 +16,7 @@ class SequenceSpec extends baseclasses.UnitTest {
 
   "A Sequence component" should "have a behaviour" in {
     val sequenceBehaviour = sequence.behaviour(None)
-    assert(sequenceBehaviour.isInstanceOf[ComponentBehaviour[sequence.C, sequence.D]])
+    assert(sequenceBehaviour.isInstanceOf[BrzComponentBehaviour[sequence.C, sequence.D]])
   }
 
   it should "respond to an request on activate with request first out" in {

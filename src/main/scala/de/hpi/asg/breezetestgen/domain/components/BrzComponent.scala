@@ -17,7 +17,7 @@ object BrzComponent {
   *
   */
 abstract class BrzComponent(val id: HandshakeComponent.Id) extends HandshakeComponent with Loggable {
-  type Behaviour <: ComponentBehaviour[_, _]
+  type Behaviour <: BrzComponentBehaviour[_, _]
   type C
   type D
 

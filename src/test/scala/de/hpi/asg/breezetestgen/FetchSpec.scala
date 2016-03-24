@@ -3,8 +3,8 @@ package de.hpi.asg.breezetestgen
 import baseclasses.UnitTest
 import de.hpi.asg.breezetestgen.testing.{MergeEvent, TestEvent}
 import de.hpi.asg.breezetestgen.domain._
-import components.ComponentBehaviour
-import ComponentBehaviour.Reaction
+import components.BrzComponentBehaviour
+import BrzComponentBehaviour.Reaction
 import de.hpi.asg.breezetestgen.domain.components.brzcomponents.Fetch
 
 class FetchSpec extends UnitTest {
@@ -17,7 +17,7 @@ class FetchSpec extends UnitTest {
 
   "A Fetch component" should "have a behaviour" in {
     val fetchBehaviour = fetch.behaviour(None)
-    assert(fetchBehaviour.isInstanceOf[ComponentBehaviour[fetch.C, fetch.D]])
+    assert(fetchBehaviour.isInstanceOf[BrzComponentBehaviour[fetch.C, fetch.D]])
   }
 
   it should "respond to an request on activate with another request on inp" in {

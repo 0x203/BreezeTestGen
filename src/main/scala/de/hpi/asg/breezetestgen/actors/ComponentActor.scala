@@ -3,11 +3,11 @@ package de.hpi.asg.breezetestgen.actors
 import akka.actor.ActorRef
 import de.hpi.asg.breezetestgen.actors.HandshakeActor.Signal
 import de.hpi.asg.breezetestgen.domain
-import de.hpi.asg.breezetestgen.domain.components.ComponentBehaviour
+import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour
 import de.hpi.asg.breezetestgen.domain.{Netlist, SignalFromActive, SignalFromPassive}
 import de.hpi.asg.breezetestgen.testing.TestEvent
 
-class ComponentActor(component: ComponentBehaviour[_, _],
+class ComponentActor(component: BrzComponentBehaviour[_, _],
                      infoHub: ActorRef) extends HandshakeActor {
 
   override protected def handleSignal(netlist: Netlist.Id, ds: domain.Signal, testEvent: TestEvent) = {
