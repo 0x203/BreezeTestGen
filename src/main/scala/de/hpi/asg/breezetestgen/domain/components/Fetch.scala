@@ -32,23 +32,25 @@ class Fetch(id: BrzComponent.Id,
   class FetchBehaviour(initState: ComponentState[C, D]) extends ComponentBehaviour[C, D](initState) {
     import FetchBehaviour._
 
+    info(s"Created FetchBehaviour with state: $initState")
+
     when(Idle) {
       case Req(`activate`, _) =>
-        //info("Activated")
+        info("Activated")
         request(inp)
         goto(WaitForInp)
     }
 
     when(WaitForInp) {
       case DataAck(`inp`, data, _) =>
-        //info(s"read ${data.value}")
+        info(s"read $data")
         dataRequest(out, data)  // no new constraint, because data is just passed through
         goto(WaitForOut)
     }
 
     when(WaitForOut) {
       case Ack(`out`, _) =>
-        //info("wrote")
+        info("wrote")
         acknowledge(activate)
         goto(Idle)
     }

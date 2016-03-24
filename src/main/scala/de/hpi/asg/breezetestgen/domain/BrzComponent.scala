@@ -1,5 +1,7 @@
 package de.hpi.asg.breezetestgen.domain
 
+import de.hpi.asg.breezetestgen.Loggable
+
 
 object BrzComponent {
   type Id = Int
@@ -12,7 +14,7 @@ object BrzComponent {
   * However, the components behaviour could be instantiated using multiple different states.
   *
   */
-abstract class BrzComponent(val id: BrzComponent.Id) {
+abstract class BrzComponent(val id: BrzComponent.Id) extends Loggable {
   type Behaviour <: ComponentBehaviour[_, _]
   type C
   type D
