@@ -1,6 +1,7 @@
-package de.hpi.asg.breezetestgen.domain.components
+package de.hpi.asg.breezetestgen.domain.components.brzcomponents
 
-import BrzComponent._
+import de.hpi.asg.breezetestgen.domain.components.BrzComponent._
+import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, ComponentBehaviour, ComponentState, HandshakeComponent}
 
 object Fetch {
   val breezeName = "BrzFetch"

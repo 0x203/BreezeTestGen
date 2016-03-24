@@ -1,9 +1,10 @@
 package de.hpi.asg.breezetestgen
 
-import de.hpi.asg.breezetestgen.domain.components.{ComponentBehaviour, Sequence}
+import de.hpi.asg.breezetestgen.domain.components.ComponentBehaviour
 import de.hpi.asg.breezetestgen.domain._
 import de.hpi.asg.breezetestgen.testing.{MergeEvent, TestEvent}
 import ComponentBehaviour.Reaction
+import de.hpi.asg.breezetestgen.domain.components.brzcomponents.Sequence
 
 
 class SequenceSpec extends baseclasses.UnitTest {
