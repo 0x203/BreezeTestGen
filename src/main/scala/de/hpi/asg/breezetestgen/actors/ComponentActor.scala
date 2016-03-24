@@ -1,30 +1,13 @@
 package de.hpi.asg.breezetestgen.actors
 
-import akka.actor.{FSM, ActorRef}
+import akka.actor.ActorRef
 import de.hpi.asg.breezetestgen.actors.HandshakeActor._
 import de.hpi.asg.breezetestgen.domain
-import de.hpi.asg.breezetestgen.domain.{SignalFromPassive, SignalFromActive, Data, ComponentBehaviour}
+import de.hpi.asg.breezetestgen.domain.{SignalFromPassive, SignalFromActive, ComponentBehaviour}
 import de.hpi.asg.breezetestgen.testing.TestEvent
 
-object ComponentActor {
-  sealed trait States
-  case object Uninitialized extends States
-  case object Initialized extends States
-}
-
 class ComponentActor(component: ComponentBehaviour[_, _],
-                     infoHub: ActorRef) extends FSM[ComponentActor.States, ChannelMap] {
-  import ComponentActor._
-
-  private def channels = stateData
-
-  startWith(Uninitialized, Map.empty)
-
-  when(Uninitialized) {
-    case Event(SetChannels(channels), _) =>
-      goto(Initialized) using channels
-  }
-
+                     infoHub: ActorRef) extends HandshakeActor {
   when(Initialized) {
     case Event(Signal(domainSignal, testEvent), _) =>
       handleSignal(domainSignal.asInstanceOf[domain.Signal], testEvent)
