@@ -1,6 +1,6 @@
 package de.hpi.asg.breezetestgen.domain.components
 
-import de.hpi.asg.breezetestgen.domain.ComponentBehaviour.Reaction
+import ComponentBehaviour.Reaction
 import de.hpi.asg.breezetestgen.domain._
 import de.hpi.asg.breezetestgen.testing.TestEvent
 

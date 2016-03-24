@@ -1,5 +1,7 @@
 package de.hpi.asg.breezetestgen.domain
 
+import de.hpi.asg.breezetestgen.domain.components.BrzComponent
+
 object Netlist {
   type Id = Int
 }

@@ -1,4 +1,4 @@
-package de.hpi.asg.breezetestgen.domain
+package de.hpi.asg.breezetestgen.domain.components
 
 object HandshakeComponent {
   type Id = Int

@@ -3,7 +3,8 @@ package de.hpi.asg.breezetestgen.actors
 import akka.actor.ActorRef
 import de.hpi.asg.breezetestgen.actors.HandshakeActor.Signal
 import de.hpi.asg.breezetestgen.domain
-import de.hpi.asg.breezetestgen.domain.{ComponentBehaviour, Netlist, SignalFromActive, SignalFromPassive}
+import de.hpi.asg.breezetestgen.domain.components.ComponentBehaviour
+import de.hpi.asg.breezetestgen.domain.{Netlist, SignalFromActive, SignalFromPassive}
 import de.hpi.asg.breezetestgen.testing.TestEvent
 
 class ComponentActor(component: ComponentBehaviour[_, _],

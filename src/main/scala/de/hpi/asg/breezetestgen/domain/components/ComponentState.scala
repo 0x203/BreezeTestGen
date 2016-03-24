@@ -1,3 +1,3 @@
-package de.hpi.asg.breezetestgen.domain
+package de.hpi.asg.breezetestgen.domain.components
 
 case class ComponentState[C, D](controlState: C, dataState: D)

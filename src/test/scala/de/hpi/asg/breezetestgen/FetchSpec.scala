@@ -3,8 +3,8 @@ package de.hpi.asg.breezetestgen
 import baseclasses.UnitTest
 import de.hpi.asg.breezetestgen.testing.{MergeEvent, TestEvent}
 import de.hpi.asg.breezetestgen.domain._
+import components.{ComponentBehaviour, Fetch}
 import ComponentBehaviour.Reaction
-import components.Fetch
 
 class FetchSpec extends UnitTest {
   val activateId: Channel.Spec[SyncChannel[_]] = 1

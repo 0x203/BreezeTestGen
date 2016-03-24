@@ -1,6 +1,5 @@
 package de.hpi.asg.breezetestgen.domain.components
 
-import de.hpi.asg.breezetestgen.domain._
 import BrzComponent.SyncSpec
 
 object Sequence {

@@ -1,6 +1,7 @@
-package de.hpi.asg.breezetestgen.domain
+package de.hpi.asg.breezetestgen.domain.components
 
 import de.hpi.asg.breezetestgen.Loggable
+import de.hpi.asg.breezetestgen.domain.{PullChannel, PushChannel, _}
 
 object BrzComponent {
   type SyncSpec = Channel.Spec[SyncChannel[Channel.Endpoint]]
