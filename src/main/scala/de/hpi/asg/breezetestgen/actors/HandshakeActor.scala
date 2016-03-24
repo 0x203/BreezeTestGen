@@ -26,5 +26,13 @@ abstract class HandshakeActor extends FSM[HandshakeActor.States, HandshakeActor.
       goto(Initialized) using channels
   }
 
+  when(Initialized) {
+    case Event(Signal(domainSignal, testEvent), _) =>
+      handleSignal(domainSignal.asInstanceOf[domain.Signal], testEvent)
+      stay()
+  }
+
   protected def channels: ChannelMap = stateData
+
+  protected def handleSignal(ds: domain.Signal, testEvent: TestEvent)
 }

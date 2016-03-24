@@ -1,13 +1,14 @@
 package de.hpi.asg.breezetestgen.actors
 
-import de.hpi.asg.breezetestgen.actors.HandshakeActor._
 import de.hpi.asg.breezetestgen.domain
+import de.hpi.asg.breezetestgen.domain.components.Netlist
+import de.hpi.asg.breezetestgen.testgeneration.InformationHub
+import de.hpi.asg.breezetestgen.testing.TestEvent
 
-class NetlistActor extends HandshakeActor {
+class NetlistActor(netlist: Netlist, infoHub: InformationHub) extends HandshakeActor {
 
-  when(Initialized) {
-    case Event(Signal(domainSignal: domain.Signal, testEvent), _) =>
-      //handleSignal(domainSignal.asInstanceOf[domain.Signal], testEvent)
-      stay()
+
+  override protected def handleSignal(ds: domain.Signal, testEvent: TestEvent) = {
+
   }
 }
