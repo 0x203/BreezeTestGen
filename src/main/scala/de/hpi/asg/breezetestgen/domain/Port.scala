@@ -21,7 +21,7 @@ object Port {
   case object Requested extends State
 
   /** every Breeze netlist has an Activation port. here it is */
-  def Activate = SyncPort(0, "activate", Passive)
+  def Activate = SyncPort(0, 0, "activate", Passive)
 }
 
 /** represents a Port of a Breeze Netlist */
@@ -30,13 +30,16 @@ sealed abstract class Port {
   def name: String
   def sense: Port.Sense
   def direction: Port.Direction
+  def channelId: Channel.Id
 }
 
 /** a Nonput port, i.g. without data channels */
-case class SyncPort(id: Port.Id, name: String, sense: Port.Sense) extends Port { val direction = Port.Nonput }
+case class SyncPort(id: Port.Id, channelId: Channel.Id, name: String, sense: Port.Sense)
+  extends Port { val direction = Port.Nonput }
 
 /** an Input or Output port, thus having a bitCount for the data channel and a isSigned flag */
 case class DataPort(id: Port.Id,
+                    channelId: Channel.Id,
                     name: String,
                     sense: Port.Sense,
                     direction: Port.Direction,

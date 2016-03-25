@@ -33,9 +33,4 @@ class ComponentActor(component: BrzComponentBehaviour[_, _],
   private def sendOutSignals(netlist: Netlist.Id, testEvent: TestEvent, ds: Set[domain.Signal]) = {
     ds.foreach{s => receiverOf(s) ! Signal(netlist, s, testEvent)}
   }
-
-  private def receiverOf(signal: domain.Signal): ActorRef = signal match {
-    case _:SignalFromActive => channels(signal.channelId).passive
-    case _:SignalFromPassive => channels(signal.channelId).active
-  }
 }
