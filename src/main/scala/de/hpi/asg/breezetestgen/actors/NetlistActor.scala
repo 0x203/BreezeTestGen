@@ -17,6 +17,8 @@ class NetlistActor(netlist: domain.Netlist,
                    portConnectionsOut: Map[Port.Id, Channel.Id],
                    infoHub: ActorRef) extends HandshakeActor with Loggable {
   import context.dispatcher   // as ExecutionContext for futures
+
+  //TODO: insert state here
   val behaviours = netlist.components.mapValues(_.behaviour(None))
   val componentProps = behaviours.mapValues(Props(classOf[ComponentActor], _, infoHub))
   val componentActors = componentProps.mapValues(context.actorOf).view.force
@@ -24,17 +26,31 @@ class NetlistActor(netlist: domain.Netlist,
   val portConnectionsIn = portConnectionsOut.map(_.swap)
 
   def handleSignal(nlId: domain.Netlist.Id, ds: domain.Signal,  te: TestEvent) = {
-    if(nlId == netlist.id)
-      handleInternal(ds, te)
-    else
-      handleExternal(ds, te)
+    val (netlistId, newSignal, port, receiver) =
+      if (nlId == netlist.id) handleInternal(ds, te) else handleExternal(ds, te)
+
+    val testOp = ds match {
+      case _:Request => AddSyncEvent(te, port.asInstanceOf[SyncPort])
+      case _:Acknowledge => AddSyncEvent(te, port.asInstanceOf[SyncPort])
+      case DataRequest(_, d) => AddDataEvent(te, port.asInstanceOf[DataPort], d)
+      case DataAcknowledge(_, d) => AddDataEvent(te, port.asInstanceOf[DataPort], d)
+    }
+    val fte: Future[TestEvent] = Future {te}  //TODO: replace this with following line when InfoHub is implemented
+    //val fte = (infoHub ? testOp).mapTo[TestEvent]
+
+    val packedSignal = fte.map(HandshakeActor.Signal(netlistId, newSignal, _))
+
+    pipe(packedSignal) to receiver
   }
+
+  /** return type of internal and external handler */
+  private type HandlerResult = (Netlist.Id, domain.Signal, Port, ActorRef)
 
   /** lift an internal signal to an external one
     *
     * also, create new TestEvent for this
     */
-  private def handleInternal(ds: domain.Signal, te: TestEvent) = {
+  private def handleInternal(ds: domain.Signal, te: TestEvent): HandlerResult = {
     val port: Port = netlist.channels.get(ds.channelId).map{ case chan =>
       ds match {
         case _:SignalFromActive => chan.passive
@@ -43,13 +59,12 @@ class NetlistActor(netlist: domain.Netlist,
     }.collect{case p:PortEndpoint => p.id}.flatMap(netlist.ports.get).get
 
     val externalSignal = Signal.changeId(ds, portConnectionsOut(port.id))
-    val packedSignal = resolveTestOpAndPack(externalNetlist, te, externalSignal, port)
 
-    pipe(packedSignal) to receiverOf(externalSignal)
+    (externalNetlist, externalSignal, port, receiverOf(externalSignal))
   }
 
   /** adapt an external signal to an internal one */
-  private def handleExternal(ds: domain.Signal, te: TestEvent) = {
+  private def handleExternal(ds: domain.Signal, te: TestEvent): HandlerResult = {
     val port: Port = portConnectionsIn.get(ds.channelId).flatMap(netlist.ports.get).get
     val channel = netlist.channels(port.channelId)
     val internalReceiverId = (ds match {
@@ -58,23 +73,7 @@ class NetlistActor(netlist: domain.Netlist,
     }).asInstanceOf[CompEndpoint].id
 
     val internalSignal = Signal.changeId(ds, channel.id)
-    val packedSignal = resolveTestOpAndPack(netlist.id, te, internalSignal, port)
 
-    pipe(packedSignal) to componentActors(internalReceiverId)
-  }
-
-  private def resolveTestOpAndPack(nlId: Netlist.Id,
-                                   after: TestEvent,
-                                   ds: domain.Signal,
-                                   port: Port): Future[HandshakeActor.Signal] = {
-    val testOp = ds match {
-      case _:Request => AddSyncEvent(after, port.asInstanceOf[SyncPort])
-      case _:Acknowledge => AddSyncEvent(after, port.asInstanceOf[SyncPort])
-      case DataRequest(_, d) => AddDataEvent(after, port.asInstanceOf[DataPort], d)
-      case DataAcknowledge(_, d) => AddDataEvent(after, port.asInstanceOf[DataPort], d)
-    }
-    val fte: Future[TestEvent] = Future {after}  //TODO: replace this with following line when InfoHub is implemented
-    //val fte = (infoHub ? testOp).mapTo[TestEvent]
-    fte.map(HandshakeActor.Signal(nlId, ds, _))
+    (netlist.id, internalSignal, port, componentActors(internalReceiverId))
   }
 }
