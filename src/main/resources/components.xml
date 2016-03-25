@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!--
+Copyright 2012-2015 Norman Kluge
+ 
+This file is part of ASGBreezeGui.
+ 
+ASGBreezeGui is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+ASGBreezeGui is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with ASGBreezeGui.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<components>
+	<component breezename="BrzVariable">
+		<parameters>
+			<parameter id="0" type="input_width" />
+			<parameter id="1" type="output_count" />
+			<parameter id="2" type="name" />
+			<parameter id="3" type="var_spec" />
+		</parameters>
+		<channels>
+			<channel id="0" type="data_in" porttype="passive" />
+			<channel id="1" type="data_out" porttype="passive" />
+		</channels>
+	</component>
+
+	<component breezename="BrzCallMux" symbol="&gt;--&gt;">
+		<parameters>
+			<parameter id="0" type="width" />
+			<parameter id="1" type="input_count" />
+		</parameters>
+		<channels>
+			<channel id="0" type="data_in" porttype="passive" />
+			<channel id="1" type="data_out" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzSequence" symbol=";">
+		<channels>
+			<channel id="0" type="control_in" porttype="passive" />
+			<channel id="1" type="control_out" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzFetch" symbol="-&gt;">
+		<parameters>
+			<parameter id="0" type="width" /> 
+			<parameter id="1" type="fetch_spec" />
+		</parameters>
+		<channels>
+			<channel id="0" type="control_in" porttype="passive" />
+			<channel id="1" type="data_in" porttype="active" />
+			<channel id="2" type="data_out" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzCase" symbol="@">
+		<parameters>
+			<parameter id="0" type="input_width" />
+			<parameter id="1" type="output_count" />
+			<parameter id="2" type="case_spec" />
+		</parameters>
+		<channels>
+			<channel id="0" type="data_in" porttype="passive" />
+			<channel id="1" type="control_out" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzWhile" symbol="do">
+		<channels>
+			<channel id="0" type="control_in" porttype="passive" />
+			<channel id="1" type="data_in" porttype="active" />
+			<channel id="2" type="control_out" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzBinaryFunc">
+		<parameters>
+			<parameter id="0" type="output_width" />
+			<parameter id="1" type="inputA_width" />
+			<parameter id="2" type="inputB_width" />
+			<parameter id="3" type="operator" />
+			<parameter id="4" type="output_signed" />
+			<parameter id="5" type="inputA_signed" />
+			<parameter id="6" type="inputB_signed" />
+		</parameters>
+		<channels>
+			<channel id="0" type="data_out" porttype="passive" />
+			<channel id="1" type="dataA_in" porttype="active" />
+			<channel id="2" type="dataB_in" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzUnaryFunc">
+		<parameters>
+			<parameter id="0" type="output_width" />
+			<parameter id="1" type="input_width" />
+			<parameter id="2" type="operator" />
+			<parameter id="3" type="output_signed" />
+		</parameters>
+		<channels>
+			<channel id="0" type="data_out" porttype="passive" />
+			<channel id="1" type="data_in" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzSplitEqual" symbol="&#x00BB;=&#x00AB;">
+		<parameters>
+			<parameter id="0" type="input_width" />
+			<parameter id="1" type="output_width" />
+			<parameter id="2" type="output_count" />
+		</parameters>
+		<channels>
+			<channel id="0" type="data_in" porttype="passive" />
+			<channel id="1" type="data_out" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzBinaryFuncConstR">
+		<parameters>
+			<parameter id="0" type="output_width" />
+			<parameter id="1" type="inputA_width" />
+			<parameter id="2" type="inputB_width" />
+			<parameter id="3" type="operator" />
+			<parameter id="4" type="output_signed" />
+			<parameter id="5" type="inputA_signed" />
+			<parameter id="6" type="inputB_signed" />
+			<parameter id="7" type="inputB_value" />
+		</parameters>
+		<channels>
+			<channel id="0" type="data_out" porttype="passive" />
+			<channel id="1" type="dataA_in" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzConcur" symbol="||">
+		<channels>
+			<channel id="0" type="control_in" porttype="passive" />
+			<channel id="1" type="control_out" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzConstant">
+		<parameters>
+			<parameter id="0" type="width" />
+			<parameter id="1" type="value" />
+		</parameters>
+		<channels>
+			<channel id="0" type="data_out" porttype="passive" />
+		</channels>
+	</component>
+
+	<component breezename="BrzCombine" symbol="&#x00AB; &#x00BB;">
+		<parameters>
+			<parameter id="0" type="output_width" />
+			<parameter id="1" type="inputA_width" />
+			<parameter id="2" type="inputB_width" />
+		</parameters>
+		<channels>
+			<channel id="0" type="data_out" porttype="passive" />
+			<channel id="1" type="dataA_in" porttype="active" />
+			<channel id="2" type="dataB_in" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzFalseVariable" symbol="FV">
+		<parameters>
+			<parameter id="0" type="input_width" />
+			<parameter id="1" type="output_count" />
+			<parameter id="2" type="var_spec" />
+		</parameters>
+		<channels>
+			<channel id="0" type="data_in" porttype="passive" />
+			<channel id="1" type="control_out" porttype="active" />
+			<channel id="2" type="data_out" porttype="passive" />
+		</channels>
+	</component>
+
+	<component breezename="BrzAdapt" symbol="A">
+		<parameters>
+			<parameter id="0" type="output_width" />
+			<parameter id="1" type="input_width" />
+			<parameter id="2" type="output_signed" />
+			<parameter id="3" type="input_signed" />
+		</parameters>
+		<channels>
+			<channel id="0" type="data_out" porttype="passive" />
+			<channel id="1" type="data_in" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzLoop" symbol="#">
+		<channels>
+			<channel id="0" type="control_in" porttype="passive" />
+			<channel id="1" type="control_out" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzDecisionWait" symbol="DW">
+		<parameters>
+			<parameter id="0" type="port_count" />
+		</parameters>
+		<channels>
+			<channel id="0" type="control_in" porttype="passive" />
+			<channel id="1" type="decision_in" porttype="passive" />
+			<channel id="2" type="decision_out" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzCaseFetch" symbol="@-&gt;">
+		<parameters>
+			<parameter id="0" type="width" />
+			<parameter id="1" type="index_width" />
+			<parameter id="2" type="input_count" />
+			<parameter id="3" type="fetch_spec" />
+		</parameters>
+		<channels>
+			<channel id="0" type="data_out" porttype="passive" />
+			<channel id="1" type="index_in" porttype="active" />
+			<channel id="2" type="data_in" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzArbiter" symbol="Arb">
+		<channels>
+			<channel id="0" type="arbA_in" porttype="passive" />
+			<channel id="1" type="arbB_in" porttype="passive" />
+			<channel id="2" type="arbA_out" porttype="active" />
+			<channel id="3" type="arbB_out" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzCombineEqual" symbol="&#x00AB;=&#x00BB;">
+		<parameters>
+			<parameter id="0" type="output_width" />
+			<parameter id="1" type="input_width" />
+			<parameter id="2" type="input_count" />
+		</parameters>
+		<channels>
+			<channel id="0" type="data_out" porttype="passive" />
+			<channel id="1" type="data_in" porttype="active" />	
+		</channels>
+	</component>
+
+	<component breezename="BrzEncode" symbol="@">
+		<parameters>
+			<parameter id="0" type="output_width" />
+			<parameter id="1" type="input_count" />
+			<parameter id="2" type="encode_spec" />
+		</parameters>
+		<channels>
+			<channel id="0" type="control_in" porttype="passive" />
+			<channel id="1" type="data_out" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzWireFork" symbol="W^">
+		<parameters>
+			<parameter id="0" type="output_count" />
+		</parameters>
+		<channels>
+			<channel id="0" type="control_in" porttype="passive" />
+			<channel id="1" type="control_out" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzSplit" symbol="&#x00BB; &#x00AB;">
+		<parameters>
+			<parameter id="0" type="input_width" />
+			<parameter id="1" type="outputA_width" />
+			<parameter id="2" type="outputB_width" />
+		</parameters>
+		<channels>
+			<channel id="0" type="data_in" porttype="passive" />
+			<channel id="1" type="dataA_out" porttype="active" />
+			<channel id="2" type="dataB_out" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzActiveEagerFalseVariable" symbol="aeFV">
+		<parameters>
+			<parameter id="0" type="input_width" />
+			<parameter id="1" type="output_count" />
+			<parameter id="2" type="var_spec" />
+		</parameters>
+		<channels>
+			<channel id="0" type="control_in" porttype="passive" />
+			<channel id="1" type="data_in" porttype="active" />
+			<channel id="2" type="control_out" porttype="active" />
+			<channel id="3" type="data_out" porttype="passive" />
+		</channels>
+	</component>
+
+	<component breezename="BrzCall" symbol="&gt;-">
+		<parameters>
+			<parameter id="0" type="input_count" />
+		</parameters>
+		<channels>
+			<channel id="0" type="control_in" porttype="passive" />
+			<channel id="1" type="control_out" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzCallDemux" symbol="&gt;- &lt;-">
+		<parameters>
+			<parameter id="0" type="width" />
+			<parameter id="1" type="output_count" />
+		</parameters>
+		<channels>
+			<channel id="0" type="data_out" porttype="passive" />
+			<channel id="1" type="data_in" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzContinue" symbol="run">
+		<channels>
+			<channel id="0" type="control_in" porttype="passive" />
+		</channels>
+	</component>
+
+	<component breezename="BrzContinuePush" symbol="run">
+		<parameters>
+			<parameter id="0" type="width" />
+		</parameters>
+		<channels>
+			<channel id="0" type="data_in" porttype="passive" />
+		</channels>
+	</component>
+
+	<component breezename="BrzFork" symbol="^">
+		<parameters>
+			<parameter id="0" type="output_count" />
+		</parameters>
+		<channels>
+			<channel id="0" type="control_in" porttype="passive" />
+			<channel id="1" type="control_out" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzNullAdapt" symbol="NA">
+		<parameters>
+			<parameter id="0" type="input_width" />
+		</parameters>
+		<channels>
+			<channel id="0" type="control_out" porttype="active" />
+			<channel id="1" type="data_in" porttype="passive" />
+		</channels>
+	</component>
+
+	<component breezename="BrzPassivatorPush" symbol="&#x00B7;">
+		<parameters>
+			<parameter id="0" type="width" />
+			<parameter id="1" type="output_count" />
+		</parameters> 
+		<channels>
+			<channel id="0" type="data_out" porttype="passive" />
+			<channel id="1" type="data_in" porttype="passive" />
+		</channels>
+	</component>
+
+	<component breezename="BrzSlice" symbol="8&lt;">
+		<parameters>
+			<parameter id="0" type="output_width" />
+			<parameter id="1" type="input_width" />
+			<parameter id="2" type="low_index" />
+		</parameters>
+		<channels>
+			<channel id="0" type="data_out" porttype="passive" />
+			<channel id="1" type="data_in" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzSynch" symbol="&#x00B7;(s)">
+		<parameters>
+			<parameter id="0" type="input_count" />
+		</parameters>
+		<channels>
+			<channel id="0" type="control_in" porttype="passive" />
+			<channel id="1" type="control_out" porttype="active" />
+		</channels>
+	</component>
+
+	<component breezename="BrzSynchPush" symbol="&#x00B7;(s)">
+		<parameters>
+			<parameter id="0" type="width"/>
+			<parameter id="1" type="output_count" />
+		</parameters>
+		<channels>
+			<channel id="0" type="data_in" porttype="passive" />
+			<channel id="1" type="data_out" porttype="passive" />
+			<channel id="2" type="extension_out" porttype="active" />
+		</channels>
+	</component>
+
+</components>
+
