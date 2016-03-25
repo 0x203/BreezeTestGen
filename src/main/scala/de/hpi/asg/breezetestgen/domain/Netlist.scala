@@ -4,6 +4,12 @@ import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, HandshakeCompon
 
 object Netlist {
   type Id = Int
+
+  private[this] var currentId: Id = 0
+  def nextId: Id = {
+    currentId += 1
+    currentId
+  }
 }
 
 /** data container for a whole Netlist */
