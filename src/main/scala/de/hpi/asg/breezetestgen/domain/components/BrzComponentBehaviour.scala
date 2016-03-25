@@ -1,7 +1,7 @@
 package de.hpi.asg.breezetestgen.domain.components
 
 import de.hpi.asg.breezetestgen.constraintsolving.ConstraintVariable
-import de.hpi.asg.breezetestgen.domain.components.Component.{Reaction, State}
+import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent.{Reaction, State}
 import de.hpi.asg.breezetestgen.domain.{DataAcknowledge, PullChannel, _}
 import de.hpi.asg.breezetestgen.testgeneration.TestOp
 import de.hpi.asg.breezetestgen.testing.TestEvent
@@ -13,7 +13,7 @@ import de.hpi.asg.breezetestgen.util.FSM
   * @tparam C control state
   * @tparam D data state
   */
-abstract class BrzComponentBehaviour[C, D] protected(initState: Component.State[C, D])
+abstract class BrzComponentBehaviour[C, D] protected(initState: HandshakeComponent.State[C, D])
   extends FSM[C, D, (Signal, TestEvent)] {
   startWith(initState.controlState, initState.dataState)
 

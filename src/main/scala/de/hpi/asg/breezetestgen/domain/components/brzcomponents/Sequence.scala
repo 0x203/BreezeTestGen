@@ -1,7 +1,7 @@
 package de.hpi.asg.breezetestgen.domain.components.brzcomponents
 
 import de.hpi.asg.breezetestgen.domain.components.BrzComponent._
-import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, BrzComponentBehaviour, Component, HandshakeComponent}
+import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, BrzComponentBehaviour, HandshakeComponent}
 
 object Sequence {
   val breezeName = "BrzSequence"
@@ -14,7 +14,7 @@ class Sequence(id: HandshakeComponent.Id,
   type C = SequenceBehaviour.ControlState
   type D = Option[Int]
 
-  def behaviour(state: Option[Component.State[C, D]]): Behaviour =
+  def behaviour(state: Option[HandshakeComponent.State[C, D]]): Behaviour =
     new SequenceBehaviour(state getOrElse SequenceBehaviour.freshState)
 
 
@@ -23,10 +23,10 @@ class Sequence(id: HandshakeComponent.Id,
     case object Idle extends ControlState
     case object Called extends ControlState
 
-    val freshState: Component.State[ControlState, D] = Component.State(Idle, None)
+    val freshState: HandshakeComponent.State[ControlState, D] = HandshakeComponent.State(Idle, None)
   }
 
-  class SequenceBehaviour(initState: Component.State[C, D]) extends BrzComponentBehaviour[C, D](initState) {
+  class SequenceBehaviour(initState: HandshakeComponent.State[C, D]) extends BrzComponentBehaviour[C, D](initState) {
     import SequenceBehaviour._
 
     info(s"SequenceBehaviour created in state: $initState")

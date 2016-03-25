@@ -4,7 +4,7 @@ import akka.actor.ActorRef
 import de.hpi.asg.breezetestgen.actors.HandshakeActor.Signal
 import de.hpi.asg.breezetestgen.domain
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour
-import de.hpi.asg.breezetestgen.domain.{Netlist, SignalFromActive, SignalFromPassive}
+import de.hpi.asg.breezetestgen.domain.Netlist
 import de.hpi.asg.breezetestgen.testing.TestEvent
 
 class ComponentActor(component: BrzComponentBehaviour[_, _],
