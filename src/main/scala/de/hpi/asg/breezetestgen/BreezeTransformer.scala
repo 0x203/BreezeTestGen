@@ -30,13 +30,13 @@ object BreezeTransformer {
   }
 
   private def extractPorts(netlist: AbstractBreezeNetlist): Map[Port.Id, Port] = {
-    import scala.collection.JavaConversions.asScalaSet
+    import scala.collection.JavaConversions.collectionAsScalaIterable
 
     netlist.getAllPorts.map(extractPort).map{case p => p.id -> p}.toMap
   }
 
   private def extractPort(raw: PortComponent): Port = {
-    import scala.collection.JavaConversions.asScalaBuffer
+    import scala.collection.JavaConversions.collectionAsScalaIterable
     val id: Port.Id = raw.getId
     val name = raw.getName
 
@@ -84,5 +84,35 @@ object BreezeTransformer {
     case port: PortComponent => Channel.PortEndpoint(port.getId)
     case hsComp: HSComponentInst => Channel.CompEndpoint(hsComp.getId)
     case subNetlist: BreezeNetlistInst => throw new RuntimeException("Did not expect a subNetlist as target of channel")
+  }
+
+  private def extractComponents(netlist: AbstractBreezeNetlist): Map[HandshakeComponent.Id, BrzComponent] = {
+    import collection.JavaConversions.collectionAsScalaIterable
+    netlist.getAllHSInstances.map(ComponentExtractors.extract).map{case c => c.id -> c}.toMap
+  }
+}
+
+object ComponentExtractors {
+  import components.brzcomponents._
+
+  type Extractor = HSComponentInst => Option[BrzComponent]
+
+  def extract(raw: HSComponentInst): BrzComponent = {
+    raw.getBrzStr match {
+      case "BrzFetch" => extractFetch(raw)
+    }
+  }
+
+  private def extractFetch(implicit raw: HSComponentInst): Fetch =
+    new Fetch(id, singleChannel(0), singleChannel(1), singleChannel(2))
+
+  private def id(implicit raw: HSComponentInst): HandshakeComponent.Id = raw.getId
+
+  private def singleChannel(i: Int)(implicit raw: HSComponentInst): Channel.Id = {
+    singleChannel2(raw.getChan(i))
+  }
+
+  private def singleChannel2(l: java.util.List[HSChannel]): Channel.Id = {
+    l.ensuring{_.size == 1}.get(0).getId
   }
 }
