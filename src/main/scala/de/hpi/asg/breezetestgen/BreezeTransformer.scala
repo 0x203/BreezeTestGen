@@ -99,8 +99,11 @@ object ComponentExtractors {
 
   def extract(implicit raw: HSComponentInst): BrzComponent = {
     raw.getBrzStr match {
+      case "BrzConcur" => new Concur(id, channel(0), channelSet(1))
+      case "BrzCallMux" => new CallMux(id, channelSet(0), channel(1))
       case "BrzFetch" => new Fetch(id, channel(0), channel(1), channel(2))
       case "BrzSequence" => new Sequence(id, channel(0), channelSeq(1))
+      case "BrzWhile" => new While(id, channel(0), channel(1), channel(2))
       case unknown => throw new RuntimeException(s"Unknown component with name: $unknown")
     }
   }
