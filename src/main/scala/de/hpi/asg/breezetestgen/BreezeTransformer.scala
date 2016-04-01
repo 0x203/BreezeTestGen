@@ -103,7 +103,12 @@ object ComponentExtractors {
       case "BrzCase" => new Case(id, CaseSpecParser.fromString(stringParam(2)), channel(0), channelSeq(1))
       case "BrzConcur" => new Concur(id, channel(0), channelSet(1))
       case "BrzBinaryFunc" =>
-        new BinaryFunc(id,stringParam(3).stripSuffix("\"").stripPrefix("\""), channel(0), channel(1), channel(2))
+        new BinaryFunc(id, stringParam(3).stripSuffix("\"").stripPrefix("\""), channel(0), channel(1), channel(2))
+      case "BrzBinaryFuncConstR" =>
+        new BinaryFuncConstR(id, stringParam(3).stripSuffix("\"").stripPrefix("\""),
+          Constant(intParam(7), intParam(2), boolParam(6)),
+          channel(0), channel(1)
+        )
       case "BrzFetch" => new Fetch(id, channel(0), channel(1), channel(2))
       case "BrzSequence" => new Sequence(id, channel(0), channelSeq(1))
       case "BrzVariable" =>
@@ -138,6 +143,22 @@ object ComponentExtractors {
     raw.getBechans.get(i) match {
       case s: java.lang.String => s
       case x => throw new RuntimeException(s"bechan #$i is no String: $x")
+    }
+  }
+
+  /** returns a Int at the given parameter position from an implicit HSComponentInst */
+  private def intParam(i: Int)(implicit raw: HSComponentInst): Int = {
+    raw.getBechans.get(i) match {
+      case i: java.lang.Integer => i
+      case x => throw new RuntimeException(s"bechan #$i is no Integer: $x")
+    }
+  }
+
+  /** returns a Boolean at the given parameter position from an implicit HSComponentInst */
+  private def boolParam(i: Int)(implicit raw: HSComponentInst): Boolean = {
+    raw.getBechans.get(i) match {
+      case b: java.lang.Boolean => b
+      case x => throw new RuntimeException(s"bechan #$i is no Boolean: $x")
     }
   }
 
