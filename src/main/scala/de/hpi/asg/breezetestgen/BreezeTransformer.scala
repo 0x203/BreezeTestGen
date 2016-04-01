@@ -88,7 +88,7 @@ object BreezeTransformer {
 
   private def extractComponents(netlist: AbstractBreezeNetlist): Map[HandshakeComponent.Id, BrzComponent] = {
     import collection.JavaConversions.collectionAsScalaIterable
-    netlist.getAllHSInstances.map(ComponentExtractors.extract).map{case c => c.id -> c}.toMap
+    netlist.getAllHSInstances.map{ComponentExtractors.extract(_)}.map{case c => c.id -> c}.toMap
   }
 }
 
@@ -97,22 +97,31 @@ object ComponentExtractors {
 
   type Extractor = HSComponentInst => Option[BrzComponent]
 
-  def extract(raw: HSComponentInst): BrzComponent = {
+  def extract(implicit raw: HSComponentInst): BrzComponent = {
     raw.getBrzStr match {
-      case "BrzFetch" => extractFetch(raw)
+      case "BrzFetch" => new Fetch(id, channel(0), channel(1), channel(2))
+      case "BrzSequence" => new Sequence(id, channel(0), channelSeq(1))
+      case unknown => throw new RuntimeException(s"Unknown component with name: $unknown")
     }
   }
 
-  private def extractFetch(implicit raw: HSComponentInst): Fetch =
-    new Fetch(id, singleChannel(0), singleChannel(1), singleChannel(2))
-
+  /** extracts the id from an implicit HSComponentInst */
   private def id(implicit raw: HSComponentInst): HandshakeComponent.Id = raw.getId
 
-  private def singleChannel(i: Int)(implicit raw: HSComponentInst): Channel.Id = {
-    singleChannel2(raw.getChan(i))
+  /** returns the single channel at the given parameter position from an implicit HSComponentInst */
+  private def channel(i: Int)(implicit raw: HSComponentInst): Channel.Id = {
+    raw.getChan(i).ensuring{_.size == 1}.get(0).getId
   }
 
-  private def singleChannel2(l: java.util.List[HSChannel]): Channel.Id = {
-    l.ensuring{_.size == 1}.get(0).getId
+  /** returns a set of channels at the given parameter position from an implicit HSComponentInst */
+  private def channelSet(i: Int)(implicit raw: HSComponentInst): Set[Channel.Id] = {
+    import collection.JavaConversions.collectionAsScalaIterable
+    raw.getChan(i).map{_.getId}.toSet
+  }
+
+  /** returns a seq of channels at the given parameter position from an implicit HSComponentInst */
+  private def channelSeq(i: Int)(implicit raw: HSComponentInst): Seq[Channel.Id] = {
+    import collection.JavaConversions.collectionAsScalaIterable
+    raw.getChan(i).map{_.getId}.toSeq
   }
 }
