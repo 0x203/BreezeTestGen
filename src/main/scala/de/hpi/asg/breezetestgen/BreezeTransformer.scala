@@ -102,10 +102,9 @@ object ComponentExtractors {
       case "BrzCallMux" => new CallMux(id, channelSet(0), channel(1))
       case "BrzCase" => new Case(id, CaseSpecParser.fromString(stringParam(2)), channel(0), channelSeq(1))
       case "BrzConcur" => new Concur(id, channel(0), channelSet(1))
-      case "BrzBinaryFunc" =>
-        new BinaryFunc(id, stringParam(3).stripSuffix("\"").stripPrefix("\""), channel(0), channel(1), channel(2))
+      case "BrzBinaryFunc" => new BinaryFunc(id, stringParam(3), channel(0), channel(1), channel(2))
       case "BrzBinaryFuncConstR" =>
-        new BinaryFuncConstR(id, stringParam(3).stripSuffix("\"").stripPrefix("\""),
+        new BinaryFuncConstR(id, stringParam(3),
           Constant(intParam(7), intParam(2), boolParam(6)),
           channel(0), channel(1)
         )
@@ -141,7 +140,7 @@ object ComponentExtractors {
   /** returns a String at the given parameter position from an implicit HSComponentInst */
   private def stringParam(i: Int)(implicit raw: HSComponentInst): String = {
     raw.getBechans.get(i) match {
-      case s: java.lang.String => s
+      case s: java.lang.String => s.stripPrefix("\"").stripSuffix("\"")
       case x => throw new RuntimeException(s"bechan #$i is no String: $x")
     }
   }
@@ -188,11 +187,9 @@ object ComponentExtractors {
     }
 
     def fromString(specification: String): Variable.ReaderSpec = {
-      val stripped = specification.stripPrefix("\"").stripSuffix("\"")
+      if (specification == "") return {i: Int => Some(0 until 0)}   // variables without selector always return everything
 
-      if (stripped == "") return {i: Int => Some(0 until 0)}   // variables without selector always return everything
-
-      val ranges: Map[Int, Range] = stripped.split(";").zipWithIndex.map{
+      val ranges: Map[Int, Range] = specification.split(";").zipWithIndex.map{
         case (StringRange(range), index) => index -> range
         case (x, index) => throw new RuntimeException(s"cannot parse Variable specification part: $x")
       }.toMap
@@ -228,8 +225,7 @@ object ComponentExtractors {
     def fromString(specification: String): Case.SelectorSpec = {
       val indexes = collection.mutable.ListMap.empty[Int, Int]
       val ranges = collection.mutable.ListBuffer.empty[(Range, Int)]
-      val stripped = specification.stripPrefix("\"").stripSuffix("\"")
-      for ((number, index) <- stripped.split(";").zipWithIndex) number match {
+      for ((number, index) <- specification.split(";").zipWithIndex) number match {
         case StringIndex(i) => indexes += (i -> index)
         case StringRange(r) => ranges += ((r, index))
       }
