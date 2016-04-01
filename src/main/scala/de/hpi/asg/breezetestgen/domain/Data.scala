@@ -7,6 +7,8 @@ trait Data {
   def isFalsy: Boolean
   def isTruthy: Boolean
 
+  def selectBits(range: Range): Data
+
   private val domainSize: Int =  math.pow(2, bitCount).toInt
   val minValue: Int = if (isSigned) -domainSize/2 else 0
   val maxValue: Int = if (isSigned) domainSize/2 - 1 else domainSize - 1
