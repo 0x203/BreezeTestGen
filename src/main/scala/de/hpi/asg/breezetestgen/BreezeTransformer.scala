@@ -99,8 +99,9 @@ object ComponentExtractors {
 
   def extract(implicit raw: HSComponentInst): BrzComponent = {
     raw.getBrzStr match {
-      case "BrzConcur" => new Concur(id, channel(0), channelSet(1))
       case "BrzCallMux" => new CallMux(id, channelSet(0), channel(1))
+      case "BrzCase" => new Case(id, CaseSpecParser.fromString(stringParam(2)), channel(0), channelSeq(1))
+      case "BrzConcur" => new Concur(id, channel(0), channelSet(1))
       case "BrzFetch" => new Fetch(id, channel(0), channel(1), channel(2))
       case "BrzSequence" => new Sequence(id, channel(0), channelSeq(1))
       case "BrzVariable" =>
@@ -174,6 +175,47 @@ object ComponentExtractors {
       }.toMap
 
       ranges.get
+    }
+  }
+
+  /** converts Strings like "0;1..3;4" to something like (0->0, 1->1, 2->1, 3->1, 4->2) */
+  private object CaseSpecParser {
+    private object StringIndex {
+      def apply(i: Int) = i.toString
+      def unapply(s: String) = {
+        try {
+          Some(s.toInt)
+        } catch {
+          case _: java.lang.NumberFormatException => None
+        }
+      }
+    }
+
+    private object StringRange {
+      def apply(start: Int, end: Int) = start.toString + ".." + end.toString
+      def unapply(s: String) = {
+        s.split("\\.\\.", 2) match {  // need escaping because its a regex in a string
+          case Array(StringIndex(start), StringIndex(end)) => Some(start to end)
+          case _ => None
+        }
+
+      }
+    }
+
+    def fromString(specification: String): Case.SelectorSpec = {
+      val indexes = collection.mutable.ListMap.empty[Int, Int]
+      val ranges = collection.mutable.ListBuffer.empty[(Range, Int)]
+      val stripped = specification.stripPrefix("\"").stripSuffix("\"")
+      for ((number, index) <- stripped.split(";").zipWithIndex) number match {
+        case StringIndex(i) => indexes += (i -> index)
+        case StringRange(r) => ranges += ((r, index))
+      }
+
+      { inp: Int =>
+        indexes.get(inp) orElse {
+          ranges.collectFirst { case (r, i) if r contains inp => i }
+        }
+      }
     }
   }
 }
