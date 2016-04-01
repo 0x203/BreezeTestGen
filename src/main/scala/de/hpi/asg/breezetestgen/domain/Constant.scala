@@ -14,6 +14,9 @@ case class Constant(v: Constant.Underlying, bitCount: Int = 8, isSigned: Boolean
     Constant(shifted, range.length, isSigned = false)
   }
 
+  def isTruthy = value != 0
+  def isFalsy = value == 0
+
   def plus(o: Data): Data = o.plusConst(this)
   def minus(o: Data): Data = o.constMinus(this)
 

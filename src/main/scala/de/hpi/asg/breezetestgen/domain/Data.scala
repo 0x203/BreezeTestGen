@@ -4,6 +4,9 @@ trait Data {
   def bitCount: Int
   def isSigned: Boolean
 
+  def isFalsy: Boolean
+  def isTruthy: Boolean
+
   private val domainSize: Int =  math.pow(2, bitCount).toInt
   val minValue: Int = if (isSigned) -domainSize/2 else 0
   val maxValue: Int = if (isSigned) domainSize/2 - 1 else domainSize - 1
