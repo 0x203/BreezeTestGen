@@ -3,10 +3,6 @@ package de.hpi.asg.breezetestgen.domain.components.brzcomponents
 import de.hpi.asg.breezetestgen.domain.components.BrzComponent._
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, BrzComponentBehaviour, HandshakeComponent}
 
-object Sequence {
-  val breezeName = "BrzSequence"
-}
-
 class Sequence(id: HandshakeComponent.Id,
                activate: SyncSpec,
                outs: Seq[SyncSpec]) extends BrzComponent(id) {

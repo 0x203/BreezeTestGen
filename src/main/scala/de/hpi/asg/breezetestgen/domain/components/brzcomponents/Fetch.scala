@@ -3,10 +3,6 @@ package de.hpi.asg.breezetestgen.domain.components.brzcomponents
 import de.hpi.asg.breezetestgen.domain.components.BrzComponent._
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, BrzComponentBehaviour, HandshakeComponent}
 
-object Fetch {
-  val breezeName = "BrzFetch"
-}
-
 class Fetch(id: HandshakeComponent.Id,
             activate: SyncSpec,
             inp: PullSpec,
