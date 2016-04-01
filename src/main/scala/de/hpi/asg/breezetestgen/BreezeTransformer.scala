@@ -102,7 +102,8 @@ object ComponentExtractors {
       case "BrzCallMux" => new CallMux(id, channelSet(0), channel(1))
       case "BrzCase" => new Case(id, CaseSpecParser.fromString(stringParam(2)), channel(0), channelSeq(1))
       case "BrzConcur" => new Concur(id, channel(0), channelSet(1))
-      case "BrzBinaryFunc" => new BinaryFunc(id, stringParam(3), channel(0), channel(1), channel(2))
+      case "BrzBinaryFunc" =>
+        new BinaryFunc(id,stringParam(3).stripSuffix("\"").stripPrefix("\""), channel(0), channel(1), channel(2))
       case "BrzFetch" => new Fetch(id, channel(0), channel(1), channel(2))
       case "BrzSequence" => new Sequence(id, channel(0), channelSeq(1))
       case "BrzVariable" =>
