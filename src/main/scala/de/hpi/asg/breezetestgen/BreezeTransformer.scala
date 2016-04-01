@@ -24,7 +24,7 @@ object BreezeTransformer {
     val ports: Map[Port.Id, Port] = extractPorts(baseNetlist)
 
     val channels: Map[Channel.Id, Channel[Channel.Endpoint]] = extractChannels(baseNetlist)
-    val components: Map[HandshakeComponent.Id, BrzComponent] = Map.empty
+    val components: Map[HandshakeComponent.Id, BrzComponent] = extractComponents(baseNetlist)
 
     Netlist(id, ports, channels, components)
   }
