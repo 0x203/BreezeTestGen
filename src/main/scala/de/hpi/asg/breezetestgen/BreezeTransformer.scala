@@ -103,6 +103,8 @@ object ComponentExtractors {
       case "BrzCallMux" => new CallMux(id, channelSet(0), channel(1))
       case "BrzFetch" => new Fetch(id, channel(0), channel(1), channel(2))
       case "BrzSequence" => new Sequence(id, channel(0), channelSeq(1))
+      case "BrzVariable" =>
+        new Variable(id, stringParam(2), VariableReaderSpec.fromString(stringParam(3)), channel(0), channelSeq(1))
       case "BrzWhile" => new While(id, channel(0), channel(1), channel(2))
       case unknown => throw new RuntimeException(s"Unknown component with name: $unknown")
     }
@@ -126,5 +128,52 @@ object ComponentExtractors {
   private def channelSeq(i: Int)(implicit raw: HSComponentInst): Seq[Channel.Id] = {
     import collection.JavaConversions.collectionAsScalaIterable
     raw.getChan(i).map{_.getId}.toSeq
+  }
+
+  /** returns a String at the given parameter position from an implicit HSComponentInst */
+  private def stringParam(i: Int)(implicit raw: HSComponentInst): String = {
+    raw.getBechans.get(i) match {
+      case s: java.lang.String => s
+      case x => throw new RuntimeException(s"bechan #$i is no String: $x")
+    }
+  }
+
+  /** converts Strings like ";1..3;0..15" to something like (0->({Empty Range}), 1->(1 to 3), 2->(0 to 15)) */
+  private object VariableReaderSpec {
+    private object StringIndex {
+      def apply(i: Int) = i.toString
+      def unapply(s: String) = {
+        try {
+          Some(s.toInt)
+        } catch {
+          case _: java.lang.NumberFormatException => None
+        }
+      }
+    }
+
+    private object StringRange {
+      def apply(start: Int, end: Int) = start.toString + ".." + end.toString
+      def unapply(s: String): Option[Range] = {
+        s.split("\\.\\.", 2) match {  // need escaping because its a regex in a string
+          case Array(StringIndex(start), StringIndex(end)) => Some(start to end)
+          case Array("") => Some(0 until 0)  // empty Range
+          case _ => None
+        }
+
+      }
+    }
+
+    def fromString(specification: String): Variable.ReaderSpec = {
+      val stripped = specification.stripPrefix("\"").stripSuffix("\"")
+
+      if (stripped == "") return {i: Int => Some(0 until 0)}   // variables without selector always return everything
+
+      val ranges: Map[Int, Range] = stripped.split(";").zipWithIndex.map{
+        case (StringRange(range), index) => index -> range
+        case (x, index) => throw new RuntimeException(s"cannot parse Variable specification part: $x")
+      }.toMap
+
+      ranges.get
+    }
   }
 }
