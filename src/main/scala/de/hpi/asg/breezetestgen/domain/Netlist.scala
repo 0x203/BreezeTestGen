@@ -18,6 +18,9 @@ case class Netlist(id: Netlist.Id,
                    channels: Map[Channel.Id, Channel[Channel.Endpoint]],
                   //TODO: component should map to HandshakeComponent, not BrzComponent
                    components: Map[HandshakeComponent.Id, BrzComponent]) {
-  /** returns all ports which are Active (as seen from the netlist itself (just POC for now*/
+
+  /** returns all ports which are Active (as seen from the netlist itself) */
   def activePorts: Set[Port] = ports.values.collect{case p: Port if p.sense == Port.Active => p}.toSet
+  /** returns all ports which are Passive (as seen from the netlist itself) */
+  def passivePorts: Set[Port] = ports.values.collect{case p: Port if p.sense == Port.Passive => p}.toSet
 }

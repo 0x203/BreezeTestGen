@@ -76,7 +76,7 @@ object BreezeTransformer {
       SyncChannel(id, active, passive)
     else raw.getDatatype match {
       case HSChannel.DataType.pull => PullChannel(id, active, passive)
-      case HSChannel.DataType.push => PullChannel(id, active, passive)
+      case HSChannel.DataType.push => PushChannel(id, active, passive)
     }
   }
 
