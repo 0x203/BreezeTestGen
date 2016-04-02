@@ -34,8 +34,16 @@ sealed abstract class Port {
 }
 
 /** a Nonput port, i.g. without data channels */
-case class SyncPort(id: Port.Id, channelId: Channel.Id, name: String, sense: Port.Sense)
-  extends Port { val direction = Port.Nonput }
+case class SyncPort(id: Port.Id, channelId: Channel.Id, name: String, sense: Port.Sense) extends Port {
+  import Port._
+  val direction = Port.Nonput
+
+  /** creates a signal which the connected channel could receive, i.e. it's coming from the outside */
+  def createSignalFromOutside(): Signal = sense match {
+    case Passive => Request(channelId)
+    case Active => Acknowledge(channelId)
+  }
+}
 
 /** an Input or Output port, thus having a bitCount for the data channel and a isSigned flag */
 case class DataPort(id: Port.Id,
@@ -44,5 +52,14 @@ case class DataPort(id: Port.Id,
                     sense: Port.Sense,
                     direction: Port.Direction,
                     bitCount: Int = 8,
-                    isSigned: Boolean = false)
-  extends Port
+                    isSigned: Boolean = false) extends Port {
+  import Port._
+
+  require(direction != Nonput)  // this would be a SyncPort
+
+  /** creates a signal which the connected channel could receive, i.e. it's coming from the outside */
+  def createSignalFromOutside(value: Data): Signal = (sense, direction) match {
+    case (Passive, Input) | (Active, Output) => DataRequest(channelId, value)
+    case (Active, Input) | (Passive, Output) => DataAcknowledge(channelId, value)
+  }
+}
