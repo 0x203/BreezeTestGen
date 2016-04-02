@@ -42,7 +42,12 @@ object Main {
 
   private def execute(breezeFile: File) = {
     logger.info(s"Execute for file: ${breezeFile.getName}")
+    val mainNetlist = BreezeTransformer.parse(breezeFile)
     //TODO: implement me
+    mainNetlist match {
+      case Some(netlist) => logger.info(netlist)
+      case None => logger.error("Could not parse Netlist")
+    }
   }
 }
 
