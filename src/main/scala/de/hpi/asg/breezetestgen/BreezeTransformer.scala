@@ -139,27 +139,32 @@ object ComponentExtractors {
 
   /** returns a String at the given parameter position from an implicit HSComponentInst */
   private def stringParam(i: Int)(implicit raw: HSComponentInst): String = {
-    raw.getBechans.get(i) match {
+    param(i) match {
       case s: java.lang.String => s.stripPrefix("\"").stripSuffix("\"")
-      case x => throw new RuntimeException(s"bechan #$i is no String: $x")
+      case x => throw new RuntimeException(s"beparam #$i is no String: $x")
     }
   }
 
   /** returns a Int at the given parameter position from an implicit HSComponentInst */
   private def intParam(i: Int)(implicit raw: HSComponentInst): Int = {
-    raw.getBechans.get(i) match {
+    param(i) match {
       case i: java.lang.Integer => i
-      case x => throw new RuntimeException(s"bechan #$i is no Integer: $x")
+      case x => throw new RuntimeException(s"beparam #$i is no Integer: $x")
     }
   }
 
   /** returns a Boolean at the given parameter position from an implicit HSComponentInst */
   private def boolParam(i: Int)(implicit raw: HSComponentInst): Boolean = {
-    raw.getBechans.get(i) match {
+    param(i) match {
+      case "\"false\"" => false
+      case "\"true\"" => true
       case b: java.lang.Boolean => b
-      case x => throw new RuntimeException(s"bechan #$i is no Boolean: $x")
+      case x => throw new RuntimeException(s"beparam #$i is no Boolean: $x")
     }
   }
+
+  /** return parameter at given position */
+  private def param(i: Int)(implicit raw: HSComponentInst): AnyRef = raw.getType.getParamValue(i)
 
   /** converts Strings like ";1..3;0..15" to something like (0->({Empty Range}), 1->(1 to 3), 2->(0 to 15)) */
   private object VariableReaderSpec {
