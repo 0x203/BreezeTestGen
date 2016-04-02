@@ -79,7 +79,7 @@ class TestBuilder private(graph: mutable.Graph[TestEvent, DiEdge]) {
     * @param f a function returning the bound value for a variable
     * @return a test-graph without any placeholders
     */
-  def instantiate(f: VariableFixator): immutable.Graph[TestEvent, DiEdge] = {
+  def instantiate(f: VariableFixator): Test = {
     // create a map from all nodes to the placeholder replacements,
     // i.e. IODataEvents for Placeholders and identity for all others
     val nodeMap: Map[graph.NodeT, TestEvent] = graph.nodes.map{ x => x -> (x.value match {
