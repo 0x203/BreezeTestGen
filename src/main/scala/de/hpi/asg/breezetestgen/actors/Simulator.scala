@@ -24,8 +24,8 @@ class Simulator(netlist: Netlist, test: Test) extends Actor with Loggable{
 
   val dummyNetlistId = 0
 
-  val activePorts = netlist.activePorts
-  val passivePorts = netlist.passivePorts
+  val activeChannels = netlist.activePorts.map{_.channelId}
+  val passiveChannels = netlist.passivePorts.map{_.channelId}
 
   val runningTest = mutable.Graph[TestEvent, DiEdge]() ++ test
 
@@ -38,47 +38,41 @@ class Simulator(netlist: Netlist, test: Test) extends Actor with Loggable{
 
   private def pendingEvents = runningTest.nodes.filter{!_.hasPredecessors}.map(_.value)
 
-  private def triggerActiveEvents(): Unit = {
+  /** if the simulator is responsible for sending this */
+  private def myOwn(s: Signal): Boolean = s match {
+    case a: SignalFromActive => activeChannels contains a.channelId
+    case p: SignalFromPassive => passiveChannels contains p.channelId
+  }
+
+  private def triggerOwnEvents(): Unit = {
     info("triggering active events")
     def triggerOne(): Boolean = pendingEvents.collectFirst{
       case m: MergeEvent => runningTest -= m
-      case event: IOEvent[_] if activePorts contains event.port =>
+      case event @ IOEvent(s) if myOwn(s) =>
         trigger(event)
         runningTest -= event
     }.isDefined
 
     // trigger until none is modified further
-    while (triggerOne()) {info("active one triggered")}
+    while (triggerOne()) {trace("one own triggered")}
   }
 
-  private def trigger(event: IOEvent[_]) = {
-    val dSignal = event match {
-      case IOSyncEvent(port) => port.createSignal()
-      case IODataEvent(port, value) => port.createSignal(value)
-    }
-    val hsSignal = HandshakeActor.Signal(dummyNetlistId, dSignal, event)
+  private def trigger(event: IOEvent) = {
+    val hsSignal = HandshakeActor.Signal(dummyNetlistId, event.signal, event)
     info(s"Sending $hsSignal")
     netlistActor ! hsSignal
   }
 
   private def handleSignal(signal: Signal) = {
-    val portOption = passivePorts.find(_.channelId == signal.channelId)
-    val teOption = portOption.flatMap{port =>
-      pendingEvents.find{case ioEvent: IOEvent[_] => ioEvent.port == port}
-    }
-    teOption match {
-      case Some(event: IOEvent[_]) =>
-        trigger(event)
-        runningTest -= event
-      case Some(_) => throw new RuntimeException("Won't happen ever (receive a MergeEvent")
-      case None =>
-        throw new TestFailed(signal, runningTest)
+    pendingEvents.find{case ioEvent: IOEvent => ioEvent.signal == signal} match {
+      case Some(event: IOEvent) => runningTest -= event
+      case None => throw new TestFailed(signal, runningTest)
     }
     somethingHappened()
   }
 
   private def somethingHappened() = {
-    triggerActiveEvents()
+    triggerOwnEvents()
     if (runningTest.isEmpty) {
       info("Test cleared, everything is done!")
       context.system.terminate()
