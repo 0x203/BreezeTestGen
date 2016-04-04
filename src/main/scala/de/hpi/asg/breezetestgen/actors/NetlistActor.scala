@@ -1,23 +1,17 @@
 package de.hpi.asg.breezetestgen.actors
 
 import akka.actor.{ActorRef, Props}
-import akka.pattern.{ask, pipe}
 import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.domain
 import de.hpi.asg.breezetestgen.domain.Channel.{CompEndpoint, PortEndpoint}
 import de.hpi.asg.breezetestgen.domain._
-import de.hpi.asg.breezetestgen.testgeneration.{AddDataEvent, AddSyncEvent}
 import de.hpi.asg.breezetestgen.testing.TestEvent
-
-import scala.concurrent.Future
 
 
 class NetlistActor(netlist: domain.Netlist,
                    externalNetlist: Netlist.Id,
                    portConnectionsOut: Map[Port.Id, Channel.Id],
                    infoHub: ActorRef) extends HandshakeActor with Loggable {
-  import context.dispatcher   // as ExecutionContext for futures
-
   info(s"NetlistActor created for netlist id ${netlist.id}")
 
   //TODO: insert state here
@@ -39,54 +33,43 @@ class NetlistActor(netlist: domain.Netlist,
       id -> chan.transform(componentEndpointToActorRef)
   }
   val setChannels = HandshakeActor.SetChannels(channelMap)
-
   componentActors.values.foreach(_ ! setChannels)
-  override def preStart() {
-    self ! setChannels
-    //self ! HandshakeActor.Signal(1, Request(0), null)
-  }
 
   def handleSignal(nlId: domain.Netlist.Id, ds: domain.Signal,  te: TestEvent) = {
     info(s"getting: $ds")
-    val (netlistId, newSignal, port, receiver) =
-      if (nlId == netlist.id) handleInternal(ds, te) else handleExternal(ds, te)
+    val (netlistId, newSignal, receiver) =
+      if (nlId == netlist.id) handleInternal(ds) else handleExternal(ds)
 
-    val testOp = ds match {
-      case _:Request => AddSyncEvent(te, port.asInstanceOf[SyncPort])
-      case _:Acknowledge => AddSyncEvent(te, port.asInstanceOf[SyncPort])
-      case DataRequest(_, d) => AddDataEvent(te, port.asInstanceOf[DataPort], d)
-      case DataAcknowledge(_, d) => AddDataEvent(te, port.asInstanceOf[DataPort], d)
-    }
-    val fte: Future[TestEvent] = Future {te}  //TODO: replace this with following line when InfoHub is implemented
-    //val fte = (infoHub ? testOp).mapTo[TestEvent]
+    val packedSignal = HandshakeActor.Signal(netlistId, newSignal, te)
 
-    val packedSignal = fte.map(HandshakeActor.Signal(netlistId, newSignal, _))
-
-    pipe(packedSignal) to receiver
+    receiver ! packedSignal
   }
 
   /** return type of internal and external handler */
-  private type HandlerResult = (Netlist.Id, domain.Signal, Port, ActorRef)
+  private type HandlerResult = (Netlist.Id, domain.Signal, ActorRef)
 
-  /** lift an internal signal to an external one
-    *
-    * also, create new TestEvent for this
-    */
-  private def handleInternal(ds: domain.Signal, te: TestEvent): HandlerResult = {
-    val port: Port = netlist.channels.get(ds.channelId).map{ case chan =>
-      ds match {
-        case _:SignalFromActive => chan.passive
-        case _:SignalFromPassive => chan.active
-      }
-    }.collect{case p:PortEndpoint => p.id}.flatMap(netlist.ports.get).get
+  /** lift an internal signal to an external one */
+  private def handleInternal(ds: domain.Signal): HandlerResult = {
+    def otherSideOfChannel[X](chan: Channel[X]): X = ds match {
+      case _:SignalFromActive => chan.passive
+      case _:SignalFromPassive => chan.active
+    }
 
-    val externalSignal = Signal.changeId(ds, portConnectionsOut(port.id))
+    val externalChannel: Channel.Id = netlist.channels
+      .get(ds.channelId)         // get channel
+      .map(otherSideOfChannel)   // get PortEndpoint
+      .collect{case p:PortEndpoint => p.id} // map it to it's id
+      .flatMap(portConnectionsOut.get)  // map it to external channel
+      .get  // unpack it
 
-    (externalNetlist, externalSignal, port, receiverOf(externalSignal))
+    val externalSignal = Signal.changeChannelId(ds, externalChannel)
+    val receiver = channels.andThen(otherSideOfChannel)(externalChannel)
+
+    (externalNetlist, externalSignal, receiver)
   }
 
   /** adapt an external signal to an internal one */
-  private def handleExternal(ds: domain.Signal, te: TestEvent): HandlerResult = {
+  private def handleExternal(ds: domain.Signal): HandlerResult = {
     val port: Port = portConnectionsIn.get(ds.channelId).flatMap(netlist.ports.get).get
     val channel = netlist.channels(port.channelId)
     val internalReceiverId = (ds match {
@@ -94,8 +77,8 @@ class NetlistActor(netlist: domain.Netlist,
       case _:SignalFromPassive => channel.active
     }).asInstanceOf[CompEndpoint].id
 
-    val internalSignal = Signal.changeId(ds, channel.id)
+    val internalSignal = Signal.changeChannelId(ds, channel.id)
 
-    (netlist.id, internalSignal, port, componentActors(internalReceiverId))
+    (netlist.id, internalSignal, componentActors(internalReceiverId))
   }
 }
