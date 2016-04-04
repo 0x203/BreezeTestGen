@@ -1,7 +1,7 @@
 package de.hpi.asg.breezetestgen.actors
 
 import akka.actor.{ActorRef, FSM}
-import de.hpi.asg.breezetestgen.domain
+import de.hpi.asg.breezetestgen.{Loggable, domain}
 import de.hpi.asg.breezetestgen.testing.TestEvent
 import domain.{Channel, Netlist, SignalFromActive, SignalFromPassive}
 
@@ -16,18 +16,20 @@ object HandshakeActor {
   case class Signal(netlist: Netlist.Id, domainSignal: domain.Signal, testEvent: TestEvent)
 }
 
-abstract class HandshakeActor extends FSM[HandshakeActor.States, HandshakeActor.ChannelMap] {
+abstract class HandshakeActor extends FSM[HandshakeActor.States, HandshakeActor.ChannelMap] with Loggable {
   import HandshakeActor._
 
   startWith(Uninitialized, Map.empty)
 
   when(Uninitialized) {
     case Event(SetChannels(channels), _) =>
+      info("received ChannelMaps")
       goto(Initialized) using channels
   }
 
   when(Initialized) {
     case Event(Signal(netlist, domainSignal, testEvent), _) =>
+      info("received something in Initialized state")
       handleSignal(netlist, domainSignal, testEvent)
       stay()
   }

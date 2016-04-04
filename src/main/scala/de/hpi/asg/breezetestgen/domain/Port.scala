@@ -38,10 +38,10 @@ case class SyncPort(id: Port.Id, channelId: Channel.Id, name: String, sense: Por
   import Port._
   val direction = Port.Nonput
 
-  /** creates a signal which the connected channel could receive, i.e. it's coming from the outside */
-  def createSignalFromOutside(): Signal = sense match {
-    case Passive => Request(channelId)
-    case Active => Acknowledge(channelId)
+  /** creates a signal for the connected channel */
+  def createSignal(): Signal = sense match {
+    case Active => Request(channelId)
+    case Passive => Acknowledge(channelId)
   }
 }
 
@@ -57,9 +57,9 @@ case class DataPort(id: Port.Id,
 
   require(direction != Nonput)  // this would be a SyncPort
 
-  /** creates a signal which the connected channel could receive, i.e. it's coming from the outside */
-  def createSignalFromOutside(value: Data): Signal = (sense, direction) match {
-    case (Passive, Input) | (Active, Output) => DataRequest(channelId, value)
-    case (Active, Input) | (Passive, Output) => DataAcknowledge(channelId, value)
+  /** creates a signal for the connected channel */
+  def createSignal(value: Data): Signal = (sense, direction) match {
+    case (Active, Input) | (Passive, Output) => DataRequest(channelId, value)
+    case (Passive, Input) | (Active, Output) => DataAcknowledge(channelId, value)
   }
 }

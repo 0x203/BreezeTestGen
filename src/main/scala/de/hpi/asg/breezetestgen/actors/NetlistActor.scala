@@ -18,6 +18,8 @@ class NetlistActor(netlist: domain.Netlist,
                    infoHub: ActorRef) extends HandshakeActor with Loggable {
   import context.dispatcher   // as ExecutionContext for futures
 
+  info(s"NetlistActor created for netlist id ${netlist.id}")
+
   //TODO: insert state here
   val behaviours = netlist.components.mapValues(_.behaviour(None))
   val componentProps = behaviours.mapValues(Props(classOf[ComponentActor], _, infoHub))
@@ -25,7 +27,27 @@ class NetlistActor(netlist: domain.Netlist,
 
   val portConnectionsIn = portConnectionsOut.map(_.swap)
 
+  // maps channelEndpoint to corresponding Actors
+  // - for CompEndpoints this is the respective component
+  // - for ports it is the netlist itself
+  private def componentEndpointToActorRef(ep: Channel.Endpoint) = ep match {
+    case ce: CompEndpoint => componentActors(ce.id)
+    case pe: PortEndpoint => self
+  }
+  // creates a channelMap to initialize the components
+  val channelMap: Map[Channel.Id, Channel[ActorRef]] = netlist.channels.map{case (id, chan) =>
+      id -> chan.transform(componentEndpointToActorRef)
+  }
+  val setChannels = HandshakeActor.SetChannels(channelMap)
+
+  componentActors.values.foreach(_ ! setChannels)
+  override def preStart() {
+    self ! setChannels
+    //self ! HandshakeActor.Signal(1, Request(0), null)
+  }
+
   def handleSignal(nlId: domain.Netlist.Id, ds: domain.Signal,  te: TestEvent) = {
+    info(s"getting: $ds")
     val (netlistId, newSignal, port, receiver) =
       if (nlId == netlist.id) handleInternal(ds, te) else handleExternal(ds, te)
 

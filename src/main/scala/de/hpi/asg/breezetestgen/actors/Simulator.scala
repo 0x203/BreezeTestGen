@@ -1,6 +1,6 @@
 package de.hpi.asg.breezetestgen.actors
 
-import akka.actor.{Actor, Props}
+import akka.actor.{Actor, ActorRef, Props}
 import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.domain._
 import de.hpi.asg.breezetestgen.testing._
@@ -9,6 +9,8 @@ import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.mutable
 
 object Simulator {
+  case object RunTest
+
   class TestFailed(val unexpectedSignal: Signal, currentTest: mutable.Graph[TestEvent, DiEdge]) extends Exception {
     val testState = scalax.collection.immutable.Graph[TestEvent, DiEdge]() ++ currentTest
   }
@@ -21,17 +23,18 @@ class Simulator(netlist: Netlist, test: Test) extends Actor with Loggable{
   import Simulator._
 
   val dummyNetlistId = 0
-  val netlistActor = context.actorOf(netlistActorProps, "MainNetlist")
 
-  // ports which are passive as seen from the netlist itself are active for the environment and the other way round
-  val activePorts = netlist.passivePorts
-  val passivePorts = netlist.activePorts
+  val activePorts = netlist.activePorts
+  val passivePorts = netlist.passivePorts
 
   val runningTest = mutable.Graph[TestEvent, DiEdge]() ++ test
 
-  private def pendingEvents = runningTest.nodes.filter{!_.hasPredecessors}
+  var netlistActor: ActorRef = _
+
+  private def pendingEvents = runningTest.nodes.filter{!_.hasPredecessors}.map(_.value)
 
   private def triggerActiveEvents(): Unit = {
+    info("triggering active events")
     def triggerOne(): Boolean = pendingEvents.collectFirst{
       case m: MergeEvent => runningTest -= m
       case event: IOEvent[_] if activePorts contains event.port =>
@@ -40,15 +43,16 @@ class Simulator(netlist: Netlist, test: Test) extends Actor with Loggable{
     }.isDefined
 
     // trigger until none is modified further
-    while (triggerOne()) {}
+    while (triggerOne()) {info("active one triggered")}
   }
 
   private def trigger(event: IOEvent[_]) = {
     val dSignal = event match {
-      case IOSyncEvent(port) => port.createSignalFromOutside()
-      case IODataEvent(port, value) => port.createSignalFromOutside(value)
+      case IOSyncEvent(port) => port.createSignal()
+      case IODataEvent(port, value) => port.createSignal(value)
     }
     val hsSignal = HandshakeActor.Signal(dummyNetlistId, dSignal, event)
+    info(s"Sending $hsSignal")
     netlistActor ! hsSignal
   }
 
@@ -74,9 +78,10 @@ class Simulator(netlist: Netlist, test: Test) extends Actor with Loggable{
     }
   }
 
-  somethingHappened()
-
   def receive = {
+    case RunTest =>
+      netlistActor = context.actorOf(netlistActorProps, "MainNetlist")
+      somethingHappened()
     case HandshakeActor.Signal(`dummyNetlistId`, domainSignal, _) => handleSignal(domainSignal)
   }
 

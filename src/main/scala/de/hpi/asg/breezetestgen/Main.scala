@@ -2,7 +2,14 @@ package de.hpi.asg.breezetestgen
 
 import java.io.File
 
+import akka.actor.{ActorSystem, Props}
+import de.hpi.asg.breezetestgen.actors.Simulator
 import de.uni_potsdam.hpi.asg.common.io.WorkingdirGenerator
+
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+import scalax.collection.GraphEdge.DiEdge
+import scalax.collection.immutable.Graph
 
 object Main {
   val logger = Logging.getLogger(this)
@@ -45,9 +52,39 @@ object Main {
     val mainNetlist = BreezeTransformer.parse(breezeFile)
     //TODO: implement me
     mainNetlist match {
-      case Some(netlist) => logger.info(netlist)
+      case Some(netlist) =>
+        logger.info(netlist)
+        val test = sampleGCDTest(netlist)
+        simulate(netlist, test)
       case None => logger.error("Could not parse Netlist")
     }
+  }
+
+  private def sampleGCDTest(netlist: domain.Netlist): testing.Test = {
+    import de.hpi.asg.breezetestgen.domain._
+    import de.hpi.asg.breezetestgen.testing._
+    def findPort(name: String): Port = netlist.ports.values.find(_.name == name).get
+    val activate = IOSyncEvent(findPort("activate").asInstanceOf[SyncPort])
+    val ain = IODataEvent(findPort("ain").asInstanceOf[DataPort], Constant(12))
+    val bin = IODataEvent(findPort("bin").asInstanceOf[DataPort], Constant(8))
+    val merge = new MergeEvent
+    val o = IODataEvent(findPort("o").asInstanceOf[DataPort], Constant(4))
+    Graph[TestEvent, DiEdge](
+      activate ~> ain,
+      activate ~> bin,
+      ain ~> merge,
+      bin ~> merge,
+      merge ~> o
+    )
+  }
+
+  private def simulate(netlist: domain.Netlist, test: testing.Test) = {
+    val system = ActorSystem("Simulator")
+    logger.info("Start simulation...")
+    val simulator = system.actorOf(Props(classOf[Simulator], netlist, test))
+    simulator ! Simulator.RunTest
+    Await.result(system.whenTerminated, Duration.Inf)
+    logger.info("Simulation finished!")
   }
 }
 

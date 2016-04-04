@@ -19,14 +19,24 @@ sealed trait Channel[Comp] {
   def id: Channel.Id
   def active: Comp
   def passive: Comp
+
+  def transform[NewComp](f: Comp => NewComp): Channel[NewComp]
 }
 
 sealed trait NoPullChannel[Comp] extends Channel[Comp]
 sealed trait NoPushChannel[Comp] extends Channel[Comp]
 
 final case class SyncChannel[Comp](id: Channel.Id, active: Comp, passive: Comp)
-  extends Channel[Comp] with NoPullChannel[Comp] with NoPushChannel[Comp]
+  extends Channel[Comp] with NoPullChannel[Comp] with NoPushChannel[Comp] {
+  def transform[NewComp](f: Comp => NewComp): SyncChannel[NewComp] = this.copy(active=f(active), passive=f(passive))
+}
+
 final case class PullChannel[Comp](id: Channel.Id, active: Comp, passive: Comp)
-  extends Channel[Comp] with NoPushChannel[Comp]
+  extends Channel[Comp] with NoPushChannel[Comp] {
+  def transform[NewComp](f: Comp => NewComp): PullChannel[NewComp] = this.copy(active=f(active), passive=f(passive))
+}
+
 final case class PushChannel[Comp](id: Channel.Id, active: Comp, passive: Comp)
-  extends Channel[Comp] with NoPullChannel[Comp]
+  extends Channel[Comp] with NoPullChannel[Comp] {
+  def transform[NewComp](f: Comp => NewComp): PushChannel[NewComp] = this.copy(active=f(active), passive=f(passive))
+}
