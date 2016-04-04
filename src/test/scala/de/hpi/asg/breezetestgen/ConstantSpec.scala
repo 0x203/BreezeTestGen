@@ -4,12 +4,12 @@ import baseclasses.UnitTest
 import de.hpi.asg.breezetestgen.domain.Constant
 
 class ConstantSpec extends UnitTest {
+  val truthy = Constant(1, 1)
+  val falsy = Constant(0, 1)
 
   "A Constant" should "perform basic operations correctly" in {
     val c1 = Constant(7)
     val c2 = Constant(5)
-    val truthy = Constant(1, 1)
-    val falsy = Constant(0, 1)
 
     assert((c1 + c2) == Constant(12))
     assert((c1 - c2) == Constant(2))
@@ -23,6 +23,14 @@ class ConstantSpec extends UnitTest {
     assert((c1 | c2) == Constant(7))
     assert((c1 ^ c2) == Constant(2))
     //assert(c1.! == Constant(-5)) // TODO: implement this for unsigned constants
+  }
+
+  it should "know the difference between greaterThan and greater or equal" in {
+    val c = Constant(7)
+    assert((c > c) == falsy)
+    assert((c >= c) == truthy)
+    assert((c < c) == falsy)
+    assert((c <= c) == truthy)
   }
 
   it should "not exceed it maximum domain value" in {

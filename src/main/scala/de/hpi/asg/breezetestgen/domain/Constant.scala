@@ -23,10 +23,10 @@ case class Constant(v: Constant.Underlying, bitCount: Int = 8, isSigned: Boolean
   def equals(o: Data): Data = o.equalsConst(this)
   def equalsNot(o: Data): Data = o.equalsNotConst(this)
 
-  def lessThen(o: Data): Data = o.greaterOrEqualConst(this)
-  def greaterThen(o: Data): Data = o.lessOrEqualConst(this)
-  def lessOrEqual(o: Data): Data = o.greaterThenConst(this)
-  def greaterOrEqual(o: Data): Data = o.lessThenConst(this)
+  def lessThen(o: Data): Data = o.greaterThenConst(this)
+  def greaterThen(o: Data): Data = o.lessThenConst(this)
+  def lessOrEqual(o: Data): Data = o.greaterOrEqualConst(this)
+  def greaterOrEqual(o: Data): Data = o.lessOrEqualConst(this)
 
   def and(o: Data): Data = o.andConst(this)
   def or(o: Data): Data = o.orConst(this)
