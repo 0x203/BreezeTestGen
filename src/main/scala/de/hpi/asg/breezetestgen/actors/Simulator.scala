@@ -31,6 +31,11 @@ class Simulator(netlist: Netlist, test: Test) extends Actor with Loggable{
 
   var netlistActor: ActorRef = _
 
+  // hacky way to create channelMaps with all ports of MainNetlist pointing to this simulator-actor
+  private val netlistChannelMap = HandshakeActor.SetChannels(
+    netlist.ports.map{case (id, port) => id -> SyncChannel(port.channelId, self, self)}
+  )
+
   private def pendingEvents = runningTest.nodes.filter{!_.hasPredecessors}.map(_.value)
 
   private def triggerActiveEvents(): Unit = {
@@ -81,13 +86,14 @@ class Simulator(netlist: Netlist, test: Test) extends Actor with Loggable{
   def receive = {
     case RunTest =>
       netlistActor = context.actorOf(netlistActorProps, "MainNetlist")
+      netlistActor ! netlistChannelMap
       somethingHappened()
     case HandshakeActor.Signal(`dummyNetlistId`, domainSignal, _) => handleSignal(domainSignal)
   }
 
   /** creates [[Props]] of a netlist actor for the netlist to be simulated */
   private def netlistActorProps: Props = {
-    val portConnections = netlist.ports.keys.map{id => id -> id}.toMap[Port.Id, Channel.Id]
+    val portConnections = netlist.ports.values.map{p => p.id -> p.channelId}.toMap[Port.Id, Channel.Id]
     // TODO create real infoHub when its implemented
     val infoHub = context.system.deadLetters
 
