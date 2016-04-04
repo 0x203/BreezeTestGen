@@ -64,17 +64,35 @@ object Main {
     import de.hpi.asg.breezetestgen.domain._
     import de.hpi.asg.breezetestgen.testing._
     def findPort(name: String): Port = netlist.ports.values.find(_.name == name).get
-    val activate = IOSyncEvent(findPort("activate").asInstanceOf[SyncPort])
-    val ain = IODataEvent(findPort("ain").asInstanceOf[DataPort], Constant(12))
-    val bin = IODataEvent(findPort("bin").asInstanceOf[DataPort], Constant(8))
+    val activateId = findPort("activate").channelId
+    val ainId = findPort("ain").channelId
+    val binId = findPort("bin").channelId
+    val oId = findPort("o").channelId
+
+    val activateReq = IOEvent(Request(activateId))
+    val activateAck = IOEvent(Acknowledge(activateId))
+
+    val ainReq = IOEvent(Request(ainId))
+    val ainAck = IOEvent(DataAcknowledge(ainId, Constant(12)))
+
+    val binReq = IOEvent(Request(binId))
+    val binAck = IOEvent(DataAcknowledge(binId, Constant(8)))
+
+    val oReq = IOEvent(DataRequest(oId, Constant(4)))
+    val oAck = IOEvent(Acknowledge(oId))
+
     val merge = new MergeEvent
-    val o = IODataEvent(findPort("o").asInstanceOf[DataPort], Constant(4))
+
     Graph[TestEvent, DiEdge](
-      activate ~> ain,
-      activate ~> bin,
-      ain ~> merge,
-      bin ~> merge,
-      merge ~> o
+      activateReq ~> ainReq,
+      activateReq ~> binReq,
+      ainReq ~> ainAck,
+      binReq ~> binAck,
+      ainAck ~> merge,
+      binAck ~> merge,
+      merge ~> oReq,
+      oReq ~> oAck,
+      oAck ~> activateAck
     )
   }
 
