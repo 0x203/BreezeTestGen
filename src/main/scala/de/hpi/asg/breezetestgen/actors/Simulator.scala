@@ -67,8 +67,10 @@ class Simulator(netlist: Netlist, test: Test) extends Actor with Loggable{
       pendingEvents.find{case ioEvent: IOEvent[_] => ioEvent.port == port}
     }
     teOption match {
-      case Some(node) =>
-        runningTest -= node
+      case Some(event: IOEvent[_]) =>
+        trigger(event)
+        runningTest -= event
+      case Some(_) => throw new RuntimeException("Won't happen ever (receive a MergeEvent")
       case None =>
         throw new TestFailed(signal, runningTest)
     }
@@ -79,7 +81,7 @@ class Simulator(netlist: Netlist, test: Test) extends Actor with Loggable{
     triggerActiveEvents()
     if (runningTest.isEmpty) {
       info("Test cleared, everything is done!")
-      context.stop(self)
+      context.system.terminate()
     }
   }
 
