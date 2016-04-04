@@ -2,7 +2,7 @@ package de.hpi.asg.breezetestgen.testgeneration
 
 import de.hpi.asg.breezetestgen.constraintsolving.ConstraintCollection
 import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent.Reaction
-import de.hpi.asg.breezetestgen.testing.TestEvent
+import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
 
 /** Central place for gathering information during a test/simulation run.
   *
@@ -25,7 +25,7 @@ class InformationHub(parentCollection: ConstraintCollection, testBuilder: TestBu
 
     reaction.testOp.map {
       case Merge(te) => testBuilder.merge(te)
-      case AddSyncEvent(te, p) => testBuilder.addSuccessor(te, p)
+      case AddIOEvent(te, s) => testBuilder.addSuccessor(te, IOEvent(s))
       // TODO: when subclasses of data are defined, differentiate between them here
       //case AddDataEvent(te, p, i) => testBuilder.addSuccessor(te, p, i)
     }

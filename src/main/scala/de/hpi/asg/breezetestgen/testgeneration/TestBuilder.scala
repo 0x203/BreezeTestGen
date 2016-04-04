@@ -1,7 +1,8 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
+
 import de.hpi.asg.breezetestgen.constraintsolving.Variable
-import de.hpi.asg.breezetestgen.domain.{Constant, SyncPort, Port, DataPort}
+import de.hpi.asg.breezetestgen.domain.{Constant, DataAcknowledge, DataRequest}
 import de.hpi.asg.breezetestgen.testing._
 
 import scalax.collection._
@@ -11,20 +12,6 @@ import scalax.collection.GraphEdge._
 object TestBuilder {
   /** a function used to fixate a variable to a concrete value */
   type VariableFixator = Variable => Constant
-
-
-  /** Used as unfixed-value placeholder for [[IODataEvent]]s during gathering of IOEvents
-    *
-    * A [[TestBuilder]] gathers IOEvents without knowledge of concrete values for the according events.
-    * Objects of this class are used as a placeholder for IODataEvents, which can be assigned to real objects
-    * of this type once the variables are fixed.
-    *
-    * @param port will become the port of the IODataEvent
-    * @param valueVariable placeholder for fixed value
-    */
-  private case class IODataEventPlaceholder(port: DataPort, valueVariable: Variable) extends IOEvent[DataPort] {
-    def toIODataEvent(f: VariableFixator): IODataEvent = IODataEvent(port, f(valueVariable))
-  }
 }
 
 class TestBuilder private(graph: mutable.Graph[TestEvent, DiEdge]) {
@@ -36,22 +23,13 @@ class TestBuilder private(graph: mutable.Graph[TestEvent, DiEdge]) {
     *
     * The request of passive ports (e.g. activate) will be registered using this here
     */
-  def addOrigin[P <: Port](o: IOEvent[P]): TestEvent = {
+  def addOrigin(o: IOEvent): TestEvent = {
     graph += o
     o
   }
 
   /** IOEvent happens always after the given one */
-  private def addSubsequentIOEvent[P <: Port](n: TestEvent, s: IOEvent[P]): TestEvent = graph.addAndGet(n ~> s).target
-
-  /** add a succeeding event on a [[SyncPort]] */
-  def addSuccessor(n: TestEvent, s: SyncPort): TestEvent = addSubsequentIOEvent(n, IOSyncEvent(s))
-
-  /** add a succeeding event on a [[DataPort]] with a concrete value */
-  def addSuccessor(n: TestEvent, d: DataPort, v: Constant): TestEvent = addSubsequentIOEvent(n, IODataEvent(d, v))
-
-  /** add a succeeding event on a [[DataPort]] with a [[Variable]] instead of a concrete value */
-  def addSuccessor(n: TestEvent, d: DataPort, v: Variable): TestEvent = addSubsequentIOEvent(n, IODataEventPlaceholder(d, v))
+  def addSuccessor(n: TestEvent, s: IOEvent): TestEvent = graph.addAndGet(n ~> s).target
 
   /** returns a nodeId which represents a state where all given nodes are processed */
   def merge(ns: Set[TestEvent]) = {
@@ -70,11 +48,8 @@ class TestBuilder private(graph: mutable.Graph[TestEvent, DiEdge]) {
     */
   def duplicate():TestBuilder = new TestBuilder(graph.clone())
 
-  /** instantiate the built TestGraph containing placeholders for [[IODataEvent]]s
-    *
-    * While simulating for test generation, IOEvents should be recorded even when no concrete values are known yet.
-    * This TestBuilder inserted [[IODataEventPlaceholder]] instances in such cases. When all variables are finally bound,
-    * the placeholders can be replaced with [[IODataEvent]] instances using this function.
+  /** instantiate the built TestGraph containing placeholders for Variables in DataSignals
+    * ([[de.hpi.asg.breezetestgen.domain.DataAcknowledge]] and [[de.hpi.asg.breezetestgen.domain.DataRequest]])
     *
     * @param f a function returning the bound value for a variable
     * @return a test-graph without any placeholders
@@ -83,7 +58,8 @@ class TestBuilder private(graph: mutable.Graph[TestEvent, DiEdge]) {
     // create a map from all nodes to the placeholder replacements,
     // i.e. IODataEvents for Placeholders and identity for all others
     val nodeMap: Map[graph.NodeT, TestEvent] = graph.nodes.map{ x => x -> (x.value match {
-      case p: IODataEventPlaceholder => p.toIODataEvent(f)
+      case IOEvent(x @ DataRequest(_, v: Variable)) => IOEvent(x.copy(data = f(v)))
+      case IOEvent(x @ DataAcknowledge(_, v: Variable)) => IOEvent(x.copy(data = f(v)))
       case e => e
     })}.toMap
 
