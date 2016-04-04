@@ -23,13 +23,13 @@ abstract class HandshakeActor extends FSM[HandshakeActor.States, HandshakeActor.
 
   when(Uninitialized) {
     case Event(SetChannels(channels), _) =>
-      info("received ChannelMaps")
+      trace("received ChannelMaps")
       goto(Initialized) using channels
   }
 
   when(Initialized) {
     case Event(Signal(netlist, domainSignal, testEvent), _) =>
-      info("received something in Initialized state")
+      trace("received something in Initialized state")
       handleSignal(netlist, domainSignal, testEvent)
       stay()
   }

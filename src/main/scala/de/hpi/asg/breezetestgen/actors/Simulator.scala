@@ -33,7 +33,7 @@ class Simulator(netlist: Netlist, test: Test) extends Actor with Loggable{
 
   // hacky way to create channelMaps with all ports of MainNetlist pointing to this simulator-actor
   private val netlistChannelMap = HandshakeActor.SetChannels(
-    netlist.ports.map{case (id, port) => id -> SyncChannel(port.channelId, self, self)}
+    netlist.ports.map{case (_, port) => port.channelId -> SyncChannel(port.channelId, self, self)}
   )
 
   private def pendingEvents = runningTest.nodes.filter{!_.hasPredecessors}.map(_.value)
