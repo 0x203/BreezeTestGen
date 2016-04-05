@@ -1,6 +1,7 @@
 package de.hpi.asg.breezetestgen
 
 import de.hpi.asg.breezetestgen.domain.{Channel, Port, SyncChannel, components}
+import fixtures._
 
 /** checks weather a parsed .breeze-file is correctly transformed to a netlist */
 class BreezeTransformationTest extends baseclasses.UnitTest {
@@ -13,14 +14,14 @@ class BreezeTransformationTest extends baseclasses.UnitTest {
   }
 
   it should "have correct number of ports, channels and components" in {
-    val netlist = BreezeTransformer.parse(breezeFile).get
+    val netlist = gcdNetlist()
     assert(netlist.ports.size == 4)
     assert(netlist.channels.size == 43)
     assert(netlist.components.size == 27)
   }
 
   it should "have correct ports" in {
-    val ports = BreezeTransformer.parse(breezeFile).get.ports
+    val ports = gcdNetlist().ports
 
     for ((id, port) <- ports) assert(id == port.id)
 
@@ -46,7 +47,7 @@ class BreezeTransformationTest extends baseclasses.UnitTest {
   }
 
   it should "have correct channels" in {
-    val netlist = BreezeTransformer.parse(breezeFile).get
+    val netlist = gcdNetlist()
 
     for ((id, channel) <- netlist.channels) assert(id == channel.id)
 
@@ -59,7 +60,7 @@ class BreezeTransformationTest extends baseclasses.UnitTest {
   }
 
   it should "have correct components" in {
-    val netlist = BreezeTransformer.parse(breezeFile).get
+    val netlist = gcdNetlist()
 
     for ((id, component) <- netlist.components) assert(id == component.id)
 
