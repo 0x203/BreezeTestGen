@@ -10,8 +10,10 @@ object BreezeTransformer {
 
   def parse(breezeFile: java.io.File): Option[Netlist] =
     Option(
-      // TODO: verify hard coded path works in packaged version
-      BreezeProject.create(breezeFile, "src/main/resources/components.xml", false, false)
+      // componentconfig = "": use default component file
+      // skipUndefinedComponents = false
+      // skipSubComponents = false
+      BreezeProject.create(breezeFile, "", false, false)
     ).flatMap(transformProject)
 
   def transformProject(breezeProject: BreezeProject): Option[Netlist] =
