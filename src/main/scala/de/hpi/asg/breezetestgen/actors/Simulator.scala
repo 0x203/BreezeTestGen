@@ -11,9 +11,9 @@ import scalax.collection.mutable
 object Simulator {
   case object RunTest
 
-  class TestFailed(val unexpectedSignal: Signal, currentTest: mutable.Graph[TestEvent, DiEdge]) extends Exception {
-    val testState = scalax.collection.immutable.Graph[TestEvent, DiEdge]() ++ currentTest
-  }
+  sealed trait TestResult
+  case object TestSucceeded extends TestResult
+  case class TestFailed(unexpectedSignal: Signal, currentTest: mutable.Graph[TestEvent, DiEdge]) extends TestResult
 }
 
 /** performs a test on a netlist
@@ -23,6 +23,8 @@ class Simulator(netlist: Netlist, test: Test) extends Actor with Loggable{
   import Simulator._
 
   val dummyNetlistId = 0
+
+  var testStarter: ActorRef = _
 
   val activeChannels = netlist.activePorts.map{_.channelId}
   val passiveChannels = netlist.passivePorts.map{_.channelId}
@@ -66,21 +68,33 @@ class Simulator(netlist: Netlist, test: Test) extends Actor with Loggable{
   private def handleSignal(signal: Signal) = {
     pendingEvents.find{case ioEvent: IOEvent => ioEvent.signal == signal} match {
       case Some(event: IOEvent) => runningTest -= event
-      case None => throw new TestFailed(signal, runningTest)
+      case None => testFailed(signal)
     }
     somethingHappened()
   }
 
   private def somethingHappened() = {
     triggerOwnEvents()
-    if (runningTest.isEmpty) {
-      info("Test cleared, everything is done!")
-      context.system.terminate()
-    }
+    if (runningTest.isEmpty)
+      testSucceeded()
+  }
+
+  private def testSucceeded() = {
+    info("Test cleared, everything is done!")
+    testDone(TestSucceeded)
+  }
+  private def testFailed(signal: Signal) = {
+    info(s"Test failed at signal: $signal")
+    testDone(TestFailed(signal, runningTest))
+  }
+  private def testDone(result: TestResult) = {
+    context.stop(netlistActor)
+    testStarter ! result
   }
 
   def receive = {
     case RunTest =>
+      testStarter = sender()
       netlistActor = context.actorOf(netlistActorProps, "MainNetlist")
       netlistActor ! netlistChannelMap
       somethingHappened()
