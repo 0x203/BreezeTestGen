@@ -16,7 +16,7 @@ object Simulator {
 /** performs a test on a netlist
   *
   */
-class Simulator(netlist: Netlist) extends Actor with Loggable{
+class Simulator(protected val netlist: Netlist) extends Actor with MainNetlistCreator with Loggable{
   import Simulator._
 
   def receive = {
@@ -63,20 +63,5 @@ class Simulator(netlist: Netlist) extends Actor with Loggable{
   private def myOwn(s: Signal): Boolean = s match {
     case a: SignalFromActive => activeChannels contains a.channelId
     case p: SignalFromPassive => passiveChannels contains p.channelId
-  }
-
-  // hacky way to create channelMaps with all ports of MainNetlist pointing to this simulator-actor
-  private val netlistChannelMap = HandshakeActor.SetChannels(
-    netlist.ports.map{case (_, port) => port.channelId -> SyncChannel(port.channelId, self, self)}
-  )
-
-  /** creates a new netlist actor for the netlist to be simulated */
-  private def newNetlistActor(id: Netlist.Id): ActorRef = {
-    val portConnections = netlist.ports.values.map{p => p.id -> p.channelId}.toMap[Port.Id, Channel.Id]
-    val props = Props(classOf[NetlistActor], netlist, id, portConnections, None, None)
-
-    val newActor = context.actorOf(props, s"Test$id-MainNetlist")
-    newActor ! netlistChannelMap
-    newActor
   }
 }
