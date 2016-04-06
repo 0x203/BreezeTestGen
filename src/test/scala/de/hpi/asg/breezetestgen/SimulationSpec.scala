@@ -2,7 +2,8 @@ package de.hpi.asg.breezetestgen
 
 import akka.actor.Props
 import de.hpi.asg.breezetestgen.actors.Simulator
-import Simulator._
+import Simulator.RunTest
+import de.hpi.asg.breezetestgen.testing.TestRunner.{TestFailed, TestResult, TestSucceeded}
 import fixtures.gcdNetlist
 
 /** tests a complete simulation run: providing it to a Simulator(-Actor) and run it */
