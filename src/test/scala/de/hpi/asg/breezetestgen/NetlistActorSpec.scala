@@ -17,7 +17,7 @@ class NetlistActorSpec extends AkkaIntegrationSpec("NetlistActorSpec") {
   val setChannels = SetChannels(id => SyncChannel(id, self, self)) // type of channel wont get checked
 
   def newActor(state: Option[Netlist.State]) = system.actorOf(
-    Props(classOf[NetlistActor], netlist, extId, portConnections, state, system.deadLetters)
+    Props(classOf[NetlistActor], netlist, extId, portConnections, state, None)
   )
 
   def assertState(uut: ActorRef, state: Netlist.State) = {

@@ -27,7 +27,7 @@ class ComponentActorSpec extends AkkaIntegrationSpec("ComponentActorSpec") {
   }
 
   def newActor(behaviour: BrzComponentBehaviour[_, _]) =
-    system.actorOf(Props(classOf[ComponentActor], nlId, compId, behaviour, system.deadLetters))
+    system.actorOf(Props(classOf[ComponentActor], nlId, compId, behaviour, None))
 
   val setChannels = SetChannels(id => SyncChannel(id, self, self)) // type of channel wont get checked
 

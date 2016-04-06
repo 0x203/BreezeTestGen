@@ -14,7 +14,7 @@ class NetlistActor(netlist: domain.Netlist,
                    externalNetlist: Netlist.Id,
                    portConnectionsOut: Map[Port.Id, Channel.Id],
                    initialState: Option[Netlist.State],
-                   infoHub: ActorRef) extends HandshakeActor with Loggable {
+                   infoHub: Option[ActorRef]) extends HandshakeActor with Loggable {
   info(s"NetlistActor created for netlist id ${netlist.id}")
 
   private val componentActors = netlist.components

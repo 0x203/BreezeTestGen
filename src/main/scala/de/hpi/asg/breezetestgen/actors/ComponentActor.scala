@@ -10,7 +10,7 @@ import de.hpi.asg.breezetestgen.testing.TestEvent
 class ComponentActor(netlistId: Netlist.Id,
                      componentId: HandshakeComponent.Id,
                      component: BrzComponentBehaviour[_, _],
-                     infoHub: ActorRef) extends HandshakeActor {
+                     infoHub: Option[ActorRef]) extends HandshakeActor {
 
   override protected def handleSignal(nlId: Netlist.Id, ds: domain.Signal, testEvent: TestEvent) = {
     require(netlistId == nlId)
@@ -28,7 +28,7 @@ class ComponentActor(netlistId: Netlist.Id,
     }
 
     // send out constraints
-    infoHub ! reaction.constraintVariables
+    infoHub.foreach(_ ! reaction.constraintVariables)
 
     // send out new signals
     sendOutSignals(netlistId, newTestEvent, reaction.signals)

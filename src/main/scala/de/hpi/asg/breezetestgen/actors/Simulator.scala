@@ -73,9 +73,7 @@ class Simulator(netlist: Netlist) extends Actor with Loggable{
   /** creates a new netlist actor for the netlist to be simulated */
   private def newNetlistActor(id: Netlist.Id): ActorRef = {
     val portConnections = netlist.ports.values.map{p => p.id -> p.channelId}.toMap[Port.Id, Channel.Id]
-    // TODO create real infoHub when its implemented
-    val infoHub = context.system.deadLetters
-    val props = Props(classOf[NetlistActor], netlist, id, portConnections, None, infoHub)
+    val props = Props(classOf[NetlistActor], netlist, id, portConnections, None, None)
 
     val newActor = context.actorOf(props, s"Test$id-MainNetlist")
     newActor ! netlistChannelMap
