@@ -11,7 +11,11 @@ object Netlist {
     currentId
   }
 
-  case class State(componentStates: Map[HandshakeComponent.Id, HandshakeComponent.State[_, _]])
+  type State = HandshakeComponent.State[Null, Map[HandshakeComponent.Id, HandshakeComponent.State[_, _]]]
+  object State {
+    def apply(componentStates: Map[HandshakeComponent.Id, HandshakeComponent.State[_, _]]): State =
+      HandshakeComponent.State(null, componentStates)
+  }
 }
 
 /** data container for a whole Netlist */

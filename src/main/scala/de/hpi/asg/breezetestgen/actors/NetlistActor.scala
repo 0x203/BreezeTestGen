@@ -49,8 +49,8 @@ class NetlistActor(netlist: domain.Netlist,
   /** create [[BrzComponentBehaviour]] with state from initial state */
   private def createBehaviour(component: BrzComponent): BrzComponentBehaviour[_, _] = {
     val state = initialState
-      .flatMap(_.componentStates.get(component.id))
-      .map(_.asInstanceOf[HandshakeComponent.State[component.C, component.D]])
+      .flatMap(_.dataState.get(component.id)) // get the state of the current component
+      .map(_.asInstanceOf[HandshakeComponent.State[component.C, component.D]])  // cast it to the right type
 
     component.behaviour(state)
   }
