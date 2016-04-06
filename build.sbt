@@ -1,8 +1,11 @@
 name := "BreezeTestGen"
+organization := "de.hpi.asg"
 
 version := "1.0"
 
 scalaVersion := "2.11.8"
+
+mainClass := Some("de.hpi.asg.breezetestgen.Main")
 
 resolvers += Resolver.mavenLocal  // for asgcommon
 resolvers += Resolver.sonatypeRepo("public")  //for scopt
