@@ -5,17 +5,18 @@ import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.domain
 import de.hpi.asg.breezetestgen.domain.Channel.{CompEndpoint, PortEndpoint}
 import de.hpi.asg.breezetestgen.domain._
+import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, BrzComponentBehaviour, HandshakeComponent}
 import de.hpi.asg.breezetestgen.testing.TestEvent
 
 
 class NetlistActor(netlist: domain.Netlist,
                    externalNetlist: Netlist.Id,
                    portConnectionsOut: Map[Port.Id, Channel.Id],
+                   initialState: Option[Netlist.State],
                    infoHub: ActorRef) extends HandshakeActor with Loggable {
   info(s"NetlistActor created for netlist id ${netlist.id}")
 
-  //TODO: insert state here
-  val behaviours = netlist.components.mapValues(_.behaviour(None))
+  val behaviours = netlist.components.mapValues(createBehaviour)
   val componentProps = behaviours.mapValues(Props(classOf[ComponentActor], _, infoHub))
   val componentActors = componentProps.mapValues(context.actorOf).view.force
 
@@ -43,6 +44,15 @@ class NetlistActor(netlist: domain.Netlist,
     val packedSignal = HandshakeActor.Signal(netlistId, newSignal, te)
 
     receiver ! packedSignal
+  }
+
+  /** create [[BrzComponentBehaviour]] with state from initial state */
+  private def createBehaviour(component: BrzComponent): BrzComponentBehaviour[_, _] = {
+    val state = initialState
+      .flatMap(_.componentStates.get(component.id))
+      .map(_.asInstanceOf[HandshakeComponent.State[component.C, component.D]])
+
+    component.behaviour(state)
   }
 
   /** return type of internal and external handler */

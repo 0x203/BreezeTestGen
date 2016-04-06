@@ -10,6 +10,8 @@ object Netlist {
     currentId += 1
     currentId
   }
+
+  case class State(componentStates: Map[HandshakeComponent.Id, HandshakeComponent.State[_, _]])
 }
 
 /** data container for a whole Netlist */
