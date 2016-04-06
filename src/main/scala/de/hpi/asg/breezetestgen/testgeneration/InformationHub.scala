@@ -26,8 +26,6 @@ class InformationHub(parentCollection: ConstraintCollection, testBuilder: TestBu
     reaction.testOp.map {
       case Merge(te) => testBuilder.merge(te)
       case AddIOEvent(te, s) => testBuilder.addSuccessor(te, IOEvent(s))
-      // TODO: when subclasses of data are defined, differentiate between them here
-      //case AddDataEvent(te, p, i) => testBuilder.addSuccessor(te, p, i)
     }
   }
 
