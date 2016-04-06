@@ -10,28 +10,28 @@ trait Loggable {
 
   val logger:Logger = Logging.getLogger(this)
 
-  def checkFormat(msg:String, refs:Seq[Any]):Message =
+  private def checkFormat(msg:String, refs:Seq[Any]):Message =
     ParameterizedMessageFactory.INSTANCE.newMessage(msg, refs)
 
-  def trace(msg:String, refs:Any*) = logger trace checkFormat(msg, refs)
+  protected def trace(msg:String, refs:Any*) = logger trace checkFormat(msg, refs)
 
-  def trace(t:Throwable, msg:String, refs:Any*) = logger trace (checkFormat(msg, refs), t)
+  protected def trace(t:Throwable, msg:String, refs:Any*) = logger trace (checkFormat(msg, refs), t)
 
-  def info(msg:String, refs:Any*) = logger info checkFormat(msg, refs)
+  protected def info(msg:String, refs:Any*) = logger info checkFormat(msg, refs)
 
-  def info(t:Throwable, msg:String, refs:Any*) = logger info (checkFormat(msg, refs), t)
+  protected def info(t:Throwable, msg:String, refs:Any*) = logger info (checkFormat(msg, refs), t)
 
-  def warn(msg:String, refs:Any*) = logger warn checkFormat(msg, refs)
+  protected def warn(msg:String, refs:Any*) = logger warn checkFormat(msg, refs)
 
-  def warn(t:Throwable, msg:String, refs:Any*) = logger warn (checkFormat(msg, refs), t)
+  protected def warn(t:Throwable, msg:String, refs:Any*) = logger warn (checkFormat(msg, refs), t)
 
-  def error(msg:String, refs:Any*) = logger error checkFormat(msg, refs)
+  protected def error(msg:String, refs:Any*) = logger error checkFormat(msg, refs)
 
-  def error(t:Throwable, msg:String, refs:Any*) = logger error (checkFormat(msg, refs), t)
+  protected def error(t:Throwable, msg:String, refs:Any*) = logger error (checkFormat(msg, refs), t)
 
-  def critical(msg:String, refs:Any*) = logger error checkFormat(msg, refs)
+  protected def critical(msg:String, refs:Any*) = logger error checkFormat(msg, refs)
 
-  def critical(t:Throwable, msg:String, refs:Any*) = logger error (checkFormat(msg, refs), t)
+  protected def critical(t:Throwable, msg:String, refs:Any*) = logger error (checkFormat(msg, refs), t)
 
 }
 
