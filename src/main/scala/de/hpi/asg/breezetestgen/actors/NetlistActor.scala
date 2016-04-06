@@ -2,6 +2,7 @@ package de.hpi.asg.breezetestgen.actors
 
 import akka.actor.{ActorRef, Props}
 import de.hpi.asg.breezetestgen.Loggable
+import de.hpi.asg.breezetestgen.actors.HandshakeActor.{GetState, MyState}
 import de.hpi.asg.breezetestgen.domain
 import de.hpi.asg.breezetestgen.domain.Channel.{CompEndpoint, PortEndpoint}
 import de.hpi.asg.breezetestgen.domain._
@@ -16,9 +17,11 @@ class NetlistActor(netlist: domain.Netlist,
                    infoHub: ActorRef) extends HandshakeActor with Loggable {
   info(s"NetlistActor created for netlist id ${netlist.id}")
 
-  val behaviours = netlist.components.mapValues(createBehaviour)
-  val componentProps = behaviours.mapValues(Props(classOf[ComponentActor], _, infoHub))
-  val componentActors = componentProps.mapValues(context.actorOf).view.force
+  private val componentActors = netlist.components
+    .mapValues(createBehaviour)
+    .map{case (id, comp) => id -> Props(classOf[ComponentActor], netlist.id, id, comp, infoHub)}  //create Props
+    .mapValues(context.actorOf)
+    .view.force
 
   val portConnectionsIn = portConnectionsOut.map(_.swap)
 
@@ -90,5 +93,32 @@ class NetlistActor(netlist: domain.Netlist,
     val internalSignal = Signal.changeChannelId(ds, channel.id)
 
     (netlist.id, internalSignal, componentActors(internalReceiverId))
+  }
+
+  // state gathering
+
+  private def freshComponentStates() =
+    collection.mutable.Map.empty[HandshakeComponent.Id, HandshakeComponent.State[_, _]]
+  var componentStates = freshComponentStates()
+  var stateInvoker: ActorRef = _
+
+  receiue{
+    case GetState =>
+      info("Start gathering component states")
+      stateInvoker = sender()
+      componentActors.values.foreach{_ ! GetState}
+
+    case MyState(netlist.id, compId, compState) =>
+      componentStates += compId -> compState
+
+      if(componentStates.size == netlist.components.size) {
+        info("Got all component states")
+        stateInvoker ! MyState(
+            externalNetlist,
+            netlist.id,
+            Netlist.State(collection.immutable.Map.empty ++ componentStates)
+        )
+        componentStates = freshComponentStates()
+      }
   }
 }

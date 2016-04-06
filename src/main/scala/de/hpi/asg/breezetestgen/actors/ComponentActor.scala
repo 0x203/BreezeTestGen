@@ -1,16 +1,20 @@
 package de.hpi.asg.breezetestgen.actors
 
 import akka.actor.ActorRef
-import de.hpi.asg.breezetestgen.actors.HandshakeActor.Signal
+import de.hpi.asg.breezetestgen.actors.HandshakeActor.{GetState, MyState, Signal}
 import de.hpi.asg.breezetestgen.domain
-import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour
-import de.hpi.asg.breezetestgen.domain.Netlist
+import de.hpi.asg.breezetestgen.domain.components.{BrzComponentBehaviour, HandshakeComponent}
+import de.hpi.asg.breezetestgen.domain.{Netlist, SignalFromActive, SignalFromPassive}
 import de.hpi.asg.breezetestgen.testing.TestEvent
 
-class ComponentActor(component: BrzComponentBehaviour[_, _],
+class ComponentActor(netlistId: Netlist.Id,
+                     componentId: HandshakeComponent.Id,
+                     component: BrzComponentBehaviour[_, _],
                      infoHub: ActorRef) extends HandshakeActor {
 
-  override protected def handleSignal(netlist: Netlist.Id, ds: domain.Signal, testEvent: TestEvent) = {
+  override protected def handleSignal(nlId: Netlist.Id, ds: domain.Signal, testEvent: TestEvent) = {
+    require(netlistId == nlId)
+
     val reaction = component.handleSignal(ds, testEvent)
 
     //TODO: handle decision making!
@@ -27,10 +31,20 @@ class ComponentActor(component: BrzComponentBehaviour[_, _],
     infoHub ! reaction.constraintVariables
 
     // send out new signals
-    sendOutSignals(netlist, newTestEvent, reaction.signals)
+    sendOutSignals(netlistId, newTestEvent, reaction.signals)
+  }
+
+  receiue{
+    case GetState => sender() ! MyState(netlistId, componentId, component.state)
   }
 
   private def sendOutSignals(netlist: Netlist.Id, testEvent: TestEvent, ds: Set[domain.Signal]) = {
     ds.foreach{s => receiverOf(s) ! Signal(netlist, s, testEvent)}
   }
+
+  private def receiverOf(signal: domain.Signal): ActorRef = signal match {
+    case _:SignalFromActive => channels(signal.channelId).passive
+    case _:SignalFromPassive => channels(signal.channelId).active
+  }
+
 }
