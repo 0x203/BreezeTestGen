@@ -42,7 +42,8 @@ abstract class HandshakeActor extends FSM[HandshakeActor.States, HandshakeActor.
   protected def receiue(f: PartialFunction[Any, _]): Unit = {
     whenUnhandled{
       case Event(a, _) =>
-        f(a)
+        if (f.isDefinedAt(a))
+          f(a)
         stay()
     }
   }
