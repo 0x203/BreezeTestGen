@@ -15,8 +15,8 @@ object Variable {
 
 
 case class BoolVariable(override val name: String) extends Variable(name, 1, isSigned = false) {
-  def isTrue: Constraint = BinaryConstraint(this, Equals, 1)
   def isFalse: Constraint = BinaryConstraint(this, Equals, 0)
+  def isTrue: Constraint = BinaryConstraint(this, NotEquals, 0)
 
   override def toString = s"BoolVariable($name)"
 }
