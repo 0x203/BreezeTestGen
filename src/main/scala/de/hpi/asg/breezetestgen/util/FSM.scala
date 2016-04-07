@@ -85,9 +85,7 @@ class FSM[S, D, M] {
     */
   final def initialize(): Unit = makeTransition(currentState)
 
-  protected def myState: State =  currentState
-
-  private var currentState: State = _
+  protected var currentState: State = _
 
   private val stateFunctions = collection.mutable.Map[S, StateFunction]()
 
