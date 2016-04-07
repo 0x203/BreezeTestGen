@@ -47,13 +47,13 @@ class ComponentActor(netlistId: Netlist.Id,
 
     implicit val askTimeout = Timeout(5 seconds)
 
-    val newTestEventF: Future[TestEvent] = infoHub
+    val newTestEventFO: Future[Option[TestEvent]] = infoHub
       .map(_ ? nf)  // ask InfoHub
-      .map(_.mapTo[TestEvent]) getOrElse  // transform answer to right type
-      Future.successful(testEvent)  //fallback if no infoHub is defined
+      .map(_.mapTo[Option[TestEvent]]) getOrElse  // transform answer to right type
+      Future.successful(Option(testEvent))  //fallback if no infoHub is defined
 
     for (signal <- nf.signals) {
-      newTestEventF.map(Signal(nlId, signal, _)) pipeTo receiverOf(signal)
+      newTestEventFO.map(_ getOrElse testEvent).map(Signal(nlId, signal, _)) pipeTo receiverOf(signal)
     }
   }
 
