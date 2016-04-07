@@ -1,7 +1,6 @@
 package de.hpi.asg.breezetestgen.domain.components
 
-import de.hpi.asg.breezetestgen.constraintsolving.ConstraintVariable
-import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent.State
+import de.hpi.asg.breezetestgen.constraintsolving.{Constraint, ConstraintVariable}
 import de.hpi.asg.breezetestgen.domain.{DataAcknowledge, PullChannel, _}
 import de.hpi.asg.breezetestgen.testgeneration.TestOp
 import de.hpi.asg.breezetestgen.testing.TestEvent
@@ -22,19 +21,64 @@ abstract class BrzComponentBehaviour[C, D] protected(initState: HandshakeCompone
   // normalFlowReaction will be build up with helper methods during signal handling
   private[this] var normalFlowReaction: NormalFlowReaction = _
 
+  // if needed, this will be set and returned
+  private[this] var decisionRequired: Option[DecisionRequired] = None
+
   /** holds the testEvent of current signal, if needed */
   protected var testEvent: TestEvent = _
 
   /** processes one step of fsm with given input */
   def handleSignal(s: Signal, te: TestEvent): Reaction = {
     normalFlowReaction = NormalFlowReaction.empty
+    decisionRequired = None
     testEvent = te
     processMsg((s, te))
-    normalFlowReaction
+    decisionRequired getOrElse normalFlowReaction
+
   }
 
   /** returns complete current state of the FSM, which can be used for replicating the FSM */
-  def state = State(myState.stateName, myState.stateData)
+  def state = HandshakeComponent.State(currentState.stateName, currentState.stateData)
+  /** sets the current state of the FSM */
+  def state_=(state: HandshakeComponent.State[C, D]) = currentState = FSM.State(state.controlState, state.dataState)
+
+  /** determines possible reactions and set DecisionRequired reaction, if needed */
+  protected def decideBetween(possibilities: Map[Either[Constraint, Boolean], () => State]): Option[State] = {
+    possibilities.collectFirst{
+      case (Right(true), f) => f  // first, check if there is any path that's definitely it
+    }.map(_.apply())
+      .orElse {
+        // else, we have to create a DecisionRequest reaction
+        createDecisionRequest(
+          // paths that are definitely false can be filtered already, just constraints matter
+          possibilities.collect { case (Left(c), f) => c -> f }
+        )
+        // then, we cannot tell which state should be transferred to
+        None
+      }
+  }
+
+  private def createDecisionRequest(possibilities: Map[Constraint, () => State]) = {
+    val currentReactionStatus = normalFlowReaction  // save it for fresh state for each possibility
+
+    val eachReaction: DecisionPossibilities =
+      // execute function for each possibility
+      possibilities.map { case (c, f) =>
+        // reset normalFlowState
+        normalFlowReaction = currentReactionStatus
+        // run function, capture final state
+        val state = f.apply()
+        // save modified reaction and resulting state
+        c -> (normalFlowReaction, state)
+      }.map{
+        // map it to the right types
+        case (c, (nfr, s)) =>
+          ConstraintVariable.constraint2ConstraintCV(c) -> (nfr, HandshakeComponent.State(s.stateName, s.stateData))
+      }
+
+    // set variable to return it later
+    decisionRequired = Option(DecisionRequired(eachReaction))
+  }
 
   private def addSignal(s: Signal) = normalFlowReaction = normalFlowReaction.addSignal(s)
 
@@ -89,9 +133,12 @@ abstract class BrzComponentBehaviour[C, D] protected(initState: HandshakeCompone
 }
 
 object BrzComponentBehaviour {
+  private type DecisionPossibilities = Map[ConstraintVariable, (NormalFlowReaction, HandshakeComponent.State[_, _])]
+
   sealed trait Reaction
 
-  case class DecisionRequired(possibilities: Map[Set[ConstraintVariable], (NormalFlowReaction, State[_, _])])
+  case class DecisionRequired(possibilities: DecisionPossibilities)
+    extends Reaction
 
   case class NormalFlowReaction(signals: Set[Signal],
                                 testOp: Option[TestOp],

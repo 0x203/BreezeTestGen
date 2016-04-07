@@ -39,16 +39,18 @@ class While(id: HandshakeComponent.Id,
 
     when(Evaluating) {
       case DataAck(`guard`, x, _) =>
-        //TODO: decision by central instance required!!
-        if (x.isFalsy) {
-          info("guard was false. returning...")
-          acknowledge(activate)
-          goto(Idle)
-        } else {
-          info("guard was true. entering loop...")
-          request(out)
-          goto(Executing)
-        }
+        decideBetween(Map(
+          x.isFalsy -> (() => {
+            info("guard was false. returning...")
+            acknowledge(activate)
+            goto(Idle)
+          }),
+          x.isTruthy -> (() => {
+            info("guard was true. entering loop...")
+            request(out)
+            goto(Executing)
+          })
+        )) getOrElse stay
     }
 
     when(Executing) {
