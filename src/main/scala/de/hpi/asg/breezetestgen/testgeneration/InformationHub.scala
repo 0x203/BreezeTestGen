@@ -1,7 +1,7 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
 import de.hpi.asg.breezetestgen.constraintsolving.ConstraintCollection
-import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent.Reaction
+import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.{NormalFlowReaction, Reaction}
 import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
 
 /** Central place for gathering information during a test/simulation run.
@@ -18,7 +18,7 @@ class InformationHub(parentCollection: ConstraintCollection, testBuilder: TestBu
     * @param reaction reaction from handshake component
     * @return a [[TestEvent]] for further building of tests, if a [[TestOp]] was specified
     */
-  def handleReaction(reaction: Reaction): Option[TestEvent] = {
+  def handleReaction(reaction: NormalFlowReaction): Option[TestEvent] = {
     cc = cc.add(reaction.constraintVariables)
 
     // TODO: extract coverage info from signals

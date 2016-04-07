@@ -3,8 +3,7 @@ package de.hpi.asg.breezetestgen.actors
 import akka.actor.Actor
 import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.domain.Netlist
-import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent
-import de.hpi.asg.breezetestgen.testgeneration.TestOp
+import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour._
 
 object TestGenerationActor {
   case object Start
@@ -18,13 +17,11 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       //TODO: create InfoHub
       //TODO: create netlistActor
       //TODO: send Request on activate to netlistActor
-    case testOp: TestOp =>
-      //TODO: let infoHub handle this
-      //TODO reply with new TestEvent
-    case r: HandshakeComponent.Reaction =>
+    case nf: NormalFlowReaction =>
       //TODO: merge this with testop above?!
       //TODO: forward to infoHub - stop search?!
-    //case DecisionRequired =>
+      //TODO reply with new TestEvent
+    case dr: DecisionRequired =>
       //TODO: create some constraintCollections to test feasibility
       //TODO: filter unfeasible possibilities
       //TODO: (decide between remaining)

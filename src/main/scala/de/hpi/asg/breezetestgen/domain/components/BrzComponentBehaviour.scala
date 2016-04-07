@@ -1,7 +1,7 @@
 package de.hpi.asg.breezetestgen.domain.components
 
 import de.hpi.asg.breezetestgen.constraintsolving.ConstraintVariable
-import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent.{Reaction, State}
+import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent.State
 import de.hpi.asg.breezetestgen.domain.{DataAcknowledge, PullChannel, _}
 import de.hpi.asg.breezetestgen.testgeneration.TestOp
 import de.hpi.asg.breezetestgen.testing.TestEvent
@@ -15,26 +15,28 @@ import de.hpi.asg.breezetestgen.util.FSM
   */
 abstract class BrzComponentBehaviour[C, D] protected(initState: HandshakeComponent.State[C, D])
   extends FSM[C, D, (Signal, TestEvent)] {
+  import BrzComponentBehaviour._
+
   startWith(initState.controlState, initState.dataState)
 
-  // reaction will be build up with helper methods during signal handling
-  private[this] var reaction: Reaction = _
+  // normalFlowReaction will be build up with helper methods during signal handling
+  private[this] var normalFlowReaction: NormalFlowReaction = _
 
   /** holds the testEvent of current signal, if needed */
   protected var testEvent: TestEvent = _
 
   /** processes one step of fsm with given input */
   def handleSignal(s: Signal, te: TestEvent): Reaction = {
-    reaction = Reaction.empty
+    normalFlowReaction = NormalFlowReaction.empty
     testEvent = te
     processMsg((s, te))
-    reaction
+    normalFlowReaction
   }
 
   /** returns complete current state of the FSM, which can be used for replicating the FSM */
   def state = State(myState.stateName, myState.stateData)
 
-  private def addSignal(s: Signal) = reaction = reaction.addSignal(s)
+  private def addSignal(s: Signal) = normalFlowReaction = normalFlowReaction.addSignal(s)
 
   /** helper methods for signaling other components */
   protected def request(channelId: Channel.Spec[NoPushChannel[_]]) = addSignal(Request(channelId))
@@ -43,10 +45,10 @@ abstract class BrzComponentBehaviour[C, D] protected(initState: HandshakeCompone
   protected def dataAcknowledge(channelId: Channel.Spec[PullChannel[_]], data: Data) = addSignal(DataAcknowledge(channelId, data))
 
   /** helper method for constraint addition */
-  protected def constrain(cv: ConstraintVariable) = reaction = reaction.addConstraint(cv)
-  protected def constrain(cvs: Set[ConstraintVariable]) = reaction = reaction.addConstraints(cvs)
+  protected def constrain(cv: ConstraintVariable) = normalFlowReaction = normalFlowReaction.addConstraint(cv)
+  protected def constrain(cvs: Set[ConstraintVariable]) = normalFlowReaction = normalFlowReaction.addConstraints(cvs)
   /** helper method for setting testOp*/
-  protected def testOp(op: TestOp) = reaction = reaction.setTestOp(op)
+  protected def testOp(op: TestOp) = normalFlowReaction = normalFlowReaction.setTestOp(op)
 
 
   // Message Event Extractors
@@ -84,4 +86,23 @@ abstract class BrzComponentBehaviour[C, D] protected(initState: HandshakeCompone
   }
 
   type UnhandledException = FSM.UnhandledException[Signal, D]
+}
+
+object BrzComponentBehaviour {
+  sealed trait Reaction
+
+  case class DecisionRequired(possibilities: Map[Set[ConstraintVariable], (NormalFlowReaction, State[_, _])])
+
+  case class NormalFlowReaction(signals: Set[Signal],
+                                testOp: Option[TestOp],
+                                constraintVariables: Set[ConstraintVariable]) extends Reaction {
+    def addSignal(s: Signal): NormalFlowReaction = copy(signals = signals + s)
+    def setTestOp(op: TestOp):NormalFlowReaction = copy(testOp = Option(op))
+    def addConstraint(cv: ConstraintVariable): NormalFlowReaction = copy(constraintVariables = constraintVariables + cv)
+    def addConstraints(new_cvs: Traversable[ConstraintVariable]): NormalFlowReaction =
+      copy(constraintVariables = constraintVariables ++ new_cvs)
+  }
+  object NormalFlowReaction {
+    def empty: NormalFlowReaction = NormalFlowReaction(Set.empty, None, Set.empty)
+  }
 }

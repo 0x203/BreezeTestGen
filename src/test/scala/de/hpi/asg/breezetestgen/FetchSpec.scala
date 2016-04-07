@@ -4,7 +4,7 @@ import baseclasses.UnitTest
 import de.hpi.asg.breezetestgen.testing.{MergeEvent, TestEvent}
 import de.hpi.asg.breezetestgen.domain._
 import components.BrzComponentBehaviour
-import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent.Reaction
+import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.NormalFlowReaction
 import de.hpi.asg.breezetestgen.domain.components.brzcomponents.Fetch
 
 class FetchSpec extends UnitTest {
@@ -24,7 +24,7 @@ class FetchSpec extends UnitTest {
     val fetchBehaviour = fetch.behaviour(None)
     val activateRequest = Request(activateId)
 
-    assertResult(Reaction(Set(Request(inpId)), None, Set.empty)) {
+    assertResult(NormalFlowReaction(Set(Request(inpId)), None, Set.empty)) {
       fetchBehaviour.handleSignal(activateRequest, te)
     }
   }
@@ -42,19 +42,18 @@ class FetchSpec extends UnitTest {
     val fetchBehaviour = fetch.behaviour(None)
     val activateRequest = Request(activateId)
 
-    assertResult(Reaction(Set(Request(inpId)), None, Set.empty)) {
+    assertResult(NormalFlowReaction(Set(Request(inpId)), None, Set.empty)) {
       fetchBehaviour.handleSignal(activateRequest, te)
     }
 
     val sampleData = Constant(5)
     val inpAck = DataAcknowledge(inpId, sampleData)
-    //TODO: put something into ConstraintsNVariables Set if it will be defined
-    assertResult(Reaction(Set(DataRequest(outId, sampleData)), None, Set.empty)) {
+    assertResult(NormalFlowReaction(Set(DataRequest(outId, sampleData)), None, Set.empty)) {
       fetchBehaviour.handleSignal(inpAck, te)
     }
 
     val outAck = Acknowledge(outId)
-    assertResult(Reaction(Set(Acknowledge(activateId)), None, Set.empty)) {
+    assertResult(NormalFlowReaction(Set(Acknowledge(activateId)), None, Set.empty)) {
       fetchBehaviour.handleSignal(outAck, te)
     }
   }
@@ -68,8 +67,7 @@ class FetchSpec extends UnitTest {
     val secondFetchB = fetch.behaviour(Some(state))
 
     val sampleData = Constant(5)
-    //TODO: put something into ConstraintsNVariables Set if it will be defined
-    assertResult(Reaction(Set(DataRequest(outId, sampleData)), None, Set.empty)) {
+    assertResult(NormalFlowReaction(Set(DataRequest(outId, sampleData)), None, Set.empty)) {
       secondFetchB.handleSignal(DataAcknowledge(inpId, sampleData), te)
     }
   }
