@@ -102,7 +102,7 @@ object ComponentExtractors {
   def extract(implicit raw: HSComponentInst): BrzComponent = {
     raw.getBrzStr match {
       case "BrzCallMux" => new CallMux(id, channelSet(0), channel(1))
-      case "BrzCase" => new Case(id, CaseSpecParser.fromString(stringParam(2)), channel(0), channelSeq(1))
+      case "BrzCase" => new Case(id, CaseSpecParser.fromString(stringParam(2), intParam(0)), channel(0), channelSeq(1))
       case "BrzConcur" => new Concur(id, channel(0), channelSet(1))
       case "BrzBinaryFunc" => new BinaryFunc(id, stringParam(3), channel(0), channel(1), channel(2))
       case "BrzBinaryFuncConstR" =>
@@ -229,7 +229,7 @@ object ComponentExtractors {
       }
     }
 
-    def fromString(specification: String): Case.Selector = {
+    def fromString(specification: String, bitCount: Int): Case.Selector = {
       val indexes = collection.mutable.ListMap.empty[Int, Int]
       val ranges = collection.mutable.ListBuffer.empty[(Range, Int)]
       for ((number, index) <- specification.split(";").zipWithIndex) number match {
@@ -237,7 +237,10 @@ object ComponentExtractors {
         case StringRange(r) => ranges += ((r, index))
       }
 
-      Case.Selector(indexes.toMap, ranges.toMap)
+      val domainSize = math.pow(2, bitCount).toInt
+      val left = (0 until domainSize).toSet -- ranges.flatMap(_._1) -- indexes.keys
+
+      Case.Selector(indexes.toMap, ranges.toMap, left)
     }
   }
 }

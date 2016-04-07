@@ -3,14 +3,13 @@ package de.hpi.asg.breezetestgen.domain.components.brzcomponents
 import de.hpi.asg.breezetestgen.domain.{Constant, Data}
 import de.hpi.asg.breezetestgen.domain.components.BrzComponent._
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, BrzComponentBehaviour, HandshakeComponent}
-import de.hpi.asg.breezetestgen.testgeneration.VariableData
 
 object Case {
-  case class Selector(indices: Map[Int, Int], ranges: Map[Range, Int]) {
+  case class Selector(indices: Map[Int, Int], ranges: Map[Range, Int], left: Set[Int]) {
     private def equalConstraint(reference: Data, value: Int): Data.ConstraintOrBool =
       (reference === Constant(value)).isTruthy
 
-    def allConstraints(reference: Data): Map[Data.ConstraintOrBool, Int] = {
+    def usableValueConstraints(reference: Data): Map[Data.ConstraintOrBool, Int] = {
       val directMaps = indices.map{case (value, index) =>
         equalConstraint(reference, value) -> index
       }
@@ -22,6 +21,9 @@ object Case {
 
       directMaps ++ rangesEnumerated
     }
+
+    //TODO: find better way for this, too
+    def unusableConstraints(reference: Data): Set[Data.ConstraintOrBool] = left.map(equalConstraint(reference, _))
   }
 }
 
@@ -53,22 +55,20 @@ class Case(id: HandshakeComponent.Id,
     when(Idle) {
       case DataReq(`inp`, data, _) =>
         info(s"Activated with data $data")
-        val possibilities = selector.allConstraints(data).mapValues{index => () => {
+        val possibilities = selector.usableValueConstraints(data).mapValues{ index => () => {
           val out = outs(index)
           info(s"Index $index maps to channel $out")
           request(out)
           goto(Called)
         }}.view.force
 
-        val alternative = () => {
+        val alternative = selector.unusableConstraints(data).map{c => c -> (() => {
           info("No index matched this constant")
           acknowledge(inp)
           stay
-        }
+        })}
 
-        //TODO: make use of alternative
-
-        decideBetween(possibilities) getOrElse stay
+        decideBetween(possibilities ++ alternative) getOrElse stay
     }
 
     when(Called) {
