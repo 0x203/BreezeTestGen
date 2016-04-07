@@ -26,17 +26,17 @@ trait Data {
   def xor(o: Data): Data
   def not(): Data
 
-  def plusConst(o: Constant): Data
-  def minusConst(o: Constant): Data
-  def equalsConst(o: Constant): Data
-  def equalsNotConst(o: Constant): Data
-  def lessThenConst(o: Constant): Data
-  def greaterThenConst(o: Constant): Data
-  def lessOrEqualConst(o: Constant): Data
-  def greaterOrEqualConst(o: Constant): Data
-  def andConst(o: Constant): Data
-  def orConst(o: Constant): Data
-  def xorConst(o: Constant): Data
+  def plusConst(o: Constant): Data = plus(o)
+  def minusConst(o: Constant): Data = minus(o)
+  def equalsConst(o: Constant): Data = equals(o)
+  def equalsNotConst(o: Constant): Data = equalsNot(o)
+  def lessThenConst(o: Constant): Data = lessThen(o)
+  def greaterThenConst(o: Constant): Data = greaterThen(o)
+  def lessOrEqualConst(o: Constant): Data = lessOrEqual(o)
+  def greaterOrEqualConst(o: Constant): Data = greaterOrEqual(o)
+  def andConst(o: Constant): Data = and(o)
+  def orConst(o: Constant): Data = or(o)
+  def xorConst(o: Constant): Data = xor(o)
 
   def constMinus(o: Constant): Data // this is needed for double dispatch
 
