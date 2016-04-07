@@ -6,8 +6,8 @@ trait Data {
   def bitCount: Int
   def isSigned: Boolean
 
-  def isFalsy: Either[Constraint, Boolean]
-  def isTruthy: Either[Constraint, Boolean]
+  def isFalsy: Data.ConstraintOrBool
+  def isTruthy: Data.ConstraintOrBool
 
   def selectBits(range: Range): Data
 
@@ -54,4 +54,8 @@ trait Data {
   def |(o: Data): Data = or(o)
   def ^(o: Data): Data = xor(o)
   def !(): Data = not()
+}
+
+object Data {
+  type ConstraintOrBool = Either[Constraint, Boolean]
 }

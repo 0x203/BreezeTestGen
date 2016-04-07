@@ -1,15 +1,32 @@
 package de.hpi.asg.breezetestgen.domain.components.brzcomponents
 
-import de.hpi.asg.breezetestgen.domain.Constant
+import de.hpi.asg.breezetestgen.domain.{Constant, Data}
 import de.hpi.asg.breezetestgen.domain.components.BrzComponent._
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, BrzComponentBehaviour, HandshakeComponent}
+import de.hpi.asg.breezetestgen.testgeneration.VariableData
 
 object Case {
-  type SelectorSpec = Int => Option[Int]
+  case class Selector(indices: Map[Int, Int], ranges: Map[Range, Int]) {
+    private def equalConstraint(reference: Data, value: Int): Data.ConstraintOrBool =
+      (reference === Constant(value)).isTruthy
+
+    def allConstraints(reference: Data): Map[Data.ConstraintOrBool, Int] = {
+      val directMaps = indices.map{case (value, index) =>
+        equalConstraint(reference, value) -> index
+      }
+      //TODO: find better way than enumeration, e.g. two combined constraints (greaterThan start, lessThan end)
+      val rangesEnumerated: Map[Data.ConstraintOrBool, Int] = for {
+        (range, index) <- ranges
+        value <- range
+      } yield equalConstraint(reference, value) -> index
+
+      directMaps ++ rangesEnumerated
+    }
+  }
 }
 
 class Case(id: HandshakeComponent.Id,
-           selectorSpec: Case.SelectorSpec,
+           selector: Case.Selector,
            inp: PushSpec,
            outs: Seq[SyncSpec]) extends BrzComponent(id) {
   type Behaviour = CaseBehaviour
@@ -36,23 +53,22 @@ class Case(id: HandshakeComponent.Id,
     when(Idle) {
       case DataReq(`inp`, data, _) =>
         info(s"Activated with data $data")
-        data match {
-          case c: Constant =>
-            selectorSpec(c.value) match {
-              case Some(index) =>
-                val out = outs(index)
-                info(s"Index $index maps to channel $out")
-                request(out)
-                goto(Called)
-              case None =>
-                info("No index matched this constant")
-                acknowledge(inp)
-                stay
-            }
-          case _ =>
-            // TODO: let central instance decide what to do
-            throw new NotImplementedError("Case can only handle Constants for now!")
+        val possibilities = selector.allConstraints(data).mapValues{index => () => {
+          val out = outs(index)
+          info(s"Index $index maps to channel $out")
+          request(out)
+          goto(Called)
+        }}.view.force
+
+        val alternative = () => {
+          info("No index matched this constant")
+          acknowledge(inp)
+          stay
         }
+
+        //TODO: make use of alternative
+
+        decideBetween(possibilities) getOrElse stay
     }
 
     when(Called) {

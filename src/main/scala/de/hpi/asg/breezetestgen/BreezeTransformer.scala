@@ -229,7 +229,7 @@ object ComponentExtractors {
       }
     }
 
-    def fromString(specification: String): Case.SelectorSpec = {
+    def fromString(specification: String): Case.Selector = {
       val indexes = collection.mutable.ListMap.empty[Int, Int]
       val ranges = collection.mutable.ListBuffer.empty[(Range, Int)]
       for ((number, index) <- specification.split(";").zipWithIndex) number match {
@@ -237,11 +237,7 @@ object ComponentExtractors {
         case StringRange(r) => ranges += ((r, index))
       }
 
-      { inp: Int =>
-        indexes.get(inp) orElse {
-          ranges.collectFirst { case (r, i) if r contains inp => i }
-        }
-      }
+      Case.Selector(indexes.toMap, ranges.toMap)
     }
   }
 }

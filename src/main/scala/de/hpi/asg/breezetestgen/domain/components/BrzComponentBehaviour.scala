@@ -43,7 +43,7 @@ abstract class BrzComponentBehaviour[C, D] protected(initState: HandshakeCompone
   def state_=(state: HandshakeComponent.State[C, D]) = currentState = FSM.State(state.controlState, state.dataState)
 
   /** determines possible reactions and set DecisionRequired reaction, if needed */
-  protected def decideBetween(possibilities: Map[Either[Constraint, Boolean], () => State]): Option[State] = {
+  protected def decideBetween(possibilities: Map[Data.ConstraintOrBool, () => State]): Option[State] = {
     possibilities.collectFirst{
       case (Right(true), f) => f  // first, check if there is any path that's definitely it
     }.map(_.apply())
