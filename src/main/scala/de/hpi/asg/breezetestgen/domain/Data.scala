@@ -1,11 +1,13 @@
 package de.hpi.asg.breezetestgen.domain
 
+import de.hpi.asg.breezetestgen.constraintsolving.Constraint
+
 trait Data {
   def bitCount: Int
   def isSigned: Boolean
 
-  def isFalsy: Boolean
-  def isTruthy: Boolean
+  def isFalsy: Either[Constraint, Boolean]
+  def isTruthy: Either[Constraint, Boolean]
 
   def selectBits(range: Range): Data
 

@@ -4,19 +4,21 @@ import de.hpi.asg.breezetestgen.constraintsolving._
 import de.hpi.asg.breezetestgen.domain.{Constant, Data}
 
 
-class VariableData(underlying: Variable,
+class VariableData(private val underlying: Variable,
                    constraint: Constraint) extends Data {
-  
+
   def bitCount = underlying.bitCount
   def isSigned = underlying.isSigned
+
+  def isFalsy = Left(BinaryConstraint(underlying, Equals, 0))
+  def isTruthy = Left(BinaryConstraint(underlying, NotEquals, 0))
 
   def plus(o: Data): VariableData = arithOp(Plus, o)
   def minus(o: Data): VariableData = arithOp(Minus, o)
   def and(o: Data): VariableData = arithOp(And, o)
   def or(o: Data): VariableData = arithOp(Or, o)
-  def xor(o: Data): VariableData = throw new NoSuchElementException //TODO: arithOp(Xor, o)
-
   def equals(o: Data): VariableData = booleanOp(Equals, o)
+
   def equalsNot(o: Data): VariableData = booleanOp(NotEquals, o)
   def lessThen(o: Data): VariableData = booleanOp(LessThan, o)
   def greaterThen(o: Data): VariableData = booleanOp(GreaterThan, o)
@@ -24,6 +26,9 @@ class VariableData(underlying: Variable,
   def greaterOrEqual(o: Data): VariableData = booleanOp(GreaterOrEqual, o)
 
   def not(): Data = throw new NoSuchElementException  //TODO: implement me
+  def selectBits(range: Range): VariableData = throw new NoSuchElementException  //TODO: implement me
+  def constMinus(o: Constant): VariableData = throw new NoSuchElementException //TODO: implement me
+  def xor(o: Data): VariableData = throw new NoSuchElementException //TODO: arithOp(Xor, o)
 
   /** creates new [[VariableData]] with an underlying [[Variable]] which reifies the according arithmetic operation */
   private def arithOp(op: ArithOperator, o: Data): VariableData = {
