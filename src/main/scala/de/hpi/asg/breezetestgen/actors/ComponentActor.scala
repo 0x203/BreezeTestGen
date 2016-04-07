@@ -1,6 +1,9 @@
 package de.hpi.asg.breezetestgen.actors
 
 import akka.actor.ActorRef
+import akka.pattern.{ask, pipe}
+
+import concurrent.Future
 import de.hpi.asg.breezetestgen.actors.HandshakeActor.{GetState, MyState, Signal}
 import de.hpi.asg.breezetestgen.domain
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.{DecisionRequired, NormalFlowReaction, Reaction}
@@ -38,11 +41,20 @@ class ComponentActor(netlistId: Netlist.Id,
   }
 
   private def handleNormalFlow(nlId: Netlist.Id, testEvent: TestEvent, nf: NormalFlowReaction) = {
+    import context.dispatcher
+    import concurrent.duration._
+    import akka.util.Timeout
 
-    //TODO implemnt something like this:
-    //val newTestEventF = infoHub.map(_ ? nf).asInstanceOf[Future[TestEvent] orElse Future[TestEvent] {testEvent}
-    //newTestEventF.then(sendOutSignals(nlId, _, nf.signals))
+    implicit val askTimeout = Timeout(5 seconds)
 
+    val newTestEventF: Future[TestEvent] = infoHub
+      .map(_ ? nf)  // ask InfoHub
+      .map(_.mapTo[TestEvent]) getOrElse  // transform answer to right type
+      Future.successful(testEvent)  //fallback if no infoHub is defined
+
+    for (signal <- nf.signals) {
+      newTestEventF.map(Signal(nlId, signal, _)) pipeTo receiverOf(signal)
+    }
   }
 
   private def sendOutSignals(netlist: Netlist.Id, testEvent: TestEvent, ds: Set[domain.Signal]) = {

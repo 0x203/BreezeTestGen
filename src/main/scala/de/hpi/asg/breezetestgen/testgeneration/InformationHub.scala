@@ -1,7 +1,7 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
 import de.hpi.asg.breezetestgen.constraintsolving.ConstraintCollection
-import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.{NormalFlowReaction, Reaction}
+import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.NormalFlowReaction
 import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
 
 /** Central place for gathering information during a test/simulation run.
