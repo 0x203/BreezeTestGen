@@ -26,7 +26,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
       val inits = initialRequests(runId)
 
-      informationHub = new InformationHub(inits)
+      informationHub = InformationHub.fromInitialSignals(inits)
 
       //TODO decide if infoHub should be own actor
       netlistActor = newNetlistActor(runId, None, Some(self))

@@ -12,15 +12,6 @@ import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
   *
   */
 class InformationHub(var cc: ConstraintCollection, testBuilder: TestBuilder) {
-  def this(initialSignals: Set[Signal]) =
-    this(
-      ConstraintCollection(
-        variables = initialSignals.collect{case DataRequest(_, vd :VariableData) => vd.underlying}
-      ),
-      TestBuilder.withOrigins(
-        initialSignals.map(IOEvent(_))
-      )
-    )
 
   /** records reaction from [[de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour]]
     *
@@ -41,6 +32,15 @@ class InformationHub(var cc: ConstraintCollection, testBuilder: TestBuilder) {
   /** returns the current state, maybe used for duplication or such things later */
   def state = (cc, testBuilder)
 }
-/*object InformationHub {
-  case class Operation(testEventO: Option[TestEvent])
-}*/
+object InformationHub {
+  def fromInitialSignals(initialSignals: Set[Signal]): InformationHub = {
+    new InformationHub(
+      ConstraintCollection(
+        variables = initialSignals.collect{case DataRequest(_, vd :VariableData) => vd.underlying}
+      ),
+      TestBuilder.withOrigins(
+        initialSignals.map(IOEvent(_))
+      )
+    )
+  }
+}

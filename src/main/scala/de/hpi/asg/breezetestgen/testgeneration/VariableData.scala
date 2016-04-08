@@ -4,7 +4,7 @@ import constraintsolving._
 import de.hpi.asg.breezetestgen.domain.{Constant, Data}
 
 
-class VariableData(private val underlying: Variable,
+class VariableData(private[testgeneration] val underlying: Variable,
                    constraint: Constraint) extends Data {
 
   def bitCount = underlying.bitCount
