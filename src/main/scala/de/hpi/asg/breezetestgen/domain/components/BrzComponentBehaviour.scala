@@ -37,10 +37,12 @@ abstract class BrzComponentBehaviour[C, D] protected(initState: HandshakeCompone
 
   }
 
+  type StateType = HandshakeComponent.State[C, D]
+
   /** returns complete current state of the FSM, which can be used for replicating the FSM */
-  def state = HandshakeComponent.State(currentState.stateName, currentState.stateData)
+  def state: StateType = HandshakeComponent.State(currentState.stateName, currentState.stateData)
   /** sets the current state of the FSM */
-  def state_=(state: HandshakeComponent.State[C, D]) = currentState = FSM.State(state.controlState, state.dataState)
+  def state_=(state: StateType) = currentState = FSM.State(state.controlState, state.dataState)
 
   /** determines possible reactions and set DecisionRequired reaction, if needed */
   protected def decideBetween(possibilities: Map[Data.ConstraintOrBool, () => State]): Option[State] = {

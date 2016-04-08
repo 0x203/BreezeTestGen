@@ -55,7 +55,6 @@ class BinaryFunc(id: HandshakeComponent.Id,
     info(s"BinaryFuncBehaviour created in state:  $initState")
 
     def inputsAvailable(a: Data, b: Data): State = {
-      //TODO: add constraints here
       dataAcknowledge(out, operate(a, b))
       goto(Idle)
     }

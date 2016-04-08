@@ -6,6 +6,7 @@ import de.hpi.asg.breezetestgen.domain._
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour._
 import de.hpi.asg.breezetestgen.testgeneration.{InformationHub, VariableData, constraintsolving}
 import constraintsolving.{ChocoSolver, ConstraintCollection, ConstraintVariable, Variable}
+import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
 import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
 
 object TestGenerationActor {
@@ -43,7 +44,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       //TODO: maybe stop search?!
       // reply with Option[TestEvent]
       sender() ! informationHub.handleReaction(nf)
-    case (DecisionRequired(possibilities), testEvent: TestEvent) =>
+    case DecisionRequired(possibilities) =>
       val ccs = createFeasibleCCs(possibilities)
 
       if (ccs.isEmpty) throw new RuntimeException("Cannot handle this yet.")
@@ -52,18 +53,10 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       val decision = decide(possibilities.filterKeys(ccs.keySet contains _))
 
       val newCC = ccs(decision)
-      val (reaction, newState) = possibilities(decision)
-
       informationHub.cc = newCC
-      val newTestEvent = informationHub.handleReaction(reaction) getOrElse testEvent
 
-      //TODO: set new state of forking component
-      //netlistActor ! SetState(id??, newState)
-
-      // send this on behalf of component in action
-      reaction.signals.foreach(ds => {
-        netlistActor ! HandshakeActor.Signal(netlist.id, ds, newTestEvent)
-      })
+      val (reaction, newState) = possibilities(decision)
+      sender() ! Decision(reaction, newState)
   }
 
 
