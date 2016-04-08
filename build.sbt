@@ -7,14 +7,14 @@ scalaVersion := "2.11.8"
 
 mainClass := Some("de.hpi.asg.breezetestgen.Main")
 
-resolvers += Resolver.mavenLocal  // for asgcommon
+resolvers += "jitpack" at "https://jitpack.io"  // for asgcommon
 resolvers += Resolver.sonatypeRepo("public")  //for scopt
 
 val akkaVersion = "2.4.3"
 
 libraryDependencies ++= Seq(
   // the following can be found here: https://github.com/hpiasg/asgcommon
-  "de.uni_potsdam.hpi.asg" % "asgcommon" % "1.0.0-SNAPSHOT",  // Breeze file parsing
+  "com.github.hpiasg" % "asgcommon" % "-8633a26ea7-1",  // Breeze file parsing
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,  // for simulating handshake components
   "org.choco-solver" % "choco-solver" % "3.3.3",  // for constraint solving  (for test generation)
   "com.assembla.scala-incubator" %% "graph-core" % "1.10.1",  // for BrzTests and netlists
