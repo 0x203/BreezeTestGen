@@ -12,7 +12,7 @@ object ChocoSolver {
   private type BV = org.chocosolver.solver.variables.BoolVar
   private type C = org.chocosolver.solver.constraints.Constraint
 
-  def instantiateSolver(cc: ConstraintCollection): (Solver, Map[Variable, V]) = {
+  private def instantiateSolver(cc: ConstraintCollection): (Solver, Map[Variable, V]) = {
     val solver = new Solver()
 
     val boolVariables: Map[BoolVariable, BV] = cc.allVariables.collect{

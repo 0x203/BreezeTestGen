@@ -12,12 +12,19 @@ import scalax.collection.GraphEdge._
 object TestBuilder {
   /** a function used to fixate a variable to a concrete value */
   type VariableFixator = Variable => Constant
+
+  def withOrigins(origins: Set[IOEvent]) = {
+    val tb = new TestBuilder()
+    for (origin <- origins)
+      tb.addOrigin(origin)
+    tb
+  }
 }
 
 class TestBuilder private(graph: mutable.Graph[TestEvent, DiEdge]) {
   import TestBuilder._
 
-  def this() = this(mutable.Graph())
+  def this() = this(mutable.Graph[TestEvent, DiEdge]())
 
   /** IOEvent happens independent from any other event
     *

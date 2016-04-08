@@ -1,6 +1,7 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
 import de.hpi.asg.breezetestgen.constraintsolving.ConstraintCollection
+import de.hpi.asg.breezetestgen.domain.{DataRequest, Signal}
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.NormalFlowReaction
 import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
 
@@ -10,8 +11,16 @@ import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
   * a [[de.hpi.asg.breezetestgen.constraintsolving.ConstraintCollection]] and (later) coverage statistics.
   *
   */
-class InformationHub(parentCollection: ConstraintCollection, testBuilder: TestBuilder) {
-  var cc: ConstraintCollection = parentCollection.fork()
+class InformationHub(var cc: ConstraintCollection, testBuilder: TestBuilder) {
+  def this(initialSignals: Set[Signal]) =
+    this(
+      ConstraintCollection(
+        variables = initialSignals.collect{case DataRequest(_, vd :VariableData) => vd.underlying}
+      ),
+      TestBuilder.withOrigins(
+        initialSignals.map(IOEvent(_))
+      )
+    )
 
   /** records reaction from [[de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour]]
     *
@@ -32,3 +41,6 @@ class InformationHub(parentCollection: ConstraintCollection, testBuilder: TestBu
   /** returns the current state, maybe used for duplication or such things later */
   def state = (cc, testBuilder)
 }
+/*object InformationHub {
+  case class Operation(testEventO: Option[TestEvent])
+}*/

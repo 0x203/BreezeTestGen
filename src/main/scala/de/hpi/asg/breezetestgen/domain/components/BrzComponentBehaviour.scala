@@ -133,7 +133,7 @@ abstract class BrzComponentBehaviour[C, D] protected(initState: HandshakeCompone
 }
 
 object BrzComponentBehaviour {
-  private type DecisionPossibilities = Map[ConstraintVariable, (NormalFlowReaction, HandshakeComponent.State[_, _])]
+  type DecisionPossibilities = Map[ConstraintVariable, (NormalFlowReaction, HandshakeComponent.State[_, _])]
 
   sealed trait Reaction
 
