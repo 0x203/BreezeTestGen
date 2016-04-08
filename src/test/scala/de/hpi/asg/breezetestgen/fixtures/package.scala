@@ -9,7 +9,10 @@ package object fixtures {
   def gcdNetlist(): Netlist = {
     WorkingdirGenerator.getInstance.create(null, null, "BrzTestGenTmp", null)
     try
-      BreezeTransformer.parse(breezeFile).get
+      BreezeTransformer.parse(breezeFile) match {
+        case Some(netlist) => netlist
+        case None => throw new RuntimeException("Could not parse gcd.breeze")
+      }
     finally
       WorkingdirGenerator.getInstance.delete()
   }
