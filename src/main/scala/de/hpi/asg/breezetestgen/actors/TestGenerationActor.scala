@@ -4,18 +4,17 @@ import akka.actor.{Actor, ActorRef}
 import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.domain._
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour._
-import de.hpi.asg.breezetestgen.testgeneration.{InformationHub, VariableData, constraintsolving}
+import de.hpi.asg.breezetestgen.testgeneration.{InformationHub, TestBuilder, VariableData, constraintsolving}
 import constraintsolving.{ChocoSolver, ConstraintCollection, ConstraintVariable, Variable}
 import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
-import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
+import de.hpi.asg.breezetestgen.testing.{IOEvent, Test, TestEvent}
 
 object TestGenerationActor {
   case object Start
 
-  private def createActivateRequest(nlId: Netlist.Id): HandshakeActor.Signal = {
-    val ds = Request(1)
-    HandshakeActor.Signal(nlId, ds, IOEvent(ds))
-  }
+  private sealed trait StopReason
+  private case object Done extends StopReason
+  private case object Error extends StopReason
 }
 
 class TestGenerationActor(protected val netlist: Netlist) extends Actor with MainNetlistCreator with Loggable {
@@ -36,9 +35,11 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       sendOutSignals(runId, inits.toSeq.sortBy(_.channelId))
 
     case HandshakeActor.Signal(runId, ds, testEvent) =>
-      //TODO: simulate environment
-      //TODO: tell this the informationHub for new testEvent and variables
-      //TODO check if this was an acknowledge on activate and sstop if so
+      val successor = informationHub.newIOEvent(ds, testEvent)
+      if(ds == Acknowledge(1))  //stop for other reasons?!
+        stop(Done)
+      else
+        mirrorSignal(runId, ds, successor)
 
     case nf: NormalFlowReaction =>
       //TODO: maybe stop search?!
@@ -67,19 +68,21 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
   private var netlistActor: ActorRef = _
   private var nextRunId: Int = -1
 
-  private def initialRequests(runId: Netlist.Id): Set[Signal] = {
-    netlist.activePorts.map{
-      case dp: DataPort =>
-        val v = new Variable(dp.name, dp.bitCount, dp.isSigned)
-        val d = new VariableData(v, null)
-        DataRequest(dp.channelId, d)
-      case sp: SyncPort => Request(sp.channelId)
-    }
+  private def signalOnPort(port: Port): Signal = port match {
+    case sp: SyncPort => sp.createSignal()
+    case dp: DataPort =>
+      val v = new Variable(dp.name, dp.bitCount, dp.isSigned)
+      val d = new VariableData(v, null)
+      dp.createSignal(d)
   }
 
-  private def sendOutSignals(runId: Netlist.Id, signals: Traversable[Signal]) = {
+  private def initialRequests(runId: Netlist.Id): Set[Signal] = {
+    netlist.activePorts.map(signalOnPort)
+  }
+
+  private def sendOutSignals(runId: Netlist.Id, signals: Traversable[Signal], teO: Option[TestEvent] = None) = {
     signals
-      .map{ds => HandshakeActor.Signal(runId, ds, IOEvent(ds))} // create understandable signals
+      .map{ds => HandshakeActor.Signal(runId, ds, teO getOrElse IOEvent(ds))} // create understandable signals
       .foreach(netlistActor ! _)  // send them out
   }
 
@@ -95,5 +98,42 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       // this should give us the possibility with most acknowledges, which should lead to an early finish
       tpl._2.signals.count(_.isInstanceOf[SignalFromPassive])
     }).last._1
+  }
+
+  private val channelIdToPortId = portConnections.map(_.swap)
+
+  /** reacts to a signal from the netlist with the counter-signal on the same port
+    *
+    * @param nlId netlistId
+    * @param signal signal to be mirrored
+    * @param testEvent predecessor of new one
+    */
+  private def mirrorSignal(nlId: Netlist.Id, signal: Signal, testEvent: TestEvent) = {
+    val portId = channelIdToPortId(signal.channelId)
+    val answerSignal = signalOnPort(netlist.ports(portId))
+
+    val followerEvent = informationHub.newIOEvent(answerSignal, testEvent)
+    sendOutSignals(nlId, Option(answerSignal), Option(followerEvent))
+  }
+
+  private def stop(reason: StopReason) = {
+    info(s"I'm stopping because of: $reason")
+
+    val (cc, tb) = informationHub.state
+    info(s"Current ConstraintCollection: $cc")
+    trySolving(cc, tb) match {
+      case Some(test) => info(s"here is a test, anyway: $test")
+      case None => info("Not even found a test.")
+    }
+
+    // TODO: give feedback to somebody
+    context.stop(self)
+  }
+
+  private def trySolving(cc: ConstraintCollection, tb: TestBuilder): Option[Test] = {
+    val solver = new ChocoSolver(cc)
+    if(solver.isFeasible) {
+      Option(tb.instantiate(solver.next.apply))
+    } else None
   }
 }

@@ -13,7 +13,7 @@ trait MainNetlistCreator {
     netlist.ports.map{case (_, port) => port.channelId -> SyncChannel(port.channelId, self, self)}
   )
 
-  val portConnections = netlist.ports.values.map{p => p.id -> p.channelId}.toMap[Port.Id, Channel.Id]
+  protected val portConnections = netlist.ports.values.map{p => p.id -> p.channelId}.toMap[Port.Id, Channel.Id]
 
   /** creates a new netlist actor for the netlist to be simulated */
   protected def newNetlistActor(id: Netlist.Id,

@@ -29,6 +29,15 @@ class InformationHub(var cc: ConstraintCollection, testBuilder: TestBuilder) {
     }
   }
 
+  /** records a signal as an IOEvent
+    *
+    * @param signal the signal of the IOEvent
+    * @param testEvent  the predecessor
+    * @return the freshly created event for further tracking
+    */
+  def newIOEvent(signal: Signal, testEvent: TestEvent): TestEvent =
+    testBuilder.addSuccessor(testEvent, IOEvent(signal))
+
   /** returns the current state, maybe used for duplication or such things later */
   def state = (cc, testBuilder)
 }
