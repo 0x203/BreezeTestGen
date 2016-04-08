@@ -11,7 +11,7 @@ package object fixtures {
     try
       BreezeTransformer.parse(breezeFile) match {
         case Some(netlist) => netlist
-        case None => throw new RuntimeException("Could not parse gcd.breeze")
+        case None => BreezeTransformer.parse(breezeFile).get  //try again for travis
       }
     finally
       WorkingdirGenerator.getInstance.delete()
