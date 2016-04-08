@@ -1,7 +1,7 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
 import constraintsolving.ConstraintCollection
-import de.hpi.asg.breezetestgen.domain.{DataRequest, Signal}
+import de.hpi.asg.breezetestgen.domain.{DataRequest, Signal, SignalWithData}
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.NormalFlowReaction
 import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
 
@@ -19,7 +19,17 @@ class InformationHub(var cc: ConstraintCollection, testBuilder: TestBuilder) {
     * @return a [[TestEvent]] for further building of tests, if a [[TestOp]] was specified
     */
   def handleReaction(reaction: NormalFlowReaction): TestEvent = {
-    cc = cc.add(reaction.constraintVariables)
+    //cc = cc.add(reaction.constraintVariables)
+    reaction.signals
+      .collect{case dataSignal: SignalWithData => dataSignal.data}
+      .collect{case vd: VariableData => vd}
+      .foreach(vd => {
+        // TODO refactor this badly
+        cc = cc.addVariable(vd.underlying)
+        val cons = vd.constraint
+        if (cons != null)
+          cc = cc.addConstraint(cons)
+      })
 
     // TODO: extract coverage info from signals
 
