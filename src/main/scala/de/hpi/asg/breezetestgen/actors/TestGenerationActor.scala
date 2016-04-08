@@ -127,7 +127,8 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
     }
 
     // TODO: give feedback to somebody
-    context.stop(self)
+    //context.stop(self)
+    context.system.terminate()
   }
 
   private def trySolving(cc: ConstraintCollection, tb: TestBuilder): Option[Test] = {

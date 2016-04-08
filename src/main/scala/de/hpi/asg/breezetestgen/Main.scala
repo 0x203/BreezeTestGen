@@ -46,8 +46,24 @@ object Main {
     mainNetlist match {
       case Some(netlist) =>
         logger.info(netlist)
+        findTest(netlist)
       case None => logger.error("Could not parse Netlist")
     }
+  }
+
+  private def findTest(netlist: domain.Netlist) = {
+    import akka.actor.{ActorSystem, Props}
+    import scala.concurrent.Await
+    import scala.concurrent.duration._
+
+    import actors.TestGenerationActor
+
+    val system = ActorSystem("TestGen")
+    logger.info("Start testfinding...")
+    val testgen = system.actorOf(Props(classOf[TestGenerationActor], netlist))
+    testgen ! TestGenerationActor.Start
+    Await.result(system.whenTerminated, 20 seconds)
+    logger.info("testfinding finished!")
   }
 }
 
