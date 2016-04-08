@@ -1,6 +1,6 @@
 package de.hpi.asg.breezetestgen.domain
 
-import de.hpi.asg.breezetestgen.constraintsolving.Constraint
+import de.hpi.asg.breezetestgen.testgeneration.constraintsolving.Constraint
 
 trait Data {
   def bitCount: Int

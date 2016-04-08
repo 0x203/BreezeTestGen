@@ -1,8 +1,8 @@
 package de.hpi.asg.breezetestgen.domain.components
 
-import de.hpi.asg.breezetestgen.constraintsolving.{Constraint, ConstraintVariable}
 import de.hpi.asg.breezetestgen.domain.{DataAcknowledge, PullChannel, _}
-import de.hpi.asg.breezetestgen.testgeneration.TestOp
+import de.hpi.asg.breezetestgen.testgeneration.{TestOp, constraintsolving}
+import constraintsolving.{Constraint, ConstraintVariable}
 import de.hpi.asg.breezetestgen.testing.TestEvent
 import de.hpi.asg.breezetestgen.util.FSM
 

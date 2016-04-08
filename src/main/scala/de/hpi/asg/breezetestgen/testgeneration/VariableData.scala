@@ -1,6 +1,6 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
-import de.hpi.asg.breezetestgen.constraintsolving._
+import constraintsolving._
 import de.hpi.asg.breezetestgen.domain.{Constant, Data}
 
 

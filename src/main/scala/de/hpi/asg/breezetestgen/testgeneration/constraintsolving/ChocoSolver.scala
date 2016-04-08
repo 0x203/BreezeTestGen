@@ -1,4 +1,4 @@
-package de.hpi.asg.breezetestgen.constraintsolving
+package de.hpi.asg.breezetestgen.testgeneration.constraintsolving
 
 import de.hpi.asg.breezetestgen.domain.Constant
 import de.hpi.asg.breezetestgen.testgeneration.TestBuilder.VariableFixator

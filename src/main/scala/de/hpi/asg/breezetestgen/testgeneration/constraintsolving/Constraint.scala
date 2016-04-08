@@ -1,4 +1,4 @@
-package de.hpi.asg.breezetestgen.constraintsolving
+package de.hpi.asg.breezetestgen.testgeneration.constraintsolving
 
 /** Superclass of all Constraints which should be re-used across Solver instances
   *

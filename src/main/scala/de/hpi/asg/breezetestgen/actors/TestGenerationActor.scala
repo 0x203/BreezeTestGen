@@ -2,11 +2,10 @@ package de.hpi.asg.breezetestgen.actors
 
 import akka.actor.{Actor, ActorRef}
 import de.hpi.asg.breezetestgen.Loggable
-import de.hpi.asg.breezetestgen.constraintsolving.{ChocoSolver, ConstraintCollection, ConstraintVariable, Variable}
 import de.hpi.asg.breezetestgen.domain._
-import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour._
-import de.hpi.asg.breezetestgen.testgeneration.{InformationHub, VariableData}
+import de.hpi.asg.breezetestgen.testgeneration.{InformationHub, VariableData, constraintsolving}
+import constraintsolving.{ChocoSolver, ConstraintCollection, ConstraintVariable, Variable}
 import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
 
 object TestGenerationActor {

@@ -1,4 +1,4 @@
-package de.hpi.asg.breezetestgen.constraintsolving
+package de.hpi.asg.breezetestgen.testgeneration.constraintsolving
 
 
 class Variable(val name: String, val bitCount: Int, val isSigned: Boolean) {

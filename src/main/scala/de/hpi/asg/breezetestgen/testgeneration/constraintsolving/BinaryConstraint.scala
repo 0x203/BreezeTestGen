@@ -1,4 +1,4 @@
-package de.hpi.asg.breezetestgen.constraintsolving
+package de.hpi.asg.breezetestgen.testgeneration.constraintsolving
 
 
 case class BinaryConstraint(a: Variable,

@@ -1,14 +1,14 @@
 package de.hpi.asg.breezetestgen
 
 import de.hpi.asg.breezetestgen.baseclasses.UnitTest
-import de.hpi.asg.breezetestgen.constraintsolving.BoolVariable
 import de.hpi.asg.breezetestgen.domain.{Acknowledge, Constant, DataAcknowledge, Request}
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.{DecisionRequired, NormalFlowReaction}
 import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent.State
 import de.hpi.asg.breezetestgen.domain.components.brzcomponents.While
 import de.hpi.asg.breezetestgen.testing.{MergeEvent, TestEvent}
-import de.hpi.asg.breezetestgen.testgeneration.VariableData
+import de.hpi.asg.breezetestgen.testgeneration.{VariableData, constraintsolving}
+
 
 class WhileSpec extends UnitTest {
   val activateId = 1
@@ -56,7 +56,7 @@ class WhileSpec extends UnitTest {
 
   it should "return DecisionRequired if guard is DataVariable" in {
     val whileBehaviour = createBehaviour(Some(evaluatingState))
-    val boolVariable = BoolVariable("guard")
+    val boolVariable = constraintsolving.BoolVariable("guard")
     val guardVar = new VariableData(boolVariable, null)
 
     val reaction = whileBehaviour.handleSignal(DataAcknowledge(guardId, guardVar), te)

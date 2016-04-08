@@ -1,4 +1,4 @@
-package de.hpi.asg.breezetestgen.constraintsolving
+package de.hpi.asg.breezetestgen.testgeneration.constraintsolving
 
 
 /** a container for [[de.hpi.asg.breezetestgen.constraintsolving.Constraint]]s

@@ -1,7 +1,7 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
 
-import de.hpi.asg.breezetestgen.constraintsolving.Variable
+import de.hpi.asg.breezetestgen.testgeneration.constraintsolving.Variable
 import de.hpi.asg.breezetestgen.domain.{Constant, DataAcknowledge, DataRequest}
 import de.hpi.asg.breezetestgen.testing._
 
