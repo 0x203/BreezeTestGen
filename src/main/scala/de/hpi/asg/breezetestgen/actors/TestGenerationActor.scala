@@ -42,7 +42,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
     case nf: NormalFlowReaction =>
       //TODO: maybe stop search?!
-      // reply with Option[TestEvent]
+      // reply with TestEvent
       sender() ! informationHub.handleReaction(nf)
     case DecisionRequired(possibilities) =>
       val ccs = createFeasibleCCs(possibilities)
@@ -56,7 +56,10 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       informationHub.cc = newCC
 
       val (reaction, newState) = possibilities(decision)
-      sender() ! Decision(reaction, newState)
+      val testEventO = informationHub.handleReaction(reaction)
+
+      //TODO: send this to copies, too
+      sender() ! Decision(newState, reaction.signals, testEventO)
   }
 
 

@@ -5,6 +5,7 @@ import de.hpi.asg.breezetestgen.domain._
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.NormalFlowReaction
 import de.hpi.asg.breezetestgen.domain.components.brzcomponents.Sequence
+import de.hpi.asg.breezetestgen.testgeneration.Follow
 
 
 class SequenceSpec extends baseclasses.UnitTest {
@@ -13,6 +14,9 @@ class SequenceSpec extends baseclasses.UnitTest {
   val te: TestEvent = new MergeEvent()
 
   val sequence = new Sequence(id = 0, activateId, outIds)
+
+  def normalReactionWith(ds: Signal): NormalFlowReaction =
+    NormalFlowReaction(Set(ds), Follow(te), Set.empty)
 
   "A Sequence component" should "have a behaviour" in {
     val sequenceBehaviour = sequence.behaviour(None)
@@ -23,7 +27,7 @@ class SequenceSpec extends baseclasses.UnitTest {
     val sequenceBehaviour = sequence.behaviour(None)
     val activateRequest = Request(activateId)
 
-    assertResult(NormalFlowReaction(Set(Request(outIds.head)), None, Set.empty)) {
+    assertResult(normalReactionWith(Request(outIds.head))) {
       sequenceBehaviour.handleSignal(activateRequest, te)
     }
   }
@@ -41,8 +45,8 @@ class SequenceSpec extends baseclasses.UnitTest {
     val sequenceBehaviour = sequence.behaviour(None)
 
     val signals: Seq[Signal] = Request(activateId) +: outIds.map{id => Acknowledge(id)}
-    val reactions: Seq[NormalFlowReaction] = outIds.map{id => NormalFlowReaction(Set(Request(id)), None, Set.empty)} :+
-      NormalFlowReaction(Set(Acknowledge(activateId)), None, Set.empty)
+    val reactions: Seq[NormalFlowReaction] = outIds.map{id => normalReactionWith(Request(id))} :+
+      normalReactionWith(Acknowledge(activateId))
 
     for ((s, r) <- signals.zip(reactions))
       yield assertResult(r) {sequenceBehaviour.handleSignal(s, te)}
@@ -56,7 +60,7 @@ class SequenceSpec extends baseclasses.UnitTest {
 
     val secondSequenceB = sequence.behaviour(Some(state))
 
-    assertResult(NormalFlowReaction(Set(Request(outIds(1))), None, Set.empty)) {
+    assertResult(normalReactionWith(Request(outIds(1)))) {
       secondSequenceB.handleSignal(Acknowledge(outIds.head), te)
     }
   }

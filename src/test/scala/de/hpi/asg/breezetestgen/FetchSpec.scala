@@ -6,6 +6,7 @@ import de.hpi.asg.breezetestgen.domain._
 import components.BrzComponentBehaviour
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.NormalFlowReaction
 import de.hpi.asg.breezetestgen.domain.components.brzcomponents.Fetch
+import de.hpi.asg.breezetestgen.testgeneration.Follow
 
 class FetchSpec extends UnitTest {
   val activateId: Channel.Spec[SyncChannel[_]] = 1
@@ -14,6 +15,9 @@ class FetchSpec extends UnitTest {
   val te: TestEvent = new MergeEvent()
 
   val fetch = new Fetch(id = 0, activateId, inpId, outId)
+
+  def normalReactionWith(ds: Signal): NormalFlowReaction =
+    NormalFlowReaction(Set(ds), Follow(te), Set.empty)
 
   "A Fetch component" should "have a behaviour" in {
     val fetchBehaviour = fetch.behaviour(None)
@@ -24,7 +28,7 @@ class FetchSpec extends UnitTest {
     val fetchBehaviour = fetch.behaviour(None)
     val activateRequest = Request(activateId)
 
-    assertResult(NormalFlowReaction(Set(Request(inpId)), None, Set.empty)) {
+    assertResult(normalReactionWith(Request(inpId))) {
       fetchBehaviour.handleSignal(activateRequest, te)
     }
   }
@@ -42,18 +46,18 @@ class FetchSpec extends UnitTest {
     val fetchBehaviour = fetch.behaviour(None)
     val activateRequest = Request(activateId)
 
-    assertResult(NormalFlowReaction(Set(Request(inpId)), None, Set.empty)) {
+    assertResult(normalReactionWith(Request(inpId))) {
       fetchBehaviour.handleSignal(activateRequest, te)
     }
 
     val sampleData = Constant(5)
     val inpAck = DataAcknowledge(inpId, sampleData)
-    assertResult(NormalFlowReaction(Set(DataRequest(outId, sampleData)), None, Set.empty)) {
+    assertResult(normalReactionWith(DataRequest(outId, sampleData))) {
       fetchBehaviour.handleSignal(inpAck, te)
     }
 
     val outAck = Acknowledge(outId)
-    assertResult(NormalFlowReaction(Set(Acknowledge(activateId)), None, Set.empty)) {
+    assertResult(normalReactionWith(Acknowledge(activateId))) {
       fetchBehaviour.handleSignal(outAck, te)
     }
   }
@@ -67,7 +71,7 @@ class FetchSpec extends UnitTest {
     val secondFetchB = fetch.behaviour(Some(state))
 
     val sampleData = Constant(5)
-    assertResult(NormalFlowReaction(Set(DataRequest(outId, sampleData)), None, Set.empty)) {
+    assertResult(normalReactionWith(DataRequest(outId, sampleData))) {
       secondFetchB.handleSignal(DataAcknowledge(inpId, sampleData), te)
     }
   }

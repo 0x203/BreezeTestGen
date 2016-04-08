@@ -1,12 +1,12 @@
 package de.hpi.asg.breezetestgen.domain.components
 
 import de.hpi.asg.breezetestgen.domain.{DataAcknowledge, PullChannel, _}
-import de.hpi.asg.breezetestgen.testgeneration.{TestOp, constraintsolving}
+import de.hpi.asg.breezetestgen.testgeneration.{Follow, Merge, TestOp, constraintsolving}
 import constraintsolving.{Constraint, ConstraintVariable}
 import de.hpi.asg.breezetestgen.testing.TestEvent
 import de.hpi.asg.breezetestgen.util.FSM
 
-/** base class for the behaviour definiton of BrzComponents
+/** base class for the behaviour definition of BrzComponents
   *
   * @param initState the state of the component to start from
   * @tparam C control state
@@ -29,7 +29,7 @@ abstract class BrzComponentBehaviour[C, D] protected(initState: HandshakeCompone
 
   /** processes one step of fsm with given input */
   def handleSignal(s: Signal, te: TestEvent): Reaction = {
-    normalFlowReaction = NormalFlowReaction.empty
+    normalFlowReaction = NormalFlowReaction.afterTestEvent(te)
     decisionRequired = None
     testEvent = te
     processMsg((s, te))
@@ -37,12 +37,11 @@ abstract class BrzComponentBehaviour[C, D] protected(initState: HandshakeCompone
 
   }
 
-  type StateType = HandshakeComponent.State[C, D]
-
   /** returns complete current state of the FSM, which can be used for replicating the FSM */
-  def state: StateType = HandshakeComponent.State(currentState.stateName, currentState.stateData)
+  def state: HandshakeComponent.State[C, D] = HandshakeComponent.State(currentState.stateName, currentState.stateData)
   /** sets the current state of the FSM */
-  def state_=(state: StateType) = currentState = FSM.State(state.controlState, state.dataState)
+  def state_=(state: HandshakeComponent.State[_, _]) =
+    currentState = FSM.State(state.controlState.asInstanceOf[C], state.dataState.asInstanceOf[D])
 
   /** determines possible reactions and set DecisionRequired reaction, if needed */
   protected def decideBetween(possibilities: Map[Data.ConstraintOrBool, () => State]): Option[State] = {
@@ -94,7 +93,7 @@ abstract class BrzComponentBehaviour[C, D] protected(initState: HandshakeCompone
   protected def constrain(cv: ConstraintVariable) = normalFlowReaction = normalFlowReaction.addConstraint(cv)
   protected def constrain(cvs: Set[ConstraintVariable]) = normalFlowReaction = normalFlowReaction.addConstraints(cvs)
   /** helper method for setting testOp*/
-  protected def testOp(op: TestOp) = normalFlowReaction = normalFlowReaction.setTestOp(op)
+  protected def mergeAfter(tes: Set[TestEvent]) = normalFlowReaction = normalFlowReaction.copy(testOp = Merge(tes))
 
 
   // Message Event Extractors
@@ -143,15 +142,14 @@ object BrzComponentBehaviour {
     extends Reaction
 
   case class NormalFlowReaction(signals: Set[Signal],
-                                testOp: Option[TestOp],
+                                testOp: TestOp,
                                 constraintVariables: Set[ConstraintVariable]) extends Reaction {
     def addSignal(s: Signal): NormalFlowReaction = copy(signals = signals + s)
-    def setTestOp(op: TestOp):NormalFlowReaction = copy(testOp = Option(op))
     def addConstraint(cv: ConstraintVariable): NormalFlowReaction = copy(constraintVariables = constraintVariables + cv)
     def addConstraints(new_cvs: Traversable[ConstraintVariable]): NormalFlowReaction =
       copy(constraintVariables = constraintVariables ++ new_cvs)
   }
   object NormalFlowReaction {
-    def empty: NormalFlowReaction = NormalFlowReaction(Set.empty, None, Set.empty)
+    def afterTestEvent(te: TestEvent): NormalFlowReaction = NormalFlowReaction(Set.empty, Follow(te), Set.empty)
   }
 }

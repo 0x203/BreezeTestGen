@@ -7,7 +7,7 @@ import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.{Decisio
 import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent.State
 import de.hpi.asg.breezetestgen.domain.components.brzcomponents.While
 import de.hpi.asg.breezetestgen.testing.{MergeEvent, TestEvent}
-import de.hpi.asg.breezetestgen.testgeneration.{VariableData, constraintsolving}
+import de.hpi.asg.breezetestgen.testgeneration.{Follow, VariableData, constraintsolving}
 
 
 class WhileSpec extends UnitTest {
@@ -17,11 +17,14 @@ class WhileSpec extends UnitTest {
 
   val te: TestEvent = new MergeEvent()
 
+  def normalReactionWith(ds: domain.Signal): NormalFlowReaction =
+    NormalFlowReaction(Set(ds), Follow(te), Set.empty)
+
   val brzWhile = new While(id = 0, activateId, guardId, outId)
   val evaluatingState: State[brzWhile.C, brzWhile.D] = State(brzWhile.WhileBehaviour.Evaluating, null)
 
-  val noEnterReaction = NormalFlowReaction(Set(Acknowledge(activateId)), None, Set.empty)
-  val enterReaction = NormalFlowReaction(Set(Request(outId)), None, Set.empty)
+  val noEnterReaction = normalReactionWith(Acknowledge(activateId))
+  val enterReaction = normalReactionWith(Request(outId))
 
   def createBehaviour(state: Option[State[brzWhile.C, brzWhile.D]]): BrzComponentBehaviour[_, _] =
     brzWhile.behaviour(state)
@@ -29,7 +32,7 @@ class WhileSpec extends UnitTest {
   "The WhileBehaviour" should "correctly go to evaluating state if requested" in {
     val whileBehaviour = createBehaviour(None)
 
-    assertResult(NormalFlowReaction(Set(Request(guardId)), None, Set.empty)) {
+    assertResult(normalReactionWith(Request(guardId))) {
       whileBehaviour.handleSignal(Request(activateId), te)
     }
 

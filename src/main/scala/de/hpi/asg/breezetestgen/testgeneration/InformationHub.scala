@@ -18,14 +18,14 @@ class InformationHub(var cc: ConstraintCollection, testBuilder: TestBuilder) {
     * @param reaction reaction from handshake component
     * @return a [[TestEvent]] for further building of tests, if a [[TestOp]] was specified
     */
-  def handleReaction(reaction: NormalFlowReaction): Option[TestEvent] = {
+  def handleReaction(reaction: NormalFlowReaction): TestEvent = {
     cc = cc.add(reaction.constraintVariables)
 
     // TODO: extract coverage info from signals
 
-    reaction.testOp.map {
+    reaction.testOp match {
       case Merge(te) => testBuilder.merge(te)
-      case AddIOEvent(te, s) => testBuilder.addSuccessor(te, IOEvent(s))
+      case Follow(te) => te
     }
   }
 
