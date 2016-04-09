@@ -60,4 +60,6 @@ class VariableData(private[testgeneration] val underlying: Variable,
       constraint
     )
   }
+
+  override def toString = s"VariableData($underlying, $constraint)"
 }
