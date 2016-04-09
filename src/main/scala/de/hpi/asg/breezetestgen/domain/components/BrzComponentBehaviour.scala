@@ -89,9 +89,6 @@ abstract class BrzComponentBehaviour[C, D] protected(initState: HandshakeCompone
   protected def dataRequest(channelId: Channel.Spec[PushChannel[_]], data: Data) = addSignal(DataRequest(channelId, data))
   protected def dataAcknowledge(channelId: Channel.Spec[PullChannel[_]], data: Data) = addSignal(DataAcknowledge(channelId, data))
 
-  /** helper method for constraint addition */
-  protected def constrain(cv: ConstraintVariable) = normalFlowReaction = normalFlowReaction.addConstraint(cv)
-  protected def constrain(cvs: Set[ConstraintVariable]) = normalFlowReaction = normalFlowReaction.addConstraints(cvs)
   /** helper method for setting testOp*/
   protected def mergeAfter(tes: Set[TestEvent]) = normalFlowReaction = normalFlowReaction.copy(testOp = Merge(tes))
 
@@ -141,15 +138,10 @@ object BrzComponentBehaviour {
   case class DecisionRequired(possibilities: DecisionPossibilities)
     extends Reaction
 
-  case class NormalFlowReaction(signals: Set[Signal],
-                                testOp: TestOp,
-                                constraintVariables: Set[ConstraintVariable]) extends Reaction {
-    def addSignal(s: Signal): NormalFlowReaction = copy(signals = signals + s)
-    def addConstraint(cv: ConstraintVariable): NormalFlowReaction = copy(constraintVariables = constraintVariables + cv)
-    def addConstraints(new_cvs: Traversable[ConstraintVariable]): NormalFlowReaction =
-      copy(constraintVariables = constraintVariables ++ new_cvs)
+    case class NormalFlowReaction(signals: Set[Signal], testOp: TestOp) extends Reaction {
+      def addSignal(s: Signal): NormalFlowReaction = copy(signals = signals + s)
   }
   object NormalFlowReaction {
-    def afterTestEvent(te: TestEvent): NormalFlowReaction = NormalFlowReaction(Set.empty, Follow(te), Set.empty)
+    def afterTestEvent(te: TestEvent): NormalFlowReaction = NormalFlowReaction(Set.empty, Follow(te))
   }
 }

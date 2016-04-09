@@ -16,7 +16,7 @@ class SequenceSpec extends baseclasses.UnitTest {
   val sequence = new Sequence(id = 0, activateId, outIds)
 
   def normalReactionWith(ds: Signal): NormalFlowReaction =
-    NormalFlowReaction(Set(ds), Follow(te), Set.empty)
+    NormalFlowReaction(Set(ds), Follow(te))
 
   "A Sequence component" should "have a behaviour" in {
     val sequenceBehaviour = sequence.behaviour(None)

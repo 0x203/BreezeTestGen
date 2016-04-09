@@ -17,7 +17,7 @@ class FetchSpec extends UnitTest {
   val fetch = new Fetch(id = 0, activateId, inpId, outId)
 
   def normalReactionWith(ds: Signal): NormalFlowReaction =
-    NormalFlowReaction(Set(ds), Follow(te), Set.empty)
+    NormalFlowReaction(Set(ds), Follow(te))
 
   "A Fetch component" should "have a behaviour" in {
     val fetchBehaviour = fetch.behaviour(None)
