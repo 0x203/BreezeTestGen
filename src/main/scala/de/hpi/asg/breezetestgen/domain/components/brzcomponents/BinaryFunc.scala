@@ -4,6 +4,7 @@ import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.domain.Data
 import de.hpi.asg.breezetestgen.domain.components.BrzComponent._
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, BrzComponentBehaviour, HandshakeComponent}
+import de.hpi.asg.breezetestgen.testing.TestEvent
 
 object BinaryFunc extends Loggable {
   def operate(operator: String)(a: Data, b: Data): Data = {
@@ -32,7 +33,7 @@ class BinaryFunc(id: HandshakeComponent.Id,
                  inpB: PullSpec) extends BrzComponent(id) {
   type Behaviour = BinaryFuncBehaviour
   type C = BinaryFuncBehaviour.ControlState
-  type D = BinaryFuncBehaviour.Inputs
+  type D = BinaryFuncBehaviour.InputsAndTestEvent
 
   def behaviour(state: Option[HandshakeComponent.State[C, D]]): Behaviour =
     new BinaryFuncBehaviour(state getOrElse BinaryFuncBehaviour.freshState)
@@ -44,9 +45,13 @@ class BinaryFunc(id: HandshakeComponent.Id,
     case object Idle extends ControlState
     case object Waiting extends ControlState
 
-    final case class Inputs(a: Option[Data], b: Option[Data])
+    final case class InputsAndTestEvent(a: Option[Data], b: Option[Data], teO: Set[TestEvent])
+    object InputsAndTestEvent {
+      def fresh(): InputsAndTestEvent = InputsAndTestEvent(None, None, Set.empty)
+    }
 
-    val freshState: HandshakeComponent.State[ControlState, Inputs] = HandshakeComponent.State(Idle, Inputs(None, None))
+    val freshState: HandshakeComponent.State[ControlState, InputsAndTestEvent] =
+      HandshakeComponent.State(Idle, InputsAndTestEvent.fresh())
   }
 
   class BinaryFuncBehaviour(initState: HandshakeComponent.State[C, D]) extends BrzComponentBehaviour[C, D](initState) {
@@ -54,7 +59,8 @@ class BinaryFunc(id: HandshakeComponent.Id,
 
     info(s"BinaryFuncBehaviour created in state:  $initState")
 
-    def inputsAvailable(a: Data, b: Data): State = {
+    def inputsAvailable(a: Data, b: Data, tes: Set[TestEvent]): State = {
+      mergeAfter(tes)
       dataAcknowledge(out, operate(a, b))
       goto(Idle)
     }
@@ -64,24 +70,26 @@ class BinaryFunc(id: HandshakeComponent.Id,
         info("Activated. Requesting A & B...")
         request(inpA)
         request(inpB)
-        goto(Waiting) using Inputs(None, None)
+        goto(Waiting) using InputsAndTestEvent.fresh()
     }
 
     when(Waiting) {
-      case DataAck(`inpA`, aData, Inputs(None, b)) =>
+      case DataAck(`inpA`, aData, InputsAndTestEvent(None, b, tes)) =>
+        val newTEs = tes + testEvent
         info(s"Got data on inpA: $aData")
         b match {
-          case Some(bData) => inputsAvailable(aData, bData)
+          case Some(bData) => inputsAvailable(aData, bData, tes)
           case None =>
-            stay using Inputs(Some(aData), None)
+            stay using InputsAndTestEvent(Some(aData), None, newTEs)
         }
 
-      case DataAck(`inpB`, bData, Inputs(a, None)) =>
+      case DataAck(`inpB`, bData, InputsAndTestEvent(a, None, tes)) =>
+        val newTEs = tes + testEvent
         info(s"Got data on inpB: $bData")
         a match {
-          case Some(aData) => inputsAvailable(aData, bData)
+          case Some(aData) => inputsAvailable(aData, bData, tes)
           case None =>
-            stay using Inputs(None, Some(bData))
+            stay using InputsAndTestEvent(None, Some(bData), newTEs)
         }
     }
 
