@@ -65,8 +65,8 @@ class TestBuilder private(graph: mutable.Graph[TestEvent, DiEdge]) {
     // create a map from all nodes to the placeholder replacements,
     // i.e. IODataEvents for Placeholders and identity for all others
     val nodeMap: Map[graph.NodeT, TestEvent] = graph.nodes.map{ x => x -> (x.value match {
-      case IOEvent(x @ DataRequest(_, v: Variable)) => IOEvent(x.copy(data = f(v)))
-      case IOEvent(x @ DataAcknowledge(_, v: Variable)) => IOEvent(x.copy(data = f(v)))
+      case IOEvent(x @ DataRequest(_, v: VariableData)) => IOEvent(x.copy(data = f(v.underlying)))
+      case IOEvent(x @ DataAcknowledge(_, v: VariableData)) => IOEvent(x.copy(data = f(v.underlying)))
       case e => e
     })}.toMap
 
