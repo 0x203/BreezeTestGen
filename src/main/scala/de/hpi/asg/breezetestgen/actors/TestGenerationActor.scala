@@ -22,6 +22,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
   def receive = {
     case Start =>
+      info("Starting test generation")
       val runId = nextRunId; nextRunId -= 1
 
       val inits = initialRequests(runId)
@@ -35,6 +36,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       sendOutSignals(runId, inits.toSeq.sortBy(_.channelId))
 
     case HandshakeActor.Signal(runId, ds, testEvent) =>
+      info(s"Got signal from MainNetlist: $ds")
       val successor = informationHub.newIOEvent(ds, testEvent)
       if(ds == Acknowledge(1))  //stop for other reasons?!
         stop(Done)
@@ -42,10 +44,11 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
         mirrorSignal(runId, ds, successor)
 
     case nf: NormalFlowReaction =>
-      //TODO: maybe stop search?!
+      trace("recording normalFlowReaction")
       // reply with TestEvent
       sender() ! informationHub.handleReaction(nf)
     case DecisionRequired(possibilities) =>
+      info(s"DecisionRequired: ${possibilities.keys}")
       val ccs = createFeasibleCCs(possibilities)
 
       if (ccs.isEmpty) throw new RuntimeException("Cannot handle this yet.")
