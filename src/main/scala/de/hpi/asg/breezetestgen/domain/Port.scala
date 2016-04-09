@@ -59,7 +59,9 @@ case class DataPort(id: Port.Id,
 
   /** creates a signal for the connected channel */
   def createSignal(value: Data): Signal = (sense, direction) match {
-    case (Active, Input) | (Passive, Output) => DataRequest(channelId, value)
-    case (Passive, Input) | (Active, Output) => DataAcknowledge(channelId, value)
+    case (Active, Input) => DataRequest(channelId, value)
+    case (Active, Output) => Request(channelId)
+    case (Passive, Output) => Acknowledge(channelId)
+    case (Passive, Input) => DataAcknowledge(channelId, value)
   }
 }
