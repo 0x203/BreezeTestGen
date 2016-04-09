@@ -3,6 +3,7 @@ package de.hpi.asg.breezetestgen.domain.components.brzcomponents
 
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, BrzComponentBehaviour, HandshakeComponent}
 import de.hpi.asg.breezetestgen.domain.components.BrzComponent._
+import de.hpi.asg.breezetestgen.testing.TestEvent
 
 
 class Concur(id: HandshakeComponent.Id,
@@ -10,7 +11,7 @@ class Concur(id: HandshakeComponent.Id,
              outs: Set[SyncSpec]) extends BrzComponent(id) {
   type Behaviour = ConcurBehaviour
   type C = ConcurBehaviour.ControlState
-  type D = Option[Int]  // number of pending acknowledges
+  type D = Option[ConcurBehaviour.Requests]  // number of pending acknowledges
 
   def behaviour(state: Option[HandshakeComponent.State[C, D]]): Behaviour =
     new ConcurBehaviour(state getOrElse ConcurBehaviour.freshState)
@@ -20,6 +21,8 @@ class Concur(id: HandshakeComponent.Id,
     sealed trait ControlState
     case object Idle extends ControlState
     case object Called extends ControlState
+
+    case class Requests(pending: Int, testEvents: Set[TestEvent])
 
     val freshState: HandshakeComponent.State[ControlState, D] = HandshakeComponent.State(Idle, None)
   }
@@ -33,17 +36,19 @@ class Concur(id: HandshakeComponent.Id,
       case Req(`activate`, _) =>
         info("Requested!")
         outs.foreach{request(_)}
-        goto(Called) using Some(outs.size)
+        goto(Called) using Some(Requests(outs.size, Set.empty))
     }
 
     when(Called) {
-      case Ack(out, Some(i)) if outs contains out =>
+      case Ack(out, Some(Requests(i, testEvents))) if outs contains out =>
+        val newTestEvents = testEvents + testEvent
         if (i != 1) {
           info(s"Channel acknowledged. ${i - 1} still pending...")
-          stay using Option(i - 1)
+          stay using Option(Requests(i - 1, newTestEvents))
         } else {
           info("all finished. acknowledging...")
           acknowledge(activate)
+          mergeAfter(newTestEvents)
           goto(Idle)
         }
     }
