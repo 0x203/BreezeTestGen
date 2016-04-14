@@ -11,6 +11,8 @@ object Main {
                     logLevel: Int = 2,
                     debug: Boolean = false)
 
+  private val context = new TestGenerationContext()
+
   val parser = new scopt.OptionParser[Config]("BrzTestGen") {
     head("BrzTestGen", "0.1")
     opt[Int]("logLevel") action { (x, c) =>
@@ -33,37 +35,10 @@ object Main {
     case Some(config) =>
       Logging.initLogger(config.logLevel, config.logFile, debugMode = config.debug)
       WorkingdirGenerator.getInstance.create(null, null, "BrzTestGenTmp", null)
-      execute(config.breezeFile)
+      context.generateTestsForFile(config.breezeFile)
       WorkingdirGenerator.getInstance.delete()
     case None =>
       sys.exit(-1)
-  }
-
-  private def execute(breezeFile: File) = {
-    logger.info(s"Execute for file: ${breezeFile.getName}")
-    val mainNetlist = BreezeTransformer.parse(breezeFile)
-    //TODO: implement me
-    mainNetlist match {
-      case Some(netlist) =>
-        logger.info(netlist)
-        findTest(netlist)
-      case None => logger.error("Could not parse Netlist")
-    }
-  }
-
-  private def findTest(netlist: domain.Netlist) = {
-    import akka.actor.{ActorSystem, Props}
-    import scala.concurrent.Await
-    import scala.concurrent.duration._
-
-    import actors.TestGenerationActor
-
-    val system = ActorSystem("TestGen")
-    logger.info("Start testfinding...")
-    val testgen = system.actorOf(Props(classOf[TestGenerationActor], netlist))
-    testgen ! TestGenerationActor.Start
-    Await.result(system.whenTerminated, 20 seconds)
-    logger.info("testfinding finished!")
   }
 }
 
