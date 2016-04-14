@@ -1,7 +1,6 @@
 package de.hpi.asg.breezetestgen
 
 import java.io.File
-import de.uni_potsdam.hpi.asg.common.io.WorkingdirGenerator
 
 object Main {
   val logger = Logging.getLogger(this)
@@ -34,9 +33,7 @@ object Main {
   def main (args: Array[String]) = parser.parse(args, Config()) match {
     case Some(config) =>
       Logging.initLogger(config.logLevel, config.logFile, debugMode = config.debug)
-      WorkingdirGenerator.getInstance.create(null, null, "BrzTestGenTmp", null)
       context.generateTestsForFile(config.breezeFile)
-      WorkingdirGenerator.getInstance.delete()
     case None =>
       sys.exit(-1)
   }
