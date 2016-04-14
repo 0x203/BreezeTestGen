@@ -2,7 +2,6 @@ package de.hpi.asg.breezetestgen
 
 import com.typesafe.config._
 import de.hpi.asg.breezetestgen.domain.Netlist
-import de.uni_potsdam.hpi.asg.common.io.WorkingdirGenerator
 
 
 class TestGenerationContext(config: Config) extends Loggable {
@@ -17,7 +16,7 @@ class TestGenerationContext(config: Config) extends Loggable {
 
   def generateTestsForFile(breezeFile: java.io.File) = {
     logger.info(s"Execute for file: ${breezeFile.getName}")
-    val mainNetlist = surroundWithTempDir{ BreezeTransformer.parse(breezeFile) }
+    val mainNetlist = BreezeTransformer.parse(breezeFile)(config)
     mainNetlist match {
       case Some(netlist) =>
         logger.info(netlist)
@@ -40,14 +39,4 @@ class TestGenerationContext(config: Config) extends Loggable {
     Await.result(system.whenTerminated, 20 seconds)
     logger.info("testfinding finished!")
   }
-
-  private def surroundWithTempDir[R](f: => R): R =
-    config.getBoolean("breeze-test-gen.use-tmp-dir") match {
-      case false => f
-      case true =>
-        WorkingdirGenerator.getInstance.create(null, null, "BrzTestGenTmp", null)
-        val r: R = f
-        WorkingdirGenerator.getInstance.delete()
-        r
-    }
 }

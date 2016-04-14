@@ -1,19 +1,12 @@
 package de.hpi.asg.breezetestgen
 
+import com.typesafe.config.ConfigFactory
 import de.hpi.asg.breezetestgen.domain.Netlist
-import de.uni_potsdam.hpi.asg.common.io.WorkingdirGenerator
 
 package object fixtures {
+  implicit val config = ConfigFactory.load()
+
   def breezeFilePath = "/breezefiles/gcd.breeze"
   def breezeFile: java.io.File = new java.io.File(getClass.getResource(breezeFilePath).getPath)
-  def gcdNetlist(): Netlist = {
-    WorkingdirGenerator.getInstance.create(null, null, "BrzTestGenTmp", null)
-    try
-      BreezeTransformer.parse(breezeFile) match {
-        case Some(netlist) => netlist
-        case None => BreezeTransformer.parse(breezeFile).get  //try again for travis
-      }
-    finally
-      WorkingdirGenerator.getInstance.delete()
-  }
+  def gcdNetlist(): Netlist = BreezeTransformer.parse(breezeFile).get
 }

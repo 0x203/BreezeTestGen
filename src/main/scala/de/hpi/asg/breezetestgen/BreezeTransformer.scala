@@ -1,19 +1,21 @@
 package de.hpi.asg.breezetestgen
 
+import com.typesafe.config.Config
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, HandshakeComponent}
 import de.hpi.asg.breezetestgen.domain._
 import de.uni_potsdam.hpi.asg.common.breeze.model._
+import de.uni_potsdam.hpi.asg.common.io.WorkingdirGenerator
 
 /** takes some netlist definition objects from asg.common and transform it to our domain objects */
 object BreezeTransformer {
   //TODO: transform hierarchical netlists, too
 
-  def parse(breezeFile: java.io.File): Option[Netlist] =
+  def parse(breezeFile: java.io.File)(implicit config: Config): Option[Netlist] =
     Option(
       // componentconfig = "": use default component file
       // skipUndefinedComponents = false
       // skipSubComponents = false
-      BreezeProject.create(breezeFile, "", false, false)
+      surroundWithTempDir{ BreezeProject.create(breezeFile, "", false, false) }
     ).flatMap(transformProject)
 
   def transformProject(breezeProject: BreezeProject): Option[Netlist] =
@@ -92,6 +94,16 @@ object BreezeTransformer {
     import collection.JavaConversions.collectionAsScalaIterable
     netlist.getAllHSInstances.map{ComponentExtractors.extract(_)}.map{case c => c.id -> c}.toMap
   }
+
+  private def surroundWithTempDir[R](f: => R)(implicit config: Config): R =
+    config.getBoolean("breeze-test-gen.use-tmp-dir") match {
+      case false => f
+      case true =>
+        WorkingdirGenerator.getInstance.create(null, null, "BrzTestGenTmp", null)
+        val r: R = f
+        WorkingdirGenerator.getInstance.delete()
+        r
+    }
 }
 
 object ComponentExtractors {

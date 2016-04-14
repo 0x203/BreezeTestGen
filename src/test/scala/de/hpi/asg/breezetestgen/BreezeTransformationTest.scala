@@ -1,7 +1,6 @@
 package de.hpi.asg.breezetestgen
 
 import de.hpi.asg.breezetestgen.domain.{Channel, Port, SyncChannel, components}
-import de.uni_potsdam.hpi.asg.common.io.WorkingdirGenerator
 import fixtures._
 
 /** checks weather a parsed .breeze-file is correctly transformed to a netlist */
@@ -10,13 +9,8 @@ class BreezeTransformationTest extends baseclasses.UnitTest {
   val breezeFile: java.io.File = new java.io.File(getClass.getResource(breezeFilePath).getPath)
 
   "The BreezeTransformer" should "read from a .breeze-file and create a netlist" in {
-    WorkingdirGenerator.getInstance.create(null, null, "BrzTestGenTmp", null)
-    try {
-      val netlistOption = BreezeTransformer.parse(breezeFile)
-      assert(netlistOption.isDefined)
-    }
-    finally
-      WorkingdirGenerator.getInstance.delete()
+    val netlistOption = BreezeTransformer.parse(breezeFile)
+    assert(netlistOption.isDefined)
   }
 
   it should "have correct number of ports, channels and components" in {
