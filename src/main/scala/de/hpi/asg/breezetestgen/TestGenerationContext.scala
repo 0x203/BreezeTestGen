@@ -16,7 +16,6 @@ class TestGenerationContext(config: Config) extends Loggable {
   //TODO: specify proper return values and use them
 
   def generateTestsForFile(breezeFile: java.io.File) = {
-    info(config.getString("breeze-test-gen.foo"))
     logger.info(s"Execute for file: ${breezeFile.getName}")
     val mainNetlist = surroundWithTempDir{ BreezeTransformer.parse(breezeFile) }
     mainNetlist match {
