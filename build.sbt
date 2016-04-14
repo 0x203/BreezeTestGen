@@ -22,6 +22,7 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.2.6" % "test", // for testing
   "com.typesafe.akka" %% "akka-testkit" % akkaVersion, // for testing akka actors
   "com.github.scopt" %% "scopt" % "3.4.0",    // for parsing command line options
+  "com.typesafe" % "config" % "1.3.0",  // for painless configuration
   "org.apache.logging.log4j" % "log4j-core" % "2.1",  // for logging compatible with asgcommon
   "org.apache.logging.log4j" % "log4j-api" % "2.1"    //for logging
 )
