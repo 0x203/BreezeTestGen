@@ -21,7 +21,7 @@ class ComponentActor(netlistId: Netlist.Id,
                      infoHub: Option[ActorRef]) extends HandshakeActor {
   import ComponentActor._
   import context.dispatcher
-  implicit val askTimeout = Timeout(3 seconds)
+  implicit val askTimeout = Timeout(5 seconds)
 
   receiue{
     case GetState => sender() ! MyState(netlistId, componentId, component.state)

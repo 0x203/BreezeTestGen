@@ -38,7 +38,7 @@ class NetlistActorSpec extends AkkaIntegrationSpec("NetlistActorSpec") {
     expectMsgClass(classOf[HandshakeActor.Signal])  // bin (or ain)
 
     actor1 ! GetState
-    val maybeState = receiveOne(1 seconds)
+    val maybeState = receiveOne(5 seconds)
     assert(maybeState.isInstanceOf[MyState])
     val myState = maybeState.asInstanceOf[MyState]
     assert(myState.netlistId == extId)
