@@ -62,7 +62,6 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       val (reaction, newState) = possibilities(decision)
       val testEventO = informationHub.handleReaction(reaction)
 
-      //TODO: send this to copies, too
       sender() ! Decision(newState, reaction.signals, testEventO)
   }
 
