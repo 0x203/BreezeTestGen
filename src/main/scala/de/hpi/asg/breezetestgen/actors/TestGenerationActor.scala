@@ -125,9 +125,8 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
     info(s"Current ConstraintCollection: $cc")
     trySolving(cc, tb) match {
       case Some(test) =>
-        info(s"here is a test, anyway: $test")
-        for (edge <- test.edges)
-          println(s"${edge.source} ~> ${edge.target}")
+        import de.hpi.asg.breezetestgen.testing.JsonFromTo
+        info(s"here is a test, anyway: ${JsonFromTo.toJson(test)}")
       case None => info("Not even found a test.")
     }
 
