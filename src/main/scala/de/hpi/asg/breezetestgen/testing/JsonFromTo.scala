@@ -2,11 +2,12 @@ package de.hpi.asg.breezetestgen.testing
 
 import de.hpi.asg.breezetestgen.domain._
 import net.liftweb.json.{CustomSerializer, DefaultFormats}
-import net.liftweb.json.JsonAST.{JField, JInt, JObject, JString}
+import net.liftweb.json.JsonAST._
 import net.liftweb.json.Extraction.decompose
 
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef
+import scalax.collection.io.edge.EdgeParameters
 import scalax.collection.io.json._
 import scalax.collection.io.json.descriptor.predefined.Di
 
@@ -68,6 +69,18 @@ object JsonFromTo {
     }
     ))
 
+  /** format edges as array of two integers: the ids of the TestEvents. Standard behavior generated Strings here  */
+  class EdgeSerializer extends CustomSerializer[EdgeParameters](format => (
+    {
+      case JArray(JInt(nodeId_1) :: JInt(nodeId_2) :: Nil) =>
+        new EdgeParameters(nodeId_1.toString, nodeId_2.toString)
+
+    }, {
+    case EdgeParameters(nodeId_1, nodeId_2) =>
+      JArray(JInt(nodeId_1.toInt) :: JInt(nodeId_2.toInt) :: Nil)
+    })
+  )
+
   private val nodeDescriptor = new NodeDescriptor[TestEventWithID](
     typeId = "TestEvent",
     customSerializers = Seq(new TestEventWithIDSerializer)
@@ -78,8 +91,6 @@ object JsonFromTo {
   }
   private val desc = new Descriptor[TestEventWithID](
     defaultNodeDescriptor = nodeDescriptor,
-    defaultEdgeDescriptor = Di.descriptor[TestEventWithID](),
-    namedNodeDescriptors = Seq(nodeDescriptor),
-    namedEdgeDescriptors = Seq(Di.descriptor[TestEventWithID]())
+    defaultEdgeDescriptor = Di.descriptor[TestEventWithID](Some(new EdgeSerializer))
   )
 }
