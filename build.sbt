@@ -10,7 +10,7 @@ mainClass := Some("de.hpi.asg.breezetestgen.Main")
 resolvers += "jitpack" at "https://jitpack.io"  // for asgcommon
 resolvers += Resolver.sonatypeRepo("public")  //for scopt
 
-val akkaVersion = "2.4.3"
+val akkaVersion = "2.4.6"
 
 libraryDependencies ++= Seq(
   // the following can be found here: https://github.com/hpiasg/asgcommon
