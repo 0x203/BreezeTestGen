@@ -17,8 +17,8 @@ libraryDependencies ++= Seq(
   "com.github.hpiasg" % "asgcommon" % "v1.0",  // Breeze file parsing
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,  // for simulating handshake components
   "org.choco-solver" % "choco-solver" % "3.3.3",  // for constraint solving  (for test generation)
-  "com.assembla.scala-incubator" %% "graph-core" % "1.10.1",  // for BrzTests and netlists
-  "com.assembla.scala-incubator" %% "graph-constrained" % "1.10.1", // for BrzTests
+  "com.assembla.scala-incubator" %% "graph-core" % "1.11.0",  // for BrzTests and netlists
+  "com.assembla.scala-incubator" %% "graph-constrained" % "1.11.0", // for BrzTests
   "org.scalatest" %% "scalatest" % "2.2.6" % "test", // for testing
   "com.typesafe.akka" %% "akka-testkit" % akkaVersion, // for testing akka actors
   "com.github.scopt" %% "scopt" % "3.4.0",    // for parsing command line options
