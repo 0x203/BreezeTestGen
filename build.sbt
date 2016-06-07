@@ -14,7 +14,7 @@ val akkaVersion = "2.4.6"
 
 libraryDependencies ++= Seq(
   // the following can be found here: https://github.com/hpiasg/asgcommon
-  "com.github.hpiasg" % "asgcommon" % "v0.1-alpha",  // Breeze file parsing
+  "com.github.hpiasg" % "asgcommon" % "v1.0",  // Breeze file parsing
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,  // for simulating handshake components
   "org.choco-solver" % "choco-solver" % "3.3.3",  // for constraint solving  (for test generation)
   "com.assembla.scala-incubator" %% "graph-core" % "1.10.1",  // for BrzTests and netlists
