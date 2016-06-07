@@ -124,7 +124,10 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
     val (cc, tb) = informationHub.state
     info(s"Current ConstraintCollection: $cc")
     trySolving(cc, tb) match {
-      case Some(test) => info(s"here is a test, anyway: $test")
+      case Some(test) =>
+        info(s"here is a test, anyway: $test")
+        for (edge <- test.edges)
+          println(s"${edge.source} ~> ${edge.target}")
       case None => info("Not even found a test.")
     }
 
