@@ -1,6 +1,6 @@
 package de.hpi.asg.breezetestgen.testing
 
-import de.hpi.asg.breezetestgen.domain.{Acknowledge, DataAcknowledge, DataRequest, Request}
+import de.hpi.asg.breezetestgen.domain._
 import net.liftweb.json.{CustomSerializer, DefaultFormats}
 import net.liftweb.json.JsonAST.{JField, JInt, JObject, JString}
 import net.liftweb.json.Extraction.decompose
@@ -55,18 +55,16 @@ object JsonFromTo {
     {
       case TestEventWithID(id, _:MergeEvent) =>
         JObject(JField("type", JString("Merge")) :: JField("id", JInt(id)) :: Nil)
-      case TestEventWithID(id, IOEvent(r: Request)) =>
-        val d = decompose(r)
-        JObject(JField("type", JString("Request")) :: JField("id", JInt(id)) :: Nil) merge d
-      case TestEventWithID(id, IOEvent(r: Acknowledge)) =>
-        val d = decompose(r)
-        JObject(JField("type", JString("Acknowledge")) :: JField("id", JInt(id)) :: Nil) merge d
-      case TestEventWithID(id, IOEvent(r: DataRequest)) =>
-        val d = decompose(r)
-        JObject(JField("type", JString("DataRequest")) :: JField("id", JInt(id)) :: Nil) merge d
-      case TestEventWithID(id, IOEvent(r: DataAcknowledge)) =>
-        val d = decompose(r)
-        JObject(JField("type", JString("DataAcknowledge")) :: JField("id", JInt(id)) :: Nil) merge d
+
+      case TestEventWithID(id, IOEvent(s: Signal)) =>
+        val d = decompose(s)
+        val typeString = s match {
+          case _: Request => "Request"
+          case _: Acknowledge => "Acknowledge"
+          case _: DataRequest => "DataRequest"
+          case _: DataAcknowledge => "DataAcknowledge"
+        }
+        JObject(JField("type", JString(typeString)) :: JField("id", JInt(id)) :: Nil) merge d
     }
     ))
 
