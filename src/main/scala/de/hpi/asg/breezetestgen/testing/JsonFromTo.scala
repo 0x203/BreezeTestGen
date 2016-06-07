@@ -1,17 +1,30 @@
 package de.hpi.asg.breezetestgen.testing
 
 import de.hpi.asg.breezetestgen.domain.{Acknowledge, DataAcknowledge, DataRequest, Request}
-import net.liftweb.json.CustomSerializer
-import net.liftweb.json.JsonAST.{JField, JInt, JObject}
+import net.liftweb.json.{CustomSerializer, DefaultFormats}
+import net.liftweb.json.JsonAST.{JField, JInt, JObject, JString}
+import net.liftweb.json.Extraction.decompose
 
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef
 import scalax.collection.io.json._
 import scalax.collection.io.json.descriptor.predefined.Di
 
+
 /** Helps transforming an instance of a test graph to a json representation and the other way round
   */
 object JsonFromTo {
+  def toJson(test: Test): String = {
+    val testWithIds = addIDs(test)
+
+    testWithIds.toJson(desc)
+  }
+
+  def fromJson(test: String): Option[Test] = {
+    None
+  }
+
+  private implicit val formats = DefaultFormats
 
   /** adds an ID to an IOEvent in order to be adresseable by edges */
   private case class TestEventWithID(id: Int, orig: TestEvent)
@@ -33,73 +46,42 @@ object JsonFromTo {
     scalax.collection.Graph[TestEventWithID, DiEdge]() ++ (edges ++ nodeMap.values.map(GraphPredef.OuterNode[TestEventWithID]))
   }
 
-
-  private def idGeneratingDescriptor(): Descriptor[TestEvent] = {
-    val idMap = collection.mutable.Map.empty[TestEvent, Int]
-    val ids = (1 to Int.MaxValue).iterator
-
-    class MergeEventSerializer extends CustomSerializer[MergeEvent](format => (
-      {
-        case JObject(JField("id", JInt(id)) :: Nil) =>
-          idMap.collectFirst{case (me: MergeEvent, i) if i == id => me}.getOrElse{
-            val newMe = new MergeEvent()
-            idMap + (newMe -> ids.next())
-            newMe
-          }
-      },
-      {
-        case x: MergeEvent =>
-          val id: Int = idMap.getOrElseUpdate(x, ids.next)
-          JObject(JField("id", JInt(id)) :: Nil)
-      }
-      ))
-
-    val mergeDescriptor = new NodeDescriptor[MergeEvent](
-      typeId = "MergeEvent",
-      customSerializers = Seq(new MergeEventSerializer)
-    ) {
-      def id(node: Any) = node match {
-        case me: MergeEvent => idMap.getOrElseUpdate(me, ids.next).toString
-      }
+  private class TestEventWithIDSerializer extends CustomSerializer[TestEventWithID](format => (
+    {
+      // TODO: implement extraction of events
+      case JObject(JField("id", JInt(id)) :: Nil) =>
+        TestEventWithID(1, new MergeEvent)
+    },
+    {
+      case TestEventWithID(id, _:MergeEvent) =>
+        JObject(JField("type", JString("Merge")) :: JField("id", JInt(id)) :: Nil)
+      case TestEventWithID(id, IOEvent(r: Request)) =>
+        val d = decompose(r)
+        JObject(JField("type", JString("Request")) :: JField("id", JInt(id)) :: Nil) merge d
+      case TestEventWithID(id, IOEvent(r: Acknowledge)) =>
+        val d = decompose(r)
+        JObject(JField("type", JString("Acknowledge")) :: JField("id", JInt(id)) :: Nil) merge d
+      case TestEventWithID(id, IOEvent(r: DataRequest)) =>
+        val d = decompose(r)
+        JObject(JField("type", JString("DataRequest")) :: JField("id", JInt(id)) :: Nil) merge d
+      case TestEventWithID(id, IOEvent(r: DataAcknowledge)) =>
+        val d = decompose(r)
+        JObject(JField("type", JString("DataAcknowledge")) :: JField("id", JInt(id)) :: Nil) merge d
     }
+    ))
 
-    val ioEventDescriptor = new NodeDescriptor[IOEvent](typeId = "TestEvent"){
-      def id(node: Any) = node match {
-        case IOEvent(Request(cId)) => s"Req($cId)"
-        case IOEvent(Acknowledge(cId)) => s"Ack($cId)"
-        case IOEvent(DataRequest(cId, data)) => s"DataReq($cId, $data)"
-        case IOEvent(DataAcknowledge(cId, data)) => s"DataAck($cId, $data)"
-      }
+  private val nodeDescriptor = new NodeDescriptor[TestEventWithID](
+    typeId = "TestEvent",
+    customSerializers = Seq(new TestEventWithIDSerializer)
+  ){
+    def id(node: Any) = node match {
+      case TestEventWithID(id, _) => id.toString
     }
-
-    new Descriptor[TestEvent](
-      defaultNodeDescriptor = ioEventDescriptor,
-      defaultEdgeDescriptor = Di.descriptor[TestEvent](),
-      namedNodeDescriptors = Seq(mergeDescriptor),
-      namedEdgeDescriptors = Seq(Di.descriptor[TestEvent]())
-    )
   }
-
-
-  def toJson(test: Test): String = {
-    val testWithIds = addIDs(test)
-
-    val nodeDescriptor = new NodeDescriptor[TestEventWithID](typeId = "TestEvent"){
-      def id(node: Any) = node match {
-        case TestEventWithID(id, _) => id.toString
-      }
-    }
-    val desc = new Descriptor[TestEventWithID](
-      defaultNodeDescriptor = nodeDescriptor,
-      defaultEdgeDescriptor = Di.descriptor[TestEventWithID](),
-      namedNodeDescriptors = Seq(nodeDescriptor),
-      namedEdgeDescriptors = Seq(Di.descriptor[TestEventWithID]())
-    )
-
-    testWithIds.toJson(desc)
-  }
-
-  def fromJson(test: String): Option[Test] = {
-    None
-  }
+  private val desc = new Descriptor[TestEventWithID](
+    defaultNodeDescriptor = nodeDescriptor,
+    defaultEdgeDescriptor = Di.descriptor[TestEventWithID](),
+    namedNodeDescriptors = Seq(nodeDescriptor),
+    namedEdgeDescriptors = Seq(Di.descriptor[TestEventWithID]())
+  )
 }
