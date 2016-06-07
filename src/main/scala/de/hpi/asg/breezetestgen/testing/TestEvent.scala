@@ -1,13 +1,8 @@
 package de.hpi.asg.breezetestgen.testing
 
-import de.hpi.asg.breezetestgen.domain.{Constant, Signal}
-import scalax.collection.GraphEdge.DiEdge
+import de.hpi.asg.breezetestgen.domain.Signal
 
-
-sealed trait TestEvent {
-  //TODO: remove this when next version of graph library is released
-  def ~>(other: TestEvent): DiEdge[TestEvent] = DiEdge(this, other)
-}
+sealed trait TestEvent
 
 class MergeEvent() extends TestEvent
 

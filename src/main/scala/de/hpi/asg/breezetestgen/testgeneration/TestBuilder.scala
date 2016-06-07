@@ -7,6 +7,7 @@ import de.hpi.asg.breezetestgen.testing._
 
 import scalax.collection._
 import scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._
 
 
 object TestBuilder {

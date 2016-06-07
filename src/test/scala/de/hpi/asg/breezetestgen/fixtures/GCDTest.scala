@@ -5,6 +5,7 @@ import de.hpi.asg.breezetestgen.testing._
 
 import scalax.collection.immutable.Graph
 import scalax.collection.GraphEdge.DiEdge
+import scalax.collection.GraphPredef._
 
 object GCDTest {
   val netlist = gcdNetlist()
