@@ -9,12 +9,16 @@ import de.hpi.asg.breezetestgen.testgeneration.constraintsolving._
 import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
 import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
 
+import scala.collection.mutable
+
 object TestGenerationActor {
   case object Start
 
   private sealed trait StopReason
   private case object Done extends StopReason
   private case object Error extends StopReason
+
+  case class ResumableRun(infoHubState: InformationHub.State, decision: Decision, inquirer: ActorRef)
 }
 
 class TestGenerationActor(protected val netlist: Netlist) extends Actor with MainNetlistCreator with Loggable {
@@ -27,16 +31,16 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
       val inits = initialRequests(runId)
 
-      informationHub = InformationHub.fromInitialSignals(netlist, inits)
-
-      //TODO decide if infoHub should be own actor
-      netlistActor = newNetlistActor(runId, None, Some(self))
+      val informationHub = InformationHub.fromInitialSignals(netlist, inits)
+      val netlistActor = newNetlistActor(runId, None, Some(self))
+      running = (informationHub, netlistActor)
 
       // send inits out; activate (lowest chanID) first
       sendOutSignals(runId, inits.toSeq.sortBy(_.channelId))
 
     case HandshakeActor.Signal(runId, ds, testEvent) =>
       info(s"Got signal from MainNetlist: $ds")
+      val informationHub = running._1
       val successor = informationHub.newIOEvent(ds, testEvent)
       if(ds == Acknowledge(1))  //stop for other reasons?!
         stop(Done)
@@ -45,6 +49,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
     case nf: NormalFlowReaction =>
       trace("recording normalFlowReaction")
+      val informationHub = running._1
       // reply with TestEvent
       sender() ! informationHub.handleReaction(nf)
     case DecisionRequired(possibilities) =>
@@ -53,21 +58,38 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
       if (ccs.isEmpty) throw new RuntimeException("Cannot handle this yet.")
 
+      val inquirer = sender()
+      val (_, testBuilder, coverage) = running._1.state()
+
+
+      val resumables: Map[ConstraintVariable, ResumableRun] = possibilities.withFilter(ccs.keySet contains _._1).map{case (cv, (reaction, newState)) =>
+        val newInformationHub = new InformationHub(ccs(cv), testBuilder, coverage)
+        val testEventO = newInformationHub.handleReaction(reaction)
+        val decision = Decision(newState, reaction.signals, testEventO)
+        cv -> ResumableRun(newInformationHub.state(), decision, inquirer)
+      }
+
+
       //TODO: instead of deciding one could copy at this point
-      val decision = decide(possibilities.filterKeys(ccs.keySet contains _))
+      val decisionCV = decide(possibilities.filterKeys(ccs.keySet contains _))
 
-      val newCC = ccs(decision)
-      informationHub.cc = newCC
+      // add others to backlog
+      backlog ++= (resumables - decisionCV).map{ case (_, r) =>
+        val i = nextRunId
+        nextRunId -= 1
+        i -> r
+      }
 
-      val (reaction, newState) = possibilities(decision)
-      val testEventO = informationHub.handleReaction(reaction)
-
-      sender() ! Decision(newState, reaction.signals, testEventO)
+      // resume the chosen one
+      val resumable = resumables(decisionCV)
+      running = (InformationHub.fromState(resumable.infoHubState), running._2)
+      resumable.inquirer ! resumable.decision
   }
 
 
-  private var informationHub: InformationHub = _
-  private var netlistActor: ActorRef = _
+  private val backlog = mutable.Map.empty[Netlist.Id, ResumableRun]
+  private var running : (InformationHub, ActorRef) = _
+
   private var nextRunId: Int = -1
 
   private def signalOnPort(port: Port): Signal = port match {
@@ -85,12 +107,12 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
   private def sendOutSignals(runId: Netlist.Id, signals: Traversable[Signal], teO: Option[TestEvent] = None) = {
     signals
       .map{ds => HandshakeActor.Signal(runId, ds, teO getOrElse IOEvent(ds))} // create understandable signals
-      .foreach(netlistActor ! _)  // send them out
+      .foreach(running._2 ! _)  // send them out
   }
 
   private def createFeasibleCCs(possibilities: DecisionPossibilities): Map[ConstraintVariable, ConstraintCollection] =
     possibilities.keys
-      .map{case constraint => constraint -> informationHub.cc.fork().add(List(constraint))}
+      .map{case constraint => constraint -> running._1.cc.fork().add(List(constraint))}
       .filter{case (_, cc) => new ChocoSolver(cc).isFeasible}
       .toMap
 
@@ -113,6 +135,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
   private def mirrorSignal(nlId: Netlist.Id, signal: Signal, testEvent: TestEvent) = {
     val portId = channelIdToPortId(signal.channelId)
     val answerSignal = signalOnPort(netlist.ports(portId))
+    val informationHub = running._1
 
     val followerEvent = informationHub.newIOEvent(answerSignal, testEvent)
     sendOutSignals(nlId, Option(answerSignal), Option(followerEvent))
@@ -120,6 +143,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
   private def stop(reason: StopReason) = {
     info(s"I'm stopping because of: $reason")
+    val informationHub = running._1
 
     val (cc, tb, coverage) = informationHub.state()
     info(s"Current ConstraintCollection: $cc")
