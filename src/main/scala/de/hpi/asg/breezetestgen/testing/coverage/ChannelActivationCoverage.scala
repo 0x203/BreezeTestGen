@@ -17,6 +17,9 @@ case class ChannelActivationCoverage(netlist: Netlist, coveredChannels: Set[Chan
       this.copy(coveredChannels = coveredChannels + signal.channelId)
     }
 
+  def withSignals(signals: Traversable[Signal]): Coverage =
+    this.copy(coveredChannels = coveredChannels ++ signals.map(_.channelId))
+
   def isComplete: Boolean = (allChannels.size - coveredChannels.size) == 0
   def percentageCovered: Double = coveredChannels.size.toDouble * 100 / allChannels.size
 

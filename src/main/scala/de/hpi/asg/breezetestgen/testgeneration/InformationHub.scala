@@ -1,8 +1,9 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
 import constraintsolving.ConstraintCollection
-import de.hpi.asg.breezetestgen.domain.{DataRequest, Signal, SignalWithData}
+import de.hpi.asg.breezetestgen.domain.{DataRequest, Netlist, Signal, SignalWithData}
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.NormalFlowReaction
+import de.hpi.asg.breezetestgen.testing.coverage.{ChannelActivationCoverage, Coverage}
 import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
 
 /** Central place for gathering information during a test/simulation run.
@@ -11,7 +12,7 @@ import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
   * a [[constraintsolving.ConstraintCollection]] and (later) coverage statistics.
   *
   */
-class InformationHub(var cc: ConstraintCollection, testBuilder: TestBuilder) {
+class InformationHub(var cc: ConstraintCollection, testBuilder: TestBuilder, var coverage: Coverage) {
 
   /** records reaction from [[de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour]]
     *
@@ -31,7 +32,7 @@ class InformationHub(var cc: ConstraintCollection, testBuilder: TestBuilder) {
           cc = cc.addConstraint(cons)
       })
 
-    // TODO: extract coverage info from signals
+    coverage = coverage.withSignals(reaction.signals)
 
     reaction.testOp match {
       case Merge(te) => testBuilder.merge(te)
@@ -45,21 +46,24 @@ class InformationHub(var cc: ConstraintCollection, testBuilder: TestBuilder) {
     * @param testEvent  the predecessor
     * @return the freshly created event for further tracking
     */
-  def newIOEvent(signal: Signal, testEvent: TestEvent): TestEvent =
+  def newIOEvent(signal: Signal, testEvent: TestEvent): TestEvent ={
+    coverage = coverage.withSignal(signal)
     testBuilder.addSuccessor(testEvent, IOEvent(signal))
+  }
 
   /** returns the current state, maybe used for duplication or such things later */
   def state = (cc, testBuilder)
 }
 object InformationHub {
-  def fromInitialSignals(initialSignals: Set[Signal]): InformationHub = {
+  def fromInitialSignals(netlist: Netlist, initialSignals: Set[Signal]): InformationHub = {
     new InformationHub(
       ConstraintCollection(
         variables = initialSignals.collect{case DataRequest(_, vd :VariableData) => vd.underlying}
       ),
       TestBuilder.withOrigins(
         initialSignals.map(IOEvent(_))
-      )
+      ),
+      ChannelActivationCoverage.forNetlist(netlist).withSignals(initialSignals)
     )
   }
 }
