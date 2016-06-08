@@ -121,13 +121,13 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
   private def stop(reason: StopReason) = {
     info(s"I'm stopping because of: $reason")
 
-    val (cc, tb) = informationHub.state
+    val (cc, tb, coverage) = informationHub.state()
     info(s"Current ConstraintCollection: $cc")
     TestInstantiator.random(cc, tb) match {
       case Some(test) =>
         import de.hpi.asg.breezetestgen.testing.JsonFromTo
         info(s"here is a test, anyway: ${JsonFromTo.toJson(test)}")
-        info(s"Coverage: ${informationHub.coverage.percentageCovered}")
+        info(s"Coverage: ${coverage.percentageCovered}")
       case None => info("Not even found a test.")
     }
 

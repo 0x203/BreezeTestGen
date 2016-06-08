@@ -52,9 +52,14 @@ class InformationHub(var cc: ConstraintCollection, testBuilder: TestBuilder, var
   }
 
   /** returns the current state, maybe used for duplication or such things later */
-  def state = (cc, testBuilder)
+  def state(): InformationHub.State = (cc, testBuilder.duplicate(), coverage)
 }
 object InformationHub {
+  type State = (ConstraintCollection, TestBuilder, Coverage)
+
+  def fromState(state: State): InformationHub =
+    new InformationHub(state._1, state._2, state._3)
+
   def fromInitialSignals(netlist: Netlist, initialSignals: Set[Signal]): InformationHub = {
     new InformationHub(
       ConstraintCollection(
