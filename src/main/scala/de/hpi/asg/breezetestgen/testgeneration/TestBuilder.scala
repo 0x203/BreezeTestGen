@@ -63,20 +63,12 @@ class TestBuilder private(graph: mutable.Graph[TestEvent, DiEdge]) {
     * @return a test-graph without any placeholders
     */
   def instantiate(f: VariableFixator): Test = {
-    // create a map from all nodes to the placeholder replacements,
-    // i.e. IODataEvents for Placeholders and identity for all others
-    val nodeMap: Map[graph.NodeT, TestEvent] = graph.nodes.map{ x => x -> (x.value match {
-      case IOEvent(x @ DataRequest(_, v: VariableData)) => IOEvent(x.copy(data = f(v.underlying)))
-      case IOEvent(x @ DataAcknowledge(_, v: VariableData)) => IOEvent(x.copy(data = f(v.underlying)))
-      case e => e
-    })}.toMap
-
-    // replace placeholders in all edge definitions
-    val edges: Set[GraphPredef.Param[TestEvent, DiEdge]] = Set() ++ graph.edges.map{
-      e => DiEdge(nodeMap(e.source), nodeMap(e.target)).asInstanceOf[GraphPredef.Param[TestEvent, DiEdge]]
-    }
-
-    // create a new, immutable graph from the edges and nodes
-    immutable.Graph[TestEvent, DiEdge]() ++ (edges ++ nodeMap.values.map(GraphPredef.OuterNode[TestEvent]))
+    de.hpi.asg.breezetestgen.util.Graph.mapNodes[TestEvent, TestEvent](graph,
+      {x: TestEvent => x.value match {
+        case IOEvent(x @ DataRequest(_, v: VariableData)) => IOEvent(x.copy(data = f(v.underlying)))
+        case IOEvent(x @ DataAcknowledge(_, v: VariableData)) => IOEvent(x.copy(data = f(v.underlying)))
+        case e => e
+      }
+    })
   }
 }
