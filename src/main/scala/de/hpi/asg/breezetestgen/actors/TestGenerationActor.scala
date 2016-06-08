@@ -5,7 +5,7 @@ import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.domain._
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour._
 import de.hpi.asg.breezetestgen.testgeneration.{InformationHub, TestBuilder, VariableData, constraintsolving}
-import constraintsolving.{ChocoSolver, ConstraintCollection, ConstraintVariable, Variable}
+import de.hpi.asg.breezetestgen.testgeneration.constraintsolving._
 import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
 import de.hpi.asg.breezetestgen.testing.{IOEvent, Test, TestEvent}
 
@@ -123,7 +123,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
     val (cc, tb) = informationHub.state
     info(s"Current ConstraintCollection: $cc")
-    trySolving(cc, tb) match {
+    TestInstantiator.random(cc, tb) match {
       case Some(test) =>
         import de.hpi.asg.breezetestgen.testing.JsonFromTo
         info(s"here is a test, anyway: ${JsonFromTo.toJson(test)}")
@@ -135,10 +135,4 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
     context.system.terminate()
   }
 
-  private def trySolving(cc: ConstraintCollection, tb: TestBuilder): Option[Test] = {
-    val solver = new ChocoSolver(cc)
-    if(solver.isFeasible) {
-      Option(tb.instantiate(solver.next.apply))
-    } else None
-  }
 }
