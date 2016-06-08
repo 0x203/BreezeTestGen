@@ -7,6 +7,7 @@ import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour._
 import de.hpi.asg.breezetestgen.testgeneration.{InformationHub, TestBuilder, VariableData, constraintsolving}
 import de.hpi.asg.breezetestgen.testgeneration.constraintsolving._
 import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
+import de.hpi.asg.breezetestgen.testing.coverage.{ChannelActivationCoverage, Coverage}
 import de.hpi.asg.breezetestgen.testing.{IOEvent, Test, TestEvent}
 
 object TestGenerationActor {
@@ -27,6 +28,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
       val inits = initialRequests(runId)
 
+      coverage = ChannelActivationCoverage.forNetlist(netlist)
       informationHub = InformationHub.fromInitialSignals(inits)
 
       //TODO decide if infoHub should be own actor
@@ -37,6 +39,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
     case HandshakeActor.Signal(runId, ds, testEvent) =>
       info(s"Got signal from MainNetlist: $ds")
+      coverage = coverage.withSignal(ds)
       val successor = informationHub.newIOEvent(ds, testEvent)
       if(ds == Acknowledge(1))  //stop for other reasons?!
         stop(Done)
@@ -45,6 +48,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
     case nf: NormalFlowReaction =>
       trace("recording normalFlowReaction")
+      nf.signals.foreach{signal => coverage = coverage.withSignal(signal)}
       // reply with TestEvent
       sender() ! informationHub.handleReaction(nf)
     case DecisionRequired(possibilities) =>
@@ -68,6 +72,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
   private var informationHub: InformationHub = _
   private var netlistActor: ActorRef = _
+  private var coverage: Coverage = _
   private var nextRunId: Int = -1
 
   private def signalOnPort(port: Port): Signal = port match {
@@ -84,6 +89,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
   private def sendOutSignals(runId: Netlist.Id, signals: Traversable[Signal], teO: Option[TestEvent] = None) = {
     signals
+      .map{ds => coverage = coverage.withSignal(ds); ds}
       .map{ds => HandshakeActor.Signal(runId, ds, teO getOrElse IOEvent(ds))} // create understandable signals
       .foreach(netlistActor ! _)  // send them out
   }
@@ -127,6 +133,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       case Some(test) =>
         import de.hpi.asg.breezetestgen.testing.JsonFromTo
         info(s"here is a test, anyway: ${JsonFromTo.toJson(test)}")
+        info(s"Coverage: ${coverage.percentageCovered}")
       case None => info("Not even found a test.")
     }
 

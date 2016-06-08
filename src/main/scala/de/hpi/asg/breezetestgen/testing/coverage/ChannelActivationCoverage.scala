@@ -1,0 +1,24 @@
+package de.hpi.asg.breezetestgen.testing.coverage
+
+import de.hpi.asg.breezetestgen.domain.{Channel, Netlist, Signal, SignalFromPassive}
+
+object ChannelActivationCoverage {
+  def forNetlist(netlist: Netlist): ChannelActivationCoverage =
+    ChannelActivationCoverage(netlist, Set.empty)
+}
+
+case class ChannelActivationCoverage(netlist: Netlist, coveredChannels: Set[Channel.Id]) extends Coverage {
+  private def allChannels = netlist.channels.keySet
+
+  def withSignal(signal: Signal): Coverage =
+    if (isCovered(signal) || signal.isInstanceOf[SignalFromPassive]) {
+      this
+    } else {
+      this.copy(coveredChannels = coveredChannels + signal.channelId)
+    }
+
+  def isComplete: Boolean = (allChannels.size - coveredChannels.size) == 0
+  def percentageCovered: Double = coveredChannels.size.toDouble * 100 / allChannels.size
+
+  def isCovered(signal: Signal): Boolean = coveredChannels contains signal.channelId
+}
