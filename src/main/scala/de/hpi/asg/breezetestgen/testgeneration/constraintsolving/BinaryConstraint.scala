@@ -20,7 +20,7 @@ case class BinaryConstraint(a: Variable,
     case Right(c) => c.toString
   }
 
-  def asString: String = s"${a.name} $operator $rightString"
+  override def toString: String = s"(${a.name}) $operator $rightString"
 
   def opposite(): BinaryConstraint = this.copy(op = op.opposite)
 }

@@ -9,5 +9,5 @@ package de.hpi.asg.breezetestgen.testgeneration.constraintsolving
    * @param reifyWith an optional [[BoolVariable]] used for reification of this constraint
   */
 abstract class Constraint(val reifyWith: Option[BoolVariable]) {
-  def asString: String
+  def toString: String
 }
