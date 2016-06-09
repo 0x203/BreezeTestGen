@@ -23,8 +23,8 @@ case class ConstraintCollection(parent: Option[ConstraintCollection] = None,
       variables = cvs.collect{case v: VariableCV => v.v}.toSet -- allVariables ++ variables
   )
 
-  def allVariables: Set[Variable] = parent.map(_.variables).getOrElse(Set.empty) ++ variables
-  def allConstraints: Set[Constraint] =  parent.map(_.constraints).getOrElse(Set.empty) ++ constraints
+  def allVariables: Set[Variable] = parent.map(_.allVariables).getOrElse(Set.empty) ++ variables
+  def allConstraints: Set[Constraint] =  parent.map(_.allConstraints).getOrElse(Set.empty) ++ constraints
 
   def fork(): ConstraintCollection = ConstraintCollection(Some(this))
 }
