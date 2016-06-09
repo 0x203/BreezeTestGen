@@ -9,6 +9,9 @@ trait Data {
   def isFalsy: Data.ConstraintOrBool
   def isTruthy: Data.ConstraintOrBool
 
+  def isEqual(o: Data): Data.ConstraintOrBool
+  def isEqualConst(o: Constant): Data.ConstraintOrBool = isEqual(o)
+
   def selectBits(range: Range): Data
 
   private val domainSize: Int =  math.pow(2, bitCount).toInt

@@ -20,7 +20,6 @@ class InformationHub(var cc: ConstraintCollection, testBuilder: TestBuilder, var
     * @return a [[TestEvent]] for further building of tests, if a [[TestOp]] was specified
     */
   def handleReaction(reaction: NormalFlowReaction): TestEvent = {
-    //cc = cc.add(reaction.constraintVariables)
     reaction.signals
       .collect{case dataSignal: SignalWithData => dataSignal.data}
       .collect{case vd: VariableData => vd}

@@ -13,6 +13,11 @@ class VariableData(private[testgeneration] val underlying: Variable,
   def isFalsy = Left(BinaryConstraint(underlying, Equals, 0))
   def isTruthy = Left(BinaryConstraint(underlying, NotEquals, 0))
 
+  def isEqual(o: Data): Data.ConstraintOrBool = Left(o match {
+    case c: Constant => BinaryConstraint(underlying, Equals, c.value)
+    case vd: VariableData => BinaryConstraint(underlying, Equals, vd.underlying)
+  })
+
   def plus(o: Data): VariableData = arithOp(Plus, o)
   def minus(o: Data): VariableData = arithOp(Minus, o)
   def and(o: Data): VariableData = arithOp(And, o)

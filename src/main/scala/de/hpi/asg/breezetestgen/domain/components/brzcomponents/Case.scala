@@ -7,7 +7,7 @@ import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, BrzComponentBeh
 object Case {
   case class Selector(indices: Map[Int, Int], ranges: Map[Range, Int], left: Set[Int]) {
     private def equalConstraint(reference: Data, value: Int): Data.ConstraintOrBool =
-      (reference === Constant(value)).isTruthy
+      reference.isEqual(Constant(value))
 
     def usableValueConstraints(reference: Data): Map[Data.ConstraintOrBool, Int] = {
       val directMaps = indices.map{case (value, index) =>

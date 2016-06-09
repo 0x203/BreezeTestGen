@@ -17,6 +17,9 @@ case class Constant(v: Constant.Underlying, bitCount: Int = 8, isSigned: Boolean
   def isTruthy = Right(value != 0)
   def isFalsy = Right(value == 0)
 
+  def isEqual(o: Data): Data.ConstraintOrBool = o.isEqualConst(this)
+  override def isEqualConst(o: Constant): Data.ConstraintOrBool = Right(o.value == value)
+
   def plus(o: Data): Data = o.plusConst(this)
   def minus(o: Data): Data = o.constMinus(this)
 
