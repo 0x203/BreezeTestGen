@@ -6,10 +6,10 @@ import akka.util.Timeout
 
 import concurrent.duration._
 import concurrent.Future
-import de.hpi.asg.breezetestgen.actors.HandshakeActor.{GetState, MyState, Signal}
+import de.hpi.asg.breezetestgen.actors.HandshakeActor.{DecisionRequired, GetState, MyState, Signal}
 import de.hpi.asg.breezetestgen.domain
-import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.{DecisionRequired, NormalFlowReaction}
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponentBehaviour, HandshakeComponent}
+import BrzComponentBehaviour.NormalFlowReaction
 import de.hpi.asg.breezetestgen.domain.{Netlist, SignalFromActive, SignalFromPassive}
 import de.hpi.asg.breezetestgen.testing.TestEvent
 
@@ -26,7 +26,7 @@ class ComponentActor(idChain: List[Netlist.Id],
   receiue{
     case GetState => sender() ! MyState(idChain, componentId, component.state)
 
-    case Decision(newState, domainSignals, testEvent) =>
+    case Decision(_, `componentId`, newState, domainSignals, testEvent) =>
       info(s"$componentId: Got Decision: $newState; $domainSignals; $testEvent")
       component.state = newState
       for(ds <- domainSignals)
@@ -38,13 +38,13 @@ class ComponentActor(idChain: List[Netlist.Id],
 
     component.handleSignal(ds, testEvent) match {
       case nf: NormalFlowReaction => handleNormalFlow(testEvent, nf)
-      case dr: DecisionRequired => handleDecisionRequired(testEvent, dr)
+      case dr: BrzComponentBehaviour.DecisionRequired => handleDecisionRequired(testEvent, dr)
     }
   }
 
-  private def handleDecisionRequired(testEvent: TestEvent, dr: DecisionRequired) = {
+  private def handleDecisionRequired(testEvent: TestEvent, ddr: BrzComponentBehaviour.DecisionRequired) = {
     infoHub match {
-      case Some(hub) => hub ! dr
+      case Some(hub) => hub ! DecisionRequired(idChain, componentId, ddr)
       case None =>
           error(s"$componentId: No InformationHub given, but DecisionRequired!")
           context.stop(self)
@@ -70,5 +70,9 @@ class ComponentActor(idChain: List[Netlist.Id],
 }
 
 object ComponentActor {
-  case class Decision(newState: HandshakeComponent.State[_, _], domainSignals: Set[domain.Signal], testEvent: TestEvent)
+  case class Decision(idChain: List[Netlist.Id],
+                      componentId: HandshakeComponent.Id,
+                      newState: HandshakeComponent.State[_, _],
+                      domainSignals: Set[domain.Signal],
+                      testEvent: TestEvent)
 }

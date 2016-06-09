@@ -2,6 +2,7 @@ package de.hpi.asg.breezetestgen.actors
 
 import akka.actor.{ActorRef, Props}
 import de.hpi.asg.breezetestgen.Loggable
+import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
 import de.hpi.asg.breezetestgen.actors.HandshakeActor.{GetState, MyState}
 import de.hpi.asg.breezetestgen.domain
 import de.hpi.asg.breezetestgen.domain.Channel.{CompEndpoint, PortEndpoint}
@@ -121,6 +122,14 @@ class NetlistActor(netlist: domain.Netlist,
             Netlist.State(collection.immutable.Map.empty ++ componentStates)
         )
         componentStates = freshComponentStates()
+      }
+
+    case Decision(netlist.id :: tail, componentId, ns, ds, te) =>
+      if (tail.isEmpty) {
+        componentActors(componentId) ! Decision(Nil, componentId, ns, ds, te)
+      } else {
+        //TODO: imeplement me for hirarchical netlists
+        throw new NotImplementedError()
       }
   }
 }

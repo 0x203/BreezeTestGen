@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, FSM}
 import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent
 import de.hpi.asg.breezetestgen.{Loggable, domain}
 import de.hpi.asg.breezetestgen.testing.TestEvent
-import domain.{Channel, Netlist, SignalFromActive, SignalFromPassive}
+import domain.{Channel, Netlist}
 
 object HandshakeActor {
   type ChannelMap = Channel.Id => Channel[ActorRef]
@@ -15,6 +15,9 @@ object HandshakeActor {
   case object Initialized extends States
 
   case class Signal(idChain: List[Netlist.Id], domainSignal: domain.Signal, testEvent: TestEvent)
+  case class DecisionRequired(idChain: List[Netlist.Id],
+                              componentId: HandshakeComponent.Id,
+                              domainDR: domain.components.BrzComponentBehaviour.DecisionRequired)
 
   case object GetState
   case class MyState(idChain: List[Netlist.Id], id: HandshakeComponent.Id, state: HandshakeComponent.State[_, _])

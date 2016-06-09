@@ -3,11 +3,11 @@ package de.hpi.asg.breezetestgen.actors
 import akka.actor.{Actor, ActorRef}
 import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.domain._
-import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour._
 import de.hpi.asg.breezetestgen.testgeneration.{InformationHub, VariableData}
 import de.hpi.asg.breezetestgen.testgeneration.constraintsolving._
 import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
 import de.hpi.asg.breezetestgen.actors.HandshakeActor.{GetState, MyState}
+import components.BrzComponentBehaviour.{DecisionPossibilities, DecisionRequired, NormalFlowReaction}
 import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
 
 import scala.collection.mutable
@@ -19,8 +19,7 @@ object TestGenerationActor {
   private case object Done extends StopReason
   private case object Error extends StopReason
 
-  case class ResumableRun(infoHubState: InformationHub.State, decision: Decision, inquirer: ActorRef,
-                          netlistState: Option[Netlist.State])
+  case class ResumableRun(infoHubState: InformationHub.State, decision: Decision, netlistState: Option[Netlist.State])
 }
 
 class TestGenerationActor(protected val netlist: Netlist) extends Actor with MainNetlistCreator with Loggable {
@@ -54,13 +53,12 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       val informationHub = running._1
       // reply with TestEvent
       sender() ! informationHub.handleReaction(nf)
-    case DecisionRequired(possibilities) =>
+    case HandshakeActor.DecisionRequired(idChain, componentId, DecisionRequired(possibilities)) =>
       info(s"DecisionRequired: ${possibilities.keys}")
       val ccs = createFeasibleCCs(possibilities)
 
       if (ccs.isEmpty) throw new RuntimeException("Cannot handle this yet.")
 
-      val inquirer = sender()
       val (infoHub, mainNetlistActor) = running
       val (_, testBuilder, coverage) = infoHub.state()
 
@@ -69,8 +67,8 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       val resumables: Map[ConstraintVariable, ResumableRun] = possibilities.withFilter(ccs.keySet contains _._1).map{case (cv, (reaction, newState)) =>
         val newInformationHub = new InformationHub(ccs(cv), testBuilder, coverage)
         val testEventO = newInformationHub.handleReaction(reaction)
-        val decision = Decision(newState, reaction.signals, testEventO)
-        cv -> ResumableRun(newInformationHub.state(), decision, inquirer, None)
+        val decision = Decision(idChain.tail, componentId, newState, reaction.signals, testEventO)
+        cv -> ResumableRun(newInformationHub.state(), decision, None)
       }
 
       info(s"created ${resumables.size} resumables, will decide for one")
@@ -98,13 +96,11 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       // resume the chosen one
       val resumable = resumable2BContinued
       info("continue with resumable")
-      running = running.copy(_1 =InformationHub.fromState(resumable.infoHubState))
+      val netlistActor = running._2
+      running = (InformationHub.fromState(resumable.infoHubState), netlistActor)
 
       info("send decision to inquirer")
-      info(s"inquirer is ${resumable.inquirer}")
-      info(s"mnetlist is ${running._2}")
-      resumable.inquirer ! resumable.decision
-
+      netlistActor ! resumable.decision
   }
 
   private var resumable2BContinued: ResumableRun = _
@@ -205,7 +201,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
     running = (newInfoHub, netlistActor)
 
-    resumableRun.inquirer ! resumableRun.decision
+    netlistActor ! resumableRun.decision
   }
 
   private def stop(reason: StopReason) = {
