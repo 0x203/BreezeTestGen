@@ -19,9 +19,9 @@ object ChocoSolver {
       case bv: BoolVariable => bv -> VF.bool(bv.name, solver)
     }.toMap
 
-    val variables: Map[Variable, V] = cc.allVariables.filterNot(_.isInstanceOf[BoolVariable]).map{
+    val variables: Map[Variable, V] = boolVariables ++  cc.allVariables.filterNot(_.isInstanceOf[BoolVariable]).map{
       case v: Variable => v -> VF.enumerated(v.name, v.minValue, v.maxValue, solver)
-    }.toMap ++ boolVariables
+    }.toMap
 
     val postOrReify = (c: C,r: Option[BoolVariable]) => r match {
       case Some(v) => c.reifyWith(boolVariables(v))

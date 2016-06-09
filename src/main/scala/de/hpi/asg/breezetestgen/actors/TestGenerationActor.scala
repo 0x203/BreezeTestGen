@@ -7,6 +7,7 @@ import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour._
 import de.hpi.asg.breezetestgen.testgeneration.{InformationHub, VariableData}
 import de.hpi.asg.breezetestgen.testgeneration.constraintsolving._
 import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
+import de.hpi.asg.breezetestgen.actors.HandshakeActor.{GetState, MyState}
 import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
 
 import scala.collection.mutable
@@ -18,7 +19,8 @@ object TestGenerationActor {
   private case object Done extends StopReason
   private case object Error extends StopReason
 
-  case class ResumableRun(infoHubState: InformationHub.State, decision: Decision, inquirer: ActorRef)
+  case class ResumableRun(infoHubState: InformationHub.State, decision: Decision, inquirer: ActorRef,
+                          netlistState: Option[Netlist.State])
 }
 
 class TestGenerationActor(protected val netlist: Netlist) extends Actor with MainNetlistCreator with Loggable {
@@ -43,7 +45,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       val informationHub = running._1
       val successor = informationHub.newIOEvent(ds, testEvent)
       if(ds == Acknowledge(1))  //stop for other reasons?!
-        stop(Done)
+        testFinished()
       else
         mirrorSignal(runId, ds, successor)
 
@@ -59,14 +61,16 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       if (ccs.isEmpty) throw new RuntimeException("Cannot handle this yet.")
 
       val inquirer = sender()
-      val (_, testBuilder, coverage) = running._1.state()
+      val (infoHub, mainNetlistActor) = running
+      val (_, testBuilder, coverage) = infoHub.state()
 
+      mainNetlistActor ! GetState
 
       val resumables: Map[ConstraintVariable, ResumableRun] = possibilities.withFilter(ccs.keySet contains _._1).map{case (cv, (reaction, newState)) =>
         val newInformationHub = new InformationHub(ccs(cv), testBuilder, coverage)
         val testEventO = newInformationHub.handleReaction(reaction)
         val decision = Decision(newState, reaction.signals, testEventO)
-        cv -> ResumableRun(newInformationHub.state(), decision, inquirer)
+        cv -> ResumableRun(newInformationHub.state(), decision, inquirer, None)
       }
 
 
@@ -74,19 +78,26 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       val decisionCV = decide(possibilities.filterKeys(ccs.keySet contains _))
 
       // add others to backlog
-      backlog ++= (resumables - decisionCV).map{ case (_, r) =>
+      val others = (resumables - decisionCV).map{ case (_, r) =>
         val i = nextRunId
         nextRunId -= 1
         i -> r
       }
+      waitingForState = others.keySet
+      backlog ++= others
 
       // resume the chosen one
       val resumable = resumables(decisionCV)
       running = (InformationHub.fromState(resumable.infoHubState), running._2)
       resumable.inquirer ! resumable.decision
+
+    case MyState(runId, _, state: Netlist.State) =>
+      for(stateAwaiter <- waitingForState) {
+        backlog.update(stateAwaiter, backlog(stateAwaiter).copy(netlistState = Option(state)))
+      }
   }
 
-
+  private var waitingForState: Set[Netlist.Id] = _
   private val backlog = mutable.Map.empty[Netlist.Id, ResumableRun]
   private var running : (InformationHub, ActorRef) = _
 
@@ -139,6 +150,48 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
     val followerEvent = informationHub.newIOEvent(answerSignal, testEvent)
     sendOutSignals(nlId, Option(answerSignal), Option(followerEvent))
+  }
+
+  var gencount = 2
+  private def testFinished(): Unit = {
+    info("A Test finished.")
+    gencount -= 1
+    if(gencount == 0) {
+      stop(Done)
+    } else {
+      val informationHub = running._1
+
+      val (cc, tb, coverage) = informationHub.state()
+      info(s"Current ConstraintCollection: $cc")
+      val generatedTestO = TestInstantiator.random(cc, tb) match {
+        case Some(test) =>
+          import de.hpi.asg.breezetestgen.testing.JsonFromTo
+          info(s"here is a test, anyway: ${JsonFromTo.toJson(test)}")
+          info(s"Coverage: ${coverage.percentageCovered}")
+        case None => info("Not even found a test.")
+      }
+
+      if (backlog.isEmpty) {
+        stop(Done)
+      } else {
+        val (id, resumable) = backlog.head
+        resumeTest(id, resumable)
+      }
+
+    }
+  }
+
+  private def resumeTest(id: Netlist.Id, resumableRun: ResumableRun): Unit = {
+    info(s"resuming test with id $id")
+    backlog.remove(id)
+
+    val newInfoHub = InformationHub.fromState(resumableRun.infoHubState)
+    info(s"resumed infohub-state: ${newInfoHub.state()}")
+    val netlistActor = newNetlistActor(id, resumableRun.netlistState, Some(self))
+
+    running = (newInfoHub, netlistActor)
+
+    resumableRun.inquirer ! resumableRun.decision
   }
 
   private def stop(reason: StopReason) = {
