@@ -40,11 +40,14 @@ class TestBuilder private(graph: mutable.Graph[TestEvent, DiEdge]) {
   def addSuccessor(n: TestEvent, s: IOEvent): TestEvent = graph.addAndGet(n ~> s).target
 
   /** returns a nodeId which represents a state where all given nodes are processed */
-  def merge(ns: Set[TestEvent]) = {
-    val m = new MergeEvent()
-    graph ++= ns.map{_ ~> m}
-    m
-  }
+  def merge(ns: Set[TestEvent]) =
+    if (ns.size > 1) {
+      val m = new MergeEvent()
+      graph ++= ns.map{_ ~> m}
+      m
+    } else {
+      ns.head
+    }
 
   /** returns another TestBuilder with the exact same internal state
     *
