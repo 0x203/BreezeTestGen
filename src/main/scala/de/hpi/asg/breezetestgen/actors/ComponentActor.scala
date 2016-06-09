@@ -25,7 +25,9 @@ class ComponentActor(netlistId: Netlist.Id,
 
   receiue{
     case GetState => sender() ! MyState(netlistId, componentId, component.state)
+
     case Decision(newState, domainSignals, testEvent) =>
+      info(s"$componentId: Got Decision: $newState; $domainSignals; $testEvent")
       component.state = newState
       for(ds <- domainSignals)
         receiverOf(ds) ! Signal(netlistId, ds, testEvent)
@@ -44,7 +46,7 @@ class ComponentActor(netlistId: Netlist.Id,
     infoHub match {
       case Some(hub) => hub ! dr
       case None =>
-          error("No InformationHub given, but DecisionRequired!")
+          error(s"$componentId: No InformationHub given, but DecisionRequired!")
           context.stop(self)
     }
   }

@@ -25,11 +25,11 @@ class Sequence(id: HandshakeComponent.Id,
   class SequenceBehaviour(initState: HandshakeComponent.State[C, D]) extends BrzComponentBehaviour[C, D](initState) {
     import SequenceBehaviour._
 
-    info(s"SequenceBehaviour created in state: $initState")
+    info(s"$id: SequenceBehaviour created in state: $initState")
 
     when(Idle) {
       case Req(`activate`, _) =>
-        info("Requested!")
+        info(s"$id: Requested!")
         request(outs.head)
         goto(Called) using Some(0)
     }
@@ -39,11 +39,11 @@ class Sequence(id: HandshakeComponent.Id,
         val next_i = i + 1
         if (next_i == outs.length) {
           acknowledge(activate)
-          info("all finished. acknowledging...")
+          info(s"$id: all finished. acknowledging...")
           goto(Idle)
         } else {
           request(outs(next_i))
-          info(s"$next_i of ${outs.length} finished. requesting next...")
+          info(s"$id: $next_i of ${outs.length} finished. requesting next...")
           stay using Some(next_i)
         }
     }

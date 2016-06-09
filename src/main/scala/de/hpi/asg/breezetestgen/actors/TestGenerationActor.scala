@@ -73,6 +73,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
         cv -> ResumableRun(newInformationHub.state(), decision, inquirer, None)
       }
 
+      info(s"created ${resumables.size} resumables, will decide for one")
 
       //TODO: instead of deciding one could copy at this point
       val decisionCV = decide(possibilities.filterKeys(ccs.keySet contains _))
@@ -86,17 +87,27 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       waitingForState = others.keySet
       backlog ++= others
 
-      // resume the chosen one
-      val resumable = resumables(decisionCV)
-      running = (InformationHub.fromState(resumable.infoHubState), running._2)
-      resumable.inquirer ! resumable.decision
+      resumable2BContinued = resumables(decisionCV)
 
     case MyState(runId, _, state: Netlist.State) =>
+      info(s"Got state of main netlist:$runId: $state")
       for(stateAwaiter <- waitingForState) {
         backlog.update(stateAwaiter, backlog(stateAwaiter).copy(netlistState = Option(state)))
       }
+
+      // resume the chosen one
+      val resumable = resumable2BContinued
+      info("continue with resumable")
+      running = running.copy(_1 =InformationHub.fromState(resumable.infoHubState))
+
+      info("send decision to inquirer")
+      info(s"inquirer is ${resumable.inquirer}")
+      info(s"mnetlist is ${running._2}")
+      resumable.inquirer ! resumable.decision
+
   }
 
+  private var resumable2BContinued: ResumableRun = _
   private var waitingForState: Set[Netlist.Id] = _
   private val backlog = mutable.Map.empty[Netlist.Id, ResumableRun]
   private var running : (InformationHub, ActorRef) = _
@@ -155,11 +166,13 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
   var gencount = 2
   private def testFinished(): Unit = {
     info("A Test finished.")
+    val (informationHub, netlistActor) = running
+    context.stop(netlistActor)
+
     gencount -= 1
     if(gencount == 0) {
       stop(Done)
     } else {
-      val informationHub = running._1
 
       val (cc, tb, coverage) = informationHub.state()
       info(s"Current ConstraintCollection: $cc")
@@ -187,6 +200,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
     val newInfoHub = InformationHub.fromState(resumableRun.infoHubState)
     info(s"resumed infohub-state: ${newInfoHub.state()}")
+    info(s"resumed netlistState: ${resumableRun.netlistState}")
     val netlistActor = newNetlistActor(id, resumableRun.netlistState, Some(self))
 
     running = (newInfoHub, netlistActor)
