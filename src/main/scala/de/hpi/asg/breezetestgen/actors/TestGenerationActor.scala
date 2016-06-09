@@ -160,7 +160,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
     sendOutSignals(nlId, Option(answerSignal), Option(followerEvent))
   }
 
-  var gencount = 2
+  var gencount = 5
   private def testFinished(): Unit = {
     info("A Test finished.")
     val (informationHub, netlistActor) = running
