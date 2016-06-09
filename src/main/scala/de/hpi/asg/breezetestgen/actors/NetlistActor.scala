@@ -17,7 +17,7 @@ class NetlistActor(netlist: domain.Netlist,
                    infoHub: Option[ActorRef]) extends HandshakeActor with Loggable {
   info(s"NetlistActor created for netlist id ${netlist.id}")
 
-  private val internalIdChain = netlist.id :: idChain
+  private val internalIdChain = idChain :+ netlist.id
 
   private val componentActors = netlist.components
     .mapValues(createBehaviour)
