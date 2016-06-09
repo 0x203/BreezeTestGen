@@ -14,10 +14,10 @@ object HandshakeActor {
   case object Uninitialized extends States
   case object Initialized extends States
 
-  case class Signal(netlist: Netlist.Id, domainSignal: domain.Signal, testEvent: TestEvent)
+  case class Signal(idChain: List[Netlist.Id], domainSignal: domain.Signal, testEvent: TestEvent)
 
   case object GetState
-  case class MyState(netlistId: Netlist.Id, id: HandshakeComponent.Id, state: HandshakeComponent.State[_, _])
+  case class MyState(idChain: List[Netlist.Id], id: HandshakeComponent.Id, state: HandshakeComponent.State[_, _])
 }
 
 abstract class HandshakeActor extends FSM[HandshakeActor.States, HandshakeActor.ChannelMap] with Loggable {
@@ -32,9 +32,9 @@ abstract class HandshakeActor extends FSM[HandshakeActor.States, HandshakeActor.
   }
 
   when(Initialized) {
-    case Event(Signal(netlist, domainSignal, testEvent), _) =>
+    case Event(Signal(idChain, domainSignal, testEvent), _) =>
       trace("received something in Initialized state")
-      handleSignal(netlist, domainSignal, testEvent)
+      handleSignal(idChain, domainSignal, testEvent)
       stay()
   }
 
@@ -50,5 +50,5 @@ abstract class HandshakeActor extends FSM[HandshakeActor.States, HandshakeActor.
 
   protected def channels: ChannelMap = stateData
 
-  protected def handleSignal(netlist: Netlist.Id, ds: domain.Signal, testEvent: TestEvent)
+  protected def handleSignal(idChain: List[Netlist.Id], ds: domain.Signal, testEvent: TestEvent)
 }

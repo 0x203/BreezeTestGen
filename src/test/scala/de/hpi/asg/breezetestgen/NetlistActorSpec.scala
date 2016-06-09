@@ -10,7 +10,7 @@ import fixtures.gcdNetlist
 
 class NetlistActorSpec extends AkkaIntegrationSpec("NetlistActorSpec") {
   val netlist = gcdNetlist()
-  val extId = -1
+  val extId = -1 :: Nil
   val portConnections = netlist.ports.values.map{p => p.id -> p.channelId}.toMap[Port.Id, Channel.Id]
 
   val freshState = Netlist.State(netlist.components.mapValues(_.behaviour(None).state))
@@ -22,7 +22,7 @@ class NetlistActorSpec extends AkkaIntegrationSpec("NetlistActorSpec") {
 
   def assertState(uut: ActorRef, state: Netlist.State) = {
     uut ! GetState
-    expectMsg(MyState(extId, netlist.id, state))
+    expectMsg(MyState(extId , netlist.id, state))
   }
 
   "A NetlistActor" should "create all components in fresh state" in {
@@ -41,7 +41,7 @@ class NetlistActorSpec extends AkkaIntegrationSpec("NetlistActorSpec") {
     val maybeState = receiveOne(5 seconds)
     assert(maybeState.isInstanceOf[MyState])
     val myState = maybeState.asInstanceOf[MyState]
-    assert(myState.netlistId == extId)
+    assert(myState.idChain == extId)
     assert(myState.id == netlist.id)
 
     system.stop(actor1)

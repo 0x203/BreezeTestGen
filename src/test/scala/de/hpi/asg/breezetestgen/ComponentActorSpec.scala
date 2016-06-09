@@ -10,7 +10,7 @@ import de.hpi.asg.breezetestgen.domain.components.brzcomponents.Fetch
 import de.hpi.asg.breezetestgen.testing.IOEvent
 
 class ComponentActorSpec extends AkkaIntegrationSpec("ComponentActorSpec") {
-  val nlId = 0
+  val nlId = 0 :: Nil
   val compId = 1
   val (aChan, iChan, oChan) = (5, 6, 7)
   val sampleFetch = new Fetch(compId, aChan, iChan, oChan)

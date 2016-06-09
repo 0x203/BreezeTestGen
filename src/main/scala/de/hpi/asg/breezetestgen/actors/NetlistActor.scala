@@ -11,15 +11,17 @@ import de.hpi.asg.breezetestgen.testing.TestEvent
 
 
 class NetlistActor(netlist: domain.Netlist,
-                   externalNetlist: Netlist.Id,
+                   idChain: List[Netlist.Id],
                    portConnectionsOut: Map[Port.Id, Channel.Id],
                    initialState: Option[Netlist.State],
                    infoHub: Option[ActorRef]) extends HandshakeActor with Loggable {
   info(s"NetlistActor created for netlist id ${netlist.id}")
 
+  private val internalIdChain = netlist.id :: idChain
+
   private val componentActors = netlist.components
     .mapValues(createBehaviour)
-    .map{case (id, comp) => id -> Props(classOf[ComponentActor], netlist.id, id, comp, infoHub)}  //create Props
+    .map{case (id, comp) => id -> Props(classOf[ComponentActor], internalIdChain, id, comp, infoHub)}  //create Props
     .mapValues(context.actorOf)
     .view.force
 
@@ -39,12 +41,12 @@ class NetlistActor(netlist: domain.Netlist,
   val setChannels = HandshakeActor.SetChannels(channelMap)
   componentActors.values.foreach(_ ! setChannels)
 
-  def handleSignal(nlId: domain.Netlist.Id, ds: domain.Signal,  te: TestEvent) = {
+  def handleSignal(senderIdChain: List[domain.Netlist.Id], ds: domain.Signal,  te: TestEvent) = {
     info(s"getting: $ds")
-    val (netlistId, newSignal, receiver) =
-      if (nlId == netlist.id) handleInternal(ds) else handleExternal(ds)
+    val (outIdChain, newSignal, receiver) =
+      if (senderIdChain == idChain) handleExternal(ds) else handleInternal(ds)
 
-    val packedSignal = HandshakeActor.Signal(netlistId, newSignal, te)
+    val packedSignal = HandshakeActor.Signal(outIdChain, newSignal, te)
 
     receiver ! packedSignal
   }
@@ -59,7 +61,7 @@ class NetlistActor(netlist: domain.Netlist,
   }
 
   /** return type of internal and external handler */
-  private type HandlerResult = (Netlist.Id, domain.Signal, ActorRef)
+  private type HandlerResult = (List[Netlist.Id], domain.Signal, ActorRef)
 
   /** lift an internal signal to an external one */
   private def handleInternal(ds: domain.Signal): HandlerResult = {
@@ -78,7 +80,7 @@ class NetlistActor(netlist: domain.Netlist,
     val externalSignal = Signal.changeChannelId(ds, externalChannel)
     val receiver = channels.andThen(otherSideOfChannel)(externalChannel)
 
-    (externalNetlist, externalSignal, receiver)
+    (idChain, externalSignal, receiver)
   }
 
   /** adapt an external signal to an internal one */
@@ -92,7 +94,7 @@ class NetlistActor(netlist: domain.Netlist,
 
     val internalSignal = Signal.changeChannelId(ds, channel.id)
 
-    (netlist.id, internalSignal, componentActors(internalReceiverId))
+    (internalIdChain, internalSignal, componentActors(internalReceiverId))
   }
 
   // state gathering
@@ -108,13 +110,13 @@ class NetlistActor(netlist: domain.Netlist,
       stateInvoker = sender()
       componentActors.values.foreach{_ ! GetState}
 
-    case MyState(netlist.id, compId, compState) =>
+    case MyState(`internalIdChain`, compId, compState) =>
       componentStates += compId -> compState
 
       if(componentStates.size == netlist.components.size) {
         info("Got all component states")
         stateInvoker ! MyState(
-            externalNetlist,
+            idChain,
             netlist.id,
             Netlist.State(collection.immutable.Map.empty ++ componentStates)
         )

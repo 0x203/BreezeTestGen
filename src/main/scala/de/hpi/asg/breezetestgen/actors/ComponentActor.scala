@@ -15,7 +15,7 @@ import de.hpi.asg.breezetestgen.testing.TestEvent
 
 
 
-class ComponentActor(netlistId: Netlist.Id,
+class ComponentActor(idChain: List[Netlist.Id],
                      componentId: HandshakeComponent.Id,
                      component: BrzComponentBehaviour[_, _],
                      infoHub: Option[ActorRef]) extends HandshakeActor {
@@ -24,17 +24,17 @@ class ComponentActor(netlistId: Netlist.Id,
   implicit val askTimeout = Timeout(5 seconds)
 
   receiue{
-    case GetState => sender() ! MyState(netlistId, componentId, component.state)
+    case GetState => sender() ! MyState(idChain, componentId, component.state)
 
     case Decision(newState, domainSignals, testEvent) =>
       info(s"$componentId: Got Decision: $newState; $domainSignals; $testEvent")
       component.state = newState
       for(ds <- domainSignals)
-        receiverOf(ds) ! Signal(netlistId, ds, testEvent)
+        receiverOf(ds) ! Signal(idChain, ds, testEvent)
   }
 
-  override protected def handleSignal(nlId: Netlist.Id, ds: domain.Signal, testEvent: TestEvent) = {
-    require(netlistId == nlId)
+  override protected def handleSignal(senderIdChain: List[Netlist.Id], ds: domain.Signal, testEvent: TestEvent) = {
+    require(idChain == senderIdChain)
 
     component.handleSignal(ds, testEvent) match {
       case nf: NormalFlowReaction => handleNormalFlow(testEvent, nf)
@@ -58,7 +58,7 @@ class ComponentActor(netlistId: Netlist.Id,
     }
 
     for (signal <- nf.signals) {
-      newTestEventF.map(Signal(netlistId, signal, _)) pipeTo receiverOf(signal)
+      newTestEventF.map(Signal(idChain, signal, _)) pipeTo receiverOf(signal)
     }
   }
 

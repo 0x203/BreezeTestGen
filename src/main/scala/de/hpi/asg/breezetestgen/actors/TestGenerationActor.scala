@@ -40,7 +40,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       // send inits out; activate (lowest chanID) first
       sendOutSignals(runId, inits.toSeq.sortBy(_.channelId))
 
-    case HandshakeActor.Signal(runId, ds, testEvent) =>
+    case HandshakeActor.Signal(runId :: Nil, ds, testEvent) =>
       info(s"Got signal from MainNetlist: $ds")
       val informationHub = running._1
       val successor = informationHub.newIOEvent(ds, testEvent)
@@ -89,7 +89,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
       resumable2BContinued = resumables(decisionCV)
 
-    case MyState(runId, _, state: Netlist.State) =>
+    case MyState(runId :: Nil, _, state: Netlist.State) =>
       info(s"Got state of main netlist:$runId: $state")
       for(stateAwaiter <- waitingForState) {
         backlog.update(stateAwaiter, backlog(stateAwaiter).copy(netlistState = Option(state)))
@@ -128,7 +128,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
   private def sendOutSignals(runId: Netlist.Id, signals: Traversable[Signal], teO: Option[TestEvent] = None) = {
     signals
-      .map{ds => HandshakeActor.Signal(runId, ds, teO getOrElse IOEvent(ds))} // create understandable signals
+      .map{ds => HandshakeActor.Signal(runId :: Nil, ds, teO getOrElse IOEvent(ds))} // create understandable signals
       .foreach(running._2 ! _)  // send them out
   }
 

@@ -16,12 +16,12 @@ trait MainNetlistCreator {
   protected val portConnections = netlist.ports.values.map{p => p.id -> p.channelId}.toMap[Port.Id, Channel.Id]
 
   /** creates a new netlist actor for the netlist to be simulated */
-  protected def newNetlistActor(id: Netlist.Id,
+  protected def newNetlistActor(externalId: Netlist.Id,
                                 state: Option[Netlist.State] = None,
                                 infoHub: Option[ActorRef] = None): ActorRef = {
-    val props = Props(classOf[NetlistActor], netlist, id, portConnections, state, infoHub)
+    val props = Props(classOf[NetlistActor], netlist, externalId :: Nil, portConnections, state, infoHub)
 
-    val newActor = context.actorOf(props, s"Test$id-MainNetlist")
+    val newActor = context.actorOf(props, s"Test$externalId-MainNetlist")
     newActor ! netlistChannelMap
     newActor
   }
