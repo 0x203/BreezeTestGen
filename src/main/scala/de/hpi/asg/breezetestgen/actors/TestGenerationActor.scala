@@ -8,7 +8,8 @@ import de.hpi.asg.breezetestgen.testgeneration.constraintsolving._
 import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
 import de.hpi.asg.breezetestgen.actors.HandshakeActor.{GetState, MyState}
 import components.BrzComponentBehaviour.{DecisionPossibilities, DecisionRequired, NormalFlowReaction}
-import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
+import de.hpi.asg.breezetestgen.testing.coverage.Coverage
+import de.hpi.asg.breezetestgen.testing.{IOEvent, Test, TestEvent}
 
 import scala.collection.mutable
 
@@ -16,8 +17,10 @@ object TestGenerationActor {
   case object Start
 
   private sealed trait StopReason
-  private case object Done extends StopReason
+  private case class Done(tests: Set[GeneratedTest]) extends StopReason
   private case object Error extends StopReason
+
+  case class GeneratedTest(test: Test, coverage: Coverage)
 
   case class ResumableRun(infoHubState: InformationHub.State, decision: Decision, netlistState: Option[Netlist.State])
 }
@@ -160,34 +163,36 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
     sendOutSignals(nlId, Option(answerSignal), Option(followerEvent))
   }
 
-  var gencount = 5
+  private var gencount = 5
+  private var testsSoFar = Set.empty[GeneratedTest]
+
   private def testFinished(): Unit = {
     info("A Test finished.")
     val (informationHub, netlistActor) = running
     context.stop(netlistActor)
 
-    gencount -= 1
-    if(gencount == 0) {
-      stop(Done)
+    val (cc, tb, coverage) = informationHub.state()
+    info(s"Current ConstraintCollection: $cc")
+    TestInstantiator.random(cc, tb) match {
+      case Some(test) =>
+        val generated = GeneratedTest(test, coverage)
+        testsSoFar += generated
+
+        import de.hpi.asg.breezetestgen.testing.JsonFromTo
+        info(s"here is a test, anyway: ${JsonFromTo.toJson(test)}")
+        info(s"Coverage: ${coverage.percentageCovered}")
+
+        stop(Done(Set(generated)))
+      case None => info("Not even found a test.")
+    }
+
+    if (backlog.isEmpty) {
+      stop(Done(testsSoFar))
+    } else if(gencount == 0) {
+      stop(Error)
     } else {
-
-      val (cc, tb, coverage) = informationHub.state()
-      info(s"Current ConstraintCollection: $cc")
-      val generatedTestO = TestInstantiator.random(cc, tb) match {
-        case Some(test) =>
-          import de.hpi.asg.breezetestgen.testing.JsonFromTo
-          info(s"here is a test, anyway: ${JsonFromTo.toJson(test)}")
-          info(s"Coverage: ${coverage.percentageCovered}")
-        case None => info("Not even found a test.")
-      }
-
-      if (backlog.isEmpty) {
-        stop(Done)
-      } else {
-        val (id, resumable) = backlog.head
-        resumeTest(id, resumable)
-      }
-
+      val (id, resumable) = backlog.head
+      resumeTest(id, resumable)
     }
   }
 
@@ -206,17 +211,20 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
   }
 
   private def stop(reason: StopReason) = {
-    info(s"I'm stopping because of: $reason")
-    val informationHub = running._1
-
-    val (cc, tb, coverage) = informationHub.state()
-    info(s"Current ConstraintCollection: $cc")
-    TestInstantiator.random(cc, tb) match {
-      case Some(test) =>
+    reason match {
+      case Done(tests) =>
         import de.hpi.asg.breezetestgen.testing.JsonFromTo
-        info(s"here is a test, anyway: ${JsonFromTo.toJson(test)}")
-        info(s"Coverage: ${coverage.percentageCovered}")
-      case None => info("Not even found a test.")
+        info(s"I'm done with generating ${tests.size} tests:")
+        for(genTest <- tests) {
+          info(s"${genTest.coverage.percentageCovered}% with: ${JsonFromTo.toJson(genTest.test)}")
+        }
+
+        //TODO: merge coverages, find minimal suite
+
+      case Error =>
+        //TODO: use better distinction of reasons here
+        info("generated some tests ithout hitting maximum coverage")
+
     }
 
     // TODO: give feedback to somebody
