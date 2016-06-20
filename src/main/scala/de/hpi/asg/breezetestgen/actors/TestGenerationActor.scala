@@ -23,6 +23,17 @@ object TestGenerationActor {
   case class GeneratedTest(test: Test, coverage: Coverage)
 
   case class ResumableRun(infoHubState: InformationHub.State, decision: Decision, netlistState: Option[Netlist.State])
+
+
+  private def signalOnPort(port: Port): Signal = port match {
+    case sp: SyncPort => sp.createSignal()
+    case dp: DataPort =>
+      val v = new Variable(dp.name, dp.bitCount, dp.isSigned)
+      val d = new VariableData(v, null)
+      dp.createSignal(d)
+  }
+
+
 }
 
 class TestGenerationActor(protected val netlist: Netlist) extends Actor with MainNetlistCreator with Loggable {
@@ -114,14 +125,6 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
   private var nextRunId: Int = -1
 
-  private def signalOnPort(port: Port): Signal = port match {
-    case sp: SyncPort => sp.createSignal()
-    case dp: DataPort =>
-      val v = new Variable(dp.name, dp.bitCount, dp.isSigned)
-      val d = new VariableData(v, null)
-      dp.createSignal(d)
-  }
-
   private def initialRequests(runId: Netlist.Id): Set[Signal] = {
     netlist.activePorts.map(signalOnPort)
   }
@@ -182,6 +185,12 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
         import de.hpi.asg.breezetestgen.testing.JsonFromTo
         info(s"here is a test, anyway: ${JsonFromTo.toJson(test)}")
         info(s"Coverage: ${coverage.percentageCovered}")
+
+        if (coverage.isComplete) {
+          info(s"Single test $runId has complete coverage already, returning this.")
+          stop(Done(Set(generated)))
+          return
+        }
 
       case None => info("Not even found a test.")
     }
