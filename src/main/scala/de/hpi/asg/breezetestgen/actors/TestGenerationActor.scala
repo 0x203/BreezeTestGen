@@ -47,7 +47,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       val informationHub = running._1
       val successor = informationHub.newIOEvent(ds, testEvent)
       if(ds == Acknowledge(1))  //stop for other reasons?!
-        testFinished()
+        testFinished(runId)
       else
         mirrorSignal(runId, ds, successor)
 
@@ -166,10 +166,11 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
   private var gencount = 5
   private var testsSoFar = Set.empty[GeneratedTest]
 
-  private def testFinished(): Unit = {
-    info("A Test finished.")
+  private def testFinished(runId: Netlist.Id): Unit = {
+    info(s"Test $runId finished.")
     val (informationHub, netlistActor) = running
     context.stop(netlistActor)
+    gencount -= 1
 
     val (cc, tb, coverage) = informationHub.state()
     info(s"Current ConstraintCollection: $cc")
@@ -182,14 +183,13 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
         info(s"here is a test, anyway: ${JsonFromTo.toJson(test)}")
         info(s"Coverage: ${coverage.percentageCovered}")
 
-        stop(Done(Set(generated)))
       case None => info("Not even found a test.")
     }
 
-    if (backlog.isEmpty) {
-      stop(Done(testsSoFar))
-    } else if(gencount == 0) {
+    if(gencount == 0) {
       stop(Error)
+    } else if (backlog.isEmpty) {
+      stop(Done(testsSoFar))
     } else {
       val (id, resumable) = backlog.head
       resumeTest(id, resumable)
