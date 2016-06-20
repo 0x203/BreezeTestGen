@@ -16,4 +16,7 @@ trait Coverage {
 
   /** returns, if adding this signal would make any difference in the covered percentage */
   def isCovered(signal: Signal): Boolean
+
+  /** new coverage instance covering everything this and other cover */
+  def merge(other: Coverage): Coverage
 }

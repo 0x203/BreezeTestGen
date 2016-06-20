@@ -24,4 +24,14 @@ case class ChannelActivationCoverage(netlist: Netlist, coveredChannels: Set[Chan
   def percentageCovered: Double = coveredChannels.size.toDouble * 100 / allChannels.size
 
   def isCovered(signal: Signal): Boolean = coveredChannels contains signal.channelId
+
+  def merge(other: Coverage): Coverage =
+    other match {
+      case ChannelActivationCoverage(`netlist`, otherCoveredChannels) =>
+        this.copy(coveredChannels = coveredChannels ++ otherCoveredChannels)
+      case _: ChannelActivationCoverage =>
+        throw new IllegalArgumentException("Merging just works if this and other share the same netlist")
+      case _ =>
+        throw new NotImplementedError()
+    }
 }
