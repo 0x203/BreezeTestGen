@@ -180,19 +180,22 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
     info(s"Current ConstraintCollection: $cc")
     TestInstantiator.random(cc, tb) match {
       case Some(test) =>
+        info(s"Found a test with ${coverage.percentageCovered}% coverage.")
+
         val generated = GeneratedTest(test, coverage)
-        testsSoFar += generated
-
-        import de.hpi.asg.breezetestgen.testing.JsonFromTo
-        info(s"here is a test, anyway: ${JsonFromTo.toJson(test)}")
-        info(s"Coverage: ${coverage.percentageCovered}")
-
         if (coverage.isComplete) {
           info(s"Single test $runId has complete coverage already, returning this.")
           stop(Done(Set(generated)))
           return
+        } else {
+          testsSoFar += generated
+          val coverageSoFar = testsSoFar.map(_.coverage).reduce(_ merge _)
+          if (coverageSoFar.isComplete) {
+            //TODO: maybe a more complete test comes later, so one could continue
+            stop(Done(testsSoFar))
+            return
+          }
         }
-
       case None => info("Not even found a test.")
     }
 
