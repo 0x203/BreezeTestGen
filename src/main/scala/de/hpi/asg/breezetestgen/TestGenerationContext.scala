@@ -1,20 +1,22 @@
 package de.hpi.asg.breezetestgen
 
+import java.util.concurrent.TimeoutException
+
 import com.typesafe.config._
 import de.hpi.asg.breezetestgen.domain.Netlist
 import de.hpi.asg.breezetestgen.testgeneration._
-import de.hpi.asg.breezetestgen.testing.JsonFromTo
+
+import scala.concurrent.duration.Duration
 
 
 class TestGenerationContext(config: Config) extends Loggable {
 
   config.checkValid(ConfigFactory.defaultReference(), "breeze-test-gen")
+  private val timeout = Duration.fromNanos(config.getDuration("breeze-test-gen.test-generation-timeout").toNanos)
 
   def this() {
     this(ConfigFactory.load())
   }
-
-  //TODO: specify proper return values and use them
 
   def generateTestsForFile(breezeFile: java.io.File): GenerationResult = {
     info(s"Execute for file: ${breezeFile.getName}")
@@ -31,8 +33,6 @@ class TestGenerationContext(config: Config) extends Loggable {
 
   def generateTestsForNetlist(mainNetlist: Netlist): GenerationResult = {
     import akka.actor.{ActorSystem, Props, Inbox}
-    import scala.concurrent.duration._
-
     import actors.TestGenerationActor
 
     val system = ActorSystem("TestGen")
@@ -41,10 +41,18 @@ class TestGenerationContext(config: Config) extends Loggable {
     val box = Inbox.create(system)
 
     box.send(testGenerator, TestGenerationActor.Start)
-    val result = box.receive(20 seconds).asInstanceOf[GenerationResult]
+    try {
+      val result = box.receive(timeout)
 
-    info("generation of tests finished!")
-    system.terminate()
-    result
+      info("generation of tests finished!")
+      result.asInstanceOf[GenerationResult]
+
+    } catch {
+      case _:TimeoutException =>
+        warn("generation of tests timed out")
+        GenerationError("Timeout for generation!")
+    } finally {
+      system.terminate()
+    }
   }
 }
