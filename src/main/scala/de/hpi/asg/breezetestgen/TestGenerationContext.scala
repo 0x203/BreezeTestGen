@@ -2,6 +2,8 @@ package de.hpi.asg.breezetestgen
 
 import com.typesafe.config._
 import de.hpi.asg.breezetestgen.domain.Netlist
+import de.hpi.asg.breezetestgen.testgeneration._
+import de.hpi.asg.breezetestgen.testing.JsonFromTo
 
 
 class TestGenerationContext(config: Config) extends Loggable {
@@ -14,18 +16,20 @@ class TestGenerationContext(config: Config) extends Loggable {
 
   //TODO: specify proper return values and use them
 
-  def generateTestsForFile(breezeFile: java.io.File) = {
+  def generateTestsForFile(breezeFile: java.io.File): GenerationResult = {
     info(s"Execute for file: ${breezeFile.getName}")
     val mainNetlist = BreezeTransformer.parse(breezeFile)(config)
     mainNetlist match {
       case Some(netlist) =>
         info(netlist.toString)
         generateTestsForNetlist(netlist)
-      case None => error("Could not parse Netlist")
+      case None =>
+        error("Could not parse Netlist")
+        GenerationError("Could not parse netlist")
     }
   }
 
-  def generateTestsForNetlist(mainNetlist: Netlist) = {
+  def generateTestsForNetlist(mainNetlist: Netlist): GenerationResult = {
     import akka.actor.{ActorSystem, Props, Inbox}
     import scala.concurrent.duration._
 
@@ -37,12 +41,10 @@ class TestGenerationContext(config: Config) extends Loggable {
     val box = Inbox.create(system)
 
     box.send(testGenerator, TestGenerationActor.Start)
-    box.receive(20 seconds) match {
-      case tests: Set[TestGenerationActor.GeneratedTest] => info(s"Generated some tests: $tests")
-      case x => error(s"Didn't expect this: $x")
-    }
+    val result = box.receive(20 seconds).asInstanceOf[GenerationResult]
 
+    info("generation of tests finished!")
     system.terminate()
-    info("testfinding finished!")
+    result
   }
 }
