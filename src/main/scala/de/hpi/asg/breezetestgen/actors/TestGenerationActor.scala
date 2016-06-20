@@ -39,9 +39,12 @@ object TestGenerationActor {
 class TestGenerationActor(protected val netlist: Netlist) extends Actor with MainNetlistCreator with Loggable {
   import TestGenerationActor._
 
+  var inquirer: ActorRef = _
+
   def receive = {
     case Start =>
       info("Starting test generation")
+      inquirer = sender()
       val runId = nextRunId; nextRunId -= 1
 
       val inits = initialRequests(runId)
@@ -230,15 +233,15 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
         //TODO: merge coverages, find minimal suite
 
+        inquirer ! tests
+
       case Error =>
         //TODO: use better distinction of reasons here
-        info("generated some tests ithout hitting maximum coverage")
-
+        info("generated some tests without hitting maximum coverage")
+        inquirer ! "something went wrong"
     }
 
-    // TODO: give feedback to somebody
-    //context.stop(self)
-    context.system.terminate()
+    context.stop(self)
   }
 
 }

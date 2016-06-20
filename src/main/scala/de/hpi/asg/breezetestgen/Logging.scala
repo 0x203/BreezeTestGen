@@ -8,7 +8,7 @@ import org.apache.logging.log4j.{Logger, LogManager}
 
 trait Loggable {
 
-  val logger:Logger = Logging.getLogger(this)
+  private val logger:Logger = Logging.getLogger(this)
 
   private def checkFormat(msg:String, refs:Seq[Any]):Message =
     ParameterizedMessageFactory.INSTANCE.newMessage(msg, refs)

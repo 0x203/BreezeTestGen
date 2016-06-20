@@ -15,28 +15,34 @@ class TestGenerationContext(config: Config) extends Loggable {
   //TODO: specify proper return values and use them
 
   def generateTestsForFile(breezeFile: java.io.File) = {
-    logger.info(s"Execute for file: ${breezeFile.getName}")
+    info(s"Execute for file: ${breezeFile.getName}")
     val mainNetlist = BreezeTransformer.parse(breezeFile)(config)
     mainNetlist match {
       case Some(netlist) =>
-        logger.info(netlist)
+        info(netlist.toString)
         generateTestsForNetlist(netlist)
-      case None => logger.error("Could not parse Netlist")
+      case None => error("Could not parse Netlist")
     }
   }
 
   def generateTestsForNetlist(mainNetlist: Netlist) = {
-    import akka.actor.{ActorSystem, Props}
-    import scala.concurrent.Await
+    import akka.actor.{ActorSystem, Props, Inbox}
     import scala.concurrent.duration._
 
     import actors.TestGenerationActor
 
     val system = ActorSystem("TestGen")
-    logger.info("Start testfinding...")
-    val testgen = system.actorOf(Props(classOf[TestGenerationActor], mainNetlist))
-    testgen ! TestGenerationActor.Start
-    Await.result(system.whenTerminated, 20 seconds)
-    logger.info("testfinding finished!")
+    info("Start testfinding...")
+    val testGenerator = system.actorOf(Props(classOf[TestGenerationActor], mainNetlist))
+    val box = Inbox.create(system)
+
+    box.send(testGenerator, TestGenerationActor.Start)
+    box.receive(20 seconds) match {
+      case tests: Set[TestGenerationActor.GeneratedTest] => info(s"Generated some tests: $tests")
+      case x => error(s"Didn't expect this: $x")
+    }
+
+    system.terminate()
+    info("testfinding finished!")
   }
 }
