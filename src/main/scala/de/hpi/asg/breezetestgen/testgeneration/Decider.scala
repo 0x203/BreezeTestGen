@@ -46,11 +46,6 @@ trait Decider extends Loggable {
   }
 
   private def decide(possibilities: DecisionPossibilities): Set[ConstraintVariable] = {
-    val acknowledging = possibilities.mapValues(_._1).toSeq.sortBy(tpl => {
-      // sort ascending by SignalFromPassive and choose last
-      // this should give us the possibility with most acknowledges, which should lead to an early finish
-      tpl._2.signals.count(_.isInstanceOf[SignalFromPassive])
-    }).last._1
-    Set(acknowledging)
+    possibilities.keySet
   }
 }
