@@ -33,6 +33,13 @@ object TestGenerationActor {
   }
 
 
+  private[this] var curRunId = -1
+  private def nextRunId(): Netlist.Id = {
+    val r = curRunId
+    curRunId -= 1
+    r
+  }
+
 }
 
 class TestGenerationActor(protected val netlist: Netlist) extends Actor with MainNetlistCreator with Loggable {
@@ -45,7 +52,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
     case Start =>
       info("Starting test generation")
       inquirer = sender()
-      val runId = nextRunId; nextRunId -= 1
+      val runId = nextRunId()
 
       val inits = initialRequests(runId)
 
@@ -97,8 +104,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
       // add others to backlog
       val others = (resumables - decisionCV).map{ case (_, r) =>
-        val i = nextRunId
-        nextRunId -= 1
+        val i = nextRunId()
         i -> r
       }
       waitingForState = others.keySet
@@ -126,8 +132,6 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
   private var waitingForState: Set[Netlist.Id] = _
   private val backlog = mutable.Map.empty[Netlist.Id, ResumableRun]
   private val running = mutable.Map.empty[Netlist.Id, (InformationHub, ActorRef)]
-
-  private var nextRunId: Int = -1
 
   private def initialRequests(runId: Netlist.Id): Set[Signal] = {
     netlist.activePorts.map(signalOnPort)
