@@ -16,7 +16,7 @@ object TestGenerationActor {
   case object Start
 
   private sealed trait StopReason
-  private case class Done(tests: Set[GeneratedTest]) extends StopReason
+  private case object Done extends StopReason
   private case object AbortGeneration extends StopReason
   private case object GenerationProblem extends StopReason
 
@@ -38,6 +38,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
   import TestGenerationActor._
 
   var inquirer: ActorRef = _
+  val collectedTests = new CollectedTests
 
   def receive = {
     case Start =>
@@ -168,7 +169,6 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
   }
 
   private var gencount = 5
-  private var testsSoFar = Set.empty[GeneratedTest]
 
   private def testFinished(runId: Netlist.Id): Unit = {
     info(s"Test $runId finished.")
@@ -178,31 +178,16 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
     val (cc, tb, coverage) = informationHub.state()
     info(s"Current ConstraintCollection: $cc")
-    TestInstantiator.random(cc, tb) match {
-      case Some(test) =>
-        info(s"Found a test with ${coverage.percentageCovered}% coverage.")
 
-        val generated = GeneratedTest(test, coverage)
-        if (coverage.isComplete) {
-          info(s"Single test $runId has complete coverage already, returning this.")
-          stop(Done(Set(generated)))
-          return
-        } else {
-          testsSoFar += generated
-          val coverageSoFar = testsSoFar.map(_.coverage).reduce(_ merge _)
-          if (coverageSoFar.isComplete) {
-            //TODO: maybe a more complete test comes later, so one could continue
-            stop(Done(testsSoFar))
-            return
-          }
-        }
-      case None => info("Not even found a test.")
+    TestInstantiator.random(cc, tb) match {
+      case Some(test) => collectedTests.foundNewTest(GeneratedTest(test, coverage))
+      case None       => info("Not even found a test.")
     }
 
-    if(gencount == 0) {
+    if(collectedTests.coverEverything) {
+      stop(Done)
+    } else if(gencount == 0 | backlog.isEmpty) {
       stop(AbortGeneration)
-    } else if (backlog.isEmpty) {
-      stop(Done(testsSoFar))
     } else {
       val (id, resumable) = backlog.head
       resumeTest(id, resumable)
@@ -225,19 +210,18 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
   private def stop(reason: StopReason) = {
     reason match {
-      case Done(tests) =>
-        info(s"I'm done with generating ${tests.size} tests:")
-
-        //TODO: merge coverages, find minimal suite
-
+      case Done =>
+        val tests = collectedTests.testCollection
+        info(s"Reached complete coverage with ${tests.size} tests.")
         inquirer ! CompleteCoverage(tests)
 
       case AbortGeneration =>
-        info("Aborting test generation...")
+        val testsSoFar = collectedTests.testCollection
+        info(s"Aborting test generation having ${testsSoFar.size} tests until generated.")
         inquirer ! PartialCoverage(testsSoFar)
 
       case GenerationProblem =>
-        info("Somewhere a problem occured.")
+        info("Somewhere a problem occurred.")
         inquirer ! GenerationError("something went wrong")
     }
 
