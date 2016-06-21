@@ -4,13 +4,12 @@ import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
 import de.hpi.asg.breezetestgen.actors.HandshakeActor
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.{DecisionPossibilities, NormalFlowReaction}
-import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent
-import de.hpi.asg.breezetestgen.domain.{Netlist, Signal, SignalFromPassive}
+import de.hpi.asg.breezetestgen.domain.{Netlist, Signal}
 import de.hpi.asg.breezetestgen.testgeneration.constraintsolving.ConstraintVariable
 import de.hpi.asg.breezetestgen.testing.TestEvent
 import de.hpi.asg.breezetestgen.testing.coverage.ChannelActivationCoverage
 
-class TestGenerator(private val netlist: Netlist) extends Loggable {
+class TestGenerator(protected val netlist: Netlist) extends Decider with Loggable {
   import TestGenerator._
 
   val collectedTests = new CollectedTests(ChannelActivationCoverage.forNetlist(netlist))
@@ -45,51 +44,6 @@ class TestGenerator(private val netlist: Netlist) extends Loggable {
     informationHub.handleReaction(nf)
   }
 
-  def onDecisionRequired(implicit runId: Netlist.Id,
-                         idChain: List[Netlist.Id],
-                         componentId: HandshakeComponent.Id,
-                         possibilities: DecisionPossibilities): List[TestGenerationAction] = {
-    info(s"DecisionRequired: ${possibilities.keys}")
-    val sleepingExecutions = informationHubs(runId).createSleepingExecutions(idChain, componentId, possibilities)
-
-    info(s"created ${sleepingExecutions.size} sleeping executions")
-
-    if (sleepingExecutions.isEmpty)
-    return runIsOver(runId)
-
-    waitingForState += runId -> WaitingForState(possibilities.filterKeys(sleepingExecutions.contains), sleepingExecutions)
-
-    List(RequestWholeState(runId))
-  }
-
-  def onWholeState(implicit runId: Netlist.Id, state: Netlist.State): List[TestGenerationAction] = {
-    info(s"Got state of main netlist:$runId: $state")
-    val wfs = waitingForState.remove(runId).get
-
-    //TODO: instead of deciding one could copy at this point
-    val decisionCV = decide(wfs.possibilities)
-
-    // add others to backlog
-    val others = (wfs.sleepingExecutions - decisionCV).map{ case (_, r) =>
-      val i = nextRunId()
-      i -> (r, state)
-    }
-    backlog ++= others
-
-    // resume selected one in current run
-    val toBeResumed = wfs.sleepingExecutions(decisionCV)
-    informationHubs.update(runId, InformationHub.fromState(runId, netlist, toBeResumed.infoHubState))
-
-    List(SendDecision(runId, toBeResumed.decision))
-  }
-  private def decide(possibilities: DecisionPossibilities): ConstraintVariable = {
-    possibilities.mapValues(_._1).toSeq.sortBy(tpl => {
-      // sort ascending by SignalFromPassive and choose last
-      // this should give us the possibility with most acknowledges, which should lead to an early finish
-      tpl._2.signals.count(_.isInstanceOf[SignalFromPassive])
-    }).last._1
-  }
-
   private def testFinished(runId: Netlist.Id, generatedTestO: Option[GeneratedTest]): List[TestGenerationAction] = {
     info(s"Test $runId finished.")
 
@@ -104,7 +58,7 @@ class TestGenerator(private val netlist: Netlist) extends Loggable {
       runIsOver(runId)
   }
 
-  private def runIsOver(runId: Netlist.Id): List[TestGenerationAction] = {
+  protected def runIsOver(runId: Netlist.Id): List[TestGenerationAction] = {
     if(backlog.nonEmpty) {
       //TODO decide more intelligent here
       val id = backlog.keySet.head
@@ -115,7 +69,7 @@ class TestGenerator(private val netlist: Netlist) extends Loggable {
       stop(AbortGeneration)
   }
 
-  private def resumeTest(runId: Netlist.Id): List[TestGenerationAction] = {
+  protected def resumeTest(runId: Netlist.Id): List[TestGenerationAction] = {
     info(s"resuming test with id $runId")
     val (sleepingExecution, netlistState) = backlog.remove(runId).get
 
@@ -176,7 +130,7 @@ object TestGenerator {
   private case object GenerationProblem extends StopReason
 
   private[this] var curRunId = -1
-  private def nextRunId(): Netlist.Id = {
+  def nextRunId(): Netlist.Id = {
     val r = curRunId
     curRunId -= 1
     r
