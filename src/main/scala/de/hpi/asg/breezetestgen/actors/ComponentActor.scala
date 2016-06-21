@@ -6,10 +6,9 @@ import akka.util.Timeout
 
 import concurrent.duration._
 import concurrent.Future
-import de.hpi.asg.breezetestgen.actors.HandshakeActor.{DecisionRequired, GetState, MyState, Signal}
+import de.hpi.asg.breezetestgen.actors.HandshakeActor.{DecisionRequired, GetState, MyState, Signal, NormalFlowReaction}
 import de.hpi.asg.breezetestgen.domain
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponentBehaviour, HandshakeComponent}
-import BrzComponentBehaviour.NormalFlowReaction
 import de.hpi.asg.breezetestgen.domain.{Netlist, SignalFromActive, SignalFromPassive}
 import de.hpi.asg.breezetestgen.testing.TestEvent
 
@@ -37,7 +36,7 @@ class ComponentActor(idChain: List[Netlist.Id],
     require(idChain == senderIdChain)
 
     component.handleSignal(ds, testEvent) match {
-      case nf: NormalFlowReaction => handleNormalFlow(testEvent, nf)
+      case nf: BrzComponentBehaviour.NormalFlowReaction => handleNormalFlow(testEvent, nf)
       case dr: BrzComponentBehaviour.DecisionRequired => handleDecisionRequired(testEvent, dr)
     }
   }
@@ -51,9 +50,9 @@ class ComponentActor(idChain: List[Netlist.Id],
     }
   }
 
-  private def handleNormalFlow(testEvent: TestEvent, nf: NormalFlowReaction) = {
+  private def handleNormalFlow(testEvent: TestEvent, nf: BrzComponentBehaviour.NormalFlowReaction) = {
     val newTestEventF: Future[TestEvent] = infoHub match {
-      case Some(hub) => (hub ? nf).mapTo[TestEvent]
+      case Some(hub) => (hub ? NormalFlowReaction(idChain, nf)).mapTo[TestEvent]
       case None => Future.successful(testEvent)
     }
 

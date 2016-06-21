@@ -65,7 +65,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       else
         mirrorSignal(runId, ds, successor)
 
-    case nf: NormalFlowReaction =>
+    case HandshakeActor.NormalFlowReaction(runId :: _, nf: NormalFlowReaction) =>
       trace("recording normalFlowReaction")
       val informationHub = running._1
       // reply with TestEvent

@@ -1,7 +1,7 @@
 package de.hpi.asg.breezetestgen.actors
 
 import akka.actor.{ActorRef, FSM}
-import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent
+import de.hpi.asg.breezetestgen.domain.components.{BrzComponentBehaviour, HandshakeComponent}
 import de.hpi.asg.breezetestgen.{Loggable, domain}
 import de.hpi.asg.breezetestgen.testing.TestEvent
 import domain.{Channel, Netlist}
@@ -14,6 +14,7 @@ object HandshakeActor {
   case object Uninitialized extends States
   case object Initialized extends States
 
+  case class NormalFlowReaction(idChain: List[Netlist.Id], domainReaction: BrzComponentBehaviour.NormalFlowReaction)
   case class Signal(idChain: List[Netlist.Id], domainSignal: domain.Signal, testEvent: TestEvent)
   case class DecisionRequired(idChain: List[Netlist.Id],
                               componentId: HandshakeComponent.Id,
