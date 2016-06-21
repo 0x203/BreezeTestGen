@@ -5,7 +5,7 @@ import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
 import de.hpi.asg.breezetestgen.actors.HandshakeActor
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.{DecisionPossibilities, NormalFlowReaction}
 import de.hpi.asg.breezetestgen.domain.{Netlist, Signal}
-import de.hpi.asg.breezetestgen.testing.{MergeEvent, TestEvent}
+import de.hpi.asg.breezetestgen.testing.TestEvent
 import de.hpi.asg.breezetestgen.testing.coverage.ChannelActivationCoverage
 
 class TestGenerator(private val netlist: Netlist) extends Loggable {
@@ -36,8 +36,10 @@ class TestGenerator(private val netlist: Netlist) extends Loggable {
     }
   }
 
-  def onNormalFlow(runId: Netlist.Id, nf: NormalFlowReaction): AnswerToComponent = {
-    AnswerToComponent(new MergeEvent)
+  // in contrast to the other handlers, this one just returns the result directly. cause it's such a simple use case
+  def onNormalFlow(runId: Netlist.Id, nf: NormalFlowReaction): TestEvent = {
+    trace("recording normalFlowReaction")
+    informationHub.handleReaction(nf)
   }
 
   def onDecisionRequired(runId: Netlist.Id, possibilities: DecisionPossibilities): List[TestGenerationAction] = {
@@ -116,8 +118,6 @@ object TestGenerator {
   case class RequestWholeState(runId: Netlist.Id) extends TestGenerationAction
   case class SendDecision(runId: Netlist.Id, decision: Decision) extends TestGenerationAction
   case class FinishedGeneration(generationResult: GenerationResult) extends TestGenerationAction
-
-  case class AnswerToComponent(testEvent: TestEvent)
 
 
   case class SleepingExecution(infoHubState: InformationHub.State, netlistState: Netlist.State, decision: Decision)

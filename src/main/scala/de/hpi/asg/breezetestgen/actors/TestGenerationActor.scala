@@ -43,14 +43,11 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       performActions(testGenerator.start(runId))
 
     case HandshakeActor.Signal(runId :: _, ds, testEvent) =>
-      info(s"Got signal from MainNetlist: $ds")
       performActions(testGenerator.onPortSignal(runId, ds, testEvent))
 
     case HandshakeActor.NormalFlowReaction(runId :: _, nf: NormalFlowReaction) =>
-      trace("recording normalFlowReaction")
-      val informationHub = running(runId)._1
       // reply with TestEvent
-      sender() ! informationHub.handleReaction(nf)
+      sender() ! testGenerator.onNormalFlow(runId, nf)
 
     case HandshakeActor.DecisionRequired(runId:: idChain, componentId, DecisionRequired(possibilities)) =>
       info(s"DecisionRequired: ${possibilities.keys}")
@@ -64,7 +61,8 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
 
       mainNetlistActor ! GetState
 
-      val resumables: Map[ConstraintVariable, ResumableRun] = possibilities.withFilter(ccs.keySet contains _._1).map{case (cv, (reaction, newState)) =>
+      val resumables: Map[ConstraintVariable, ResumableRun] =
+        possibilities.withFilter(ccs.keySet contains _._1).map{case (cv, (reaction, newState)) =>
         val newInformationHub = new InformationHub(ccs(cv), testBuilder, coverage)
         val testEventO = newInformationHub.handleReaction(reaction)
         val decision = Decision(idChain, componentId, newState, reaction.signals, testEventO)
