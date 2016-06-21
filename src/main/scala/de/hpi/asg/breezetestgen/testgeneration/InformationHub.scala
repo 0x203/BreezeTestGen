@@ -1,9 +1,12 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
-import constraintsolving.{ConstraintCollection, TestInstantiator, Variable}
+import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
+import de.hpi.asg.breezetestgen.testgeneration.constraintsolving._
 import de.hpi.asg.breezetestgen.actors.HandshakeActor
 import de.hpi.asg.breezetestgen.domain.{DataPort, SyncPort, _}
-import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.NormalFlowReaction
+import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.{DecisionPossibilities, NormalFlowReaction}
+import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent
+import de.hpi.asg.breezetestgen.testgeneration.TestGenerator.SleepingExecution
 import de.hpi.asg.breezetestgen.testing.coverage.{ChannelActivationCoverage, Coverage}
 import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
 
@@ -66,6 +69,25 @@ class InformationHub(private val runId: Netlist.Id,
   /** returns the requests that should be sent initially*/
   def initialRequests(): Seq[HandshakeActor.Signal] =
     packSignals(runId, initialRequestsForNetlist(netlist))
+
+  /** creates a [[ConstraintCollection]] for each possibility that is feasible after this */
+  def createSleepingExecutions(idChain: List[Netlist.Id],
+                               componentId: HandshakeComponent.Id,
+                               possibilities: DecisionPossibilities): Map[ConstraintVariable, SleepingExecution] = {
+    val newCCs = possibilities.keys
+      .map{case constraint => constraint -> cc.fork().add(List(constraint))}
+      .filter{case (_, newCC) => new ChocoSolver(newCC).isFeasible}
+      .toMap[ConstraintVariable, ConstraintCollection]
+
+    val remainingPossibilities = possibilities.filterKeys(newCCs.keySet contains _)
+
+    remainingPossibilities.map { case (cv, (reaction, newState)) =>
+      val newInformationHub = new InformationHub(runId, netlist, newCCs(cv), testBuilder, coverage)
+      val testEventO = newInformationHub.handleReaction(reaction)
+      val decision = Decision(idChain, componentId, newState, reaction.signals, testEventO)
+      cv -> SleepingExecution(newInformationHub.state(), decision)
+    }
+  }
 
   /** reacts to a signal from the netlist with the counter-signal on the same port
     *
