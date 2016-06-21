@@ -34,4 +34,18 @@ case class ChannelActivationCoverage(netlist: Netlist, coveredChannels: Set[Chan
       case _ =>
         throw new NotImplementedError()
     }
+
+  def tryCompareTo[B >: Coverage](that: B)(implicit evidence: B => PartiallyOrdered[B]): Option[Int] =
+    that match {
+      case other: ChannelActivationCoverage =>
+        val unionSize = coveredChannels.union(other.coveredChannels).size
+        if(coveredChannels == other.coveredChannels)      // both cover the same
+          Some(0)
+        else if (other.coveredChannels.size == unionSize) // I don't add anything to other
+          Some(-1)
+        else if (coveredChannels.size == unionSize)       // other doesn't add anything to me
+          Some(1)
+        else None                                         // we cover different parts of the netlist
+      case _ => None
+    }
 }

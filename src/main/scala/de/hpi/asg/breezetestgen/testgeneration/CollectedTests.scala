@@ -1,9 +1,10 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
 import de.hpi.asg.breezetestgen.Loggable
+import de.hpi.asg.breezetestgen.testing.coverage.Coverage
 
 
-class CollectedTests extends Loggable {
+class CollectedTests(private val emptyCoverage: Coverage) extends Loggable {
   val tests = scala.collection.mutable.Set.empty[GeneratedTest]
 
   /** registers a newly found test*/
@@ -13,16 +14,30 @@ class CollectedTests extends Loggable {
       tests.clear()
       tests.add(test)
     } else {
-      //TODO: check if this test is superfluous or makes another test superfluous
-      tests += test
+      addAndCheckRedundancy(test)
     }
   }
 
-  /** returns, if coverage hits 100% */
-  def coverEverything: Boolean =
-    tests.map(_.coverage).reduce(_ merge _).isComplete
+  /**  coverage of all tests so far combined */
+  def combinedCoverage: Coverage =
+    if(tests.isEmpty)
+      emptyCoverage
+    else
+      tests.map(_.coverage).reduce(_ merge _)
 
   /** returns the minimal set of tests for maximal coverage so far */
-  def testCollection: Set[GeneratedTest] =
-    Set.empty[GeneratedTest] ++ tests
+  def testCollection: Set[GeneratedTest] = tests.toSet
+
+  /** add test if its increases coverage, remove other tests that become superfluous because of that*/
+  private def addAndCheckRedundancy(test: GeneratedTest): Unit = {
+    // just keep tests that cover more than the new one
+    tests.retain(_.coverage >= test.coverage)
+
+    // add new test if it increases the combined coverage
+    // or at least is not "sub-covering" another test
+    if(combinedCoverage.merge(test.coverage) > combinedCoverage | !tests.exists(_.coverage >= test.coverage)) {
+      info("adding a new test to the collection")
+      tests += test
+    }
+  }
 }

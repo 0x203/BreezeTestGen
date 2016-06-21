@@ -2,7 +2,7 @@ package de.hpi.asg.breezetestgen.testing.coverage
 
 import de.hpi.asg.breezetestgen.domain.{Netlist, Signal}
 
-trait Coverage {
+trait Coverage extends PartiallyOrdered[Coverage] {
   val netlist: Netlist
 
   /** return a new coverage instance with this signal covered additionally */

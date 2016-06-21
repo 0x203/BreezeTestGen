@@ -8,6 +8,7 @@ import de.hpi.asg.breezetestgen.testgeneration.constraintsolving._
 import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
 import de.hpi.asg.breezetestgen.actors.HandshakeActor.{GetState, MyState}
 import components.BrzComponentBehaviour.{DecisionPossibilities, DecisionRequired, NormalFlowReaction}
+import de.hpi.asg.breezetestgen.testing.coverage.ChannelActivationCoverage
 import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
 
 import scala.collection.mutable
@@ -38,7 +39,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
   import TestGenerationActor._
 
   var inquirer: ActorRef = _
-  val collectedTests = new CollectedTests
+  val collectedTests = new CollectedTests(ChannelActivationCoverage.forNetlist(netlist))
 
   def receive = {
     case Start =>
@@ -184,7 +185,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       case None       => info("Not even found a test.")
     }
 
-    if(collectedTests.coverEverything) {
+    if(collectedTests.combinedCoverage.isComplete) {
       stop(Done)
     } else if(gencount == 0 | backlog.isEmpty) {
       stop(AbortGeneration)
