@@ -50,10 +50,7 @@ class InformationHub(private val runId: Netlist.Id,
 
   def handlePortSignal(signal: Signal, testEvent: TestEvent):
     Either[Seq[HandshakeActor.Signal], Option[GeneratedTest]] = {
-    //record coverage
-    coverage = coverage.withSignal(signal)
-    //create succeeding TestEvent
-    val successor = testBuilder.addSuccessor(testEvent, IOEvent(signal))
+    val successor = newIOEvent(signal, testEvent)
 
     if(signal == Signal.ActivateAcknowledge)
       // test finished, instantiate it
@@ -89,6 +86,14 @@ class InformationHub(private val runId: Netlist.Id,
     }
   }
 
+  /** record IOEvent on the interface between main netlist and environment */
+  private def newIOEvent(signal: Signal, testEvent: TestEvent): TestEvent = {
+    //record coverage
+    coverage = coverage.withSignal(signal)
+    //create succeeding TestEvent
+    testBuilder.addSuccessor(testEvent, IOEvent(signal))
+  }
+
   /** reacts to a signal from the netlist with the counter-signal on the same port
     *
     * @param signal signal to be mirrored
@@ -97,8 +102,9 @@ class InformationHub(private val runId: Netlist.Id,
   private def mirrorSignal(signal: Signal, testEvent: TestEvent) = {
     val portId = channelIdToPortId(signal.channelId)
     val answerSignal = signalOnPort(netlist.ports(portId))
+    val answerEvent = newIOEvent(answerSignal, testEvent)
 
-    packSignals(runId, List(answerSignal), Option(testEvent))
+    packSignals(runId, List(answerSignal), Option(answerEvent))
   }
   private val channelIdToPortId = netlist.ports.values.map{p => p.channelId -> p.id}.toMap[Channel.Id, Port.Id]
 
