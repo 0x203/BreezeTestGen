@@ -11,6 +11,7 @@ class CollectedTests(private val emptyCoverage: Coverage) extends Loggable {
   def foundNewTest(test: GeneratedTest): Unit = {
     info(s"Found a test with ${test.coverage.percentageCovered}% coverage.")
     if (test.coverage.isComplete) {
+      info(s"clearing all ${tests.size} tests found so far in favour of the complete one")
       tests.clear()
       tests.add(test)
     } else {
@@ -31,7 +32,8 @@ class CollectedTests(private val emptyCoverage: Coverage) extends Loggable {
   /** add test if its increases coverage, remove other tests that become superfluous because of that*/
   private def addAndCheckRedundancy(test: GeneratedTest): Unit = {
     // just keep tests that cover more than the new one
-    tests.retain(_.coverage >= test.coverage)
+    // reverse logic assures that incomparable coverages are retained
+    tests.retain{other => !(other.coverage < test.coverage)}
 
     // add new test if it increases the combined coverage
     // or at least is not "sub-covering" another test
