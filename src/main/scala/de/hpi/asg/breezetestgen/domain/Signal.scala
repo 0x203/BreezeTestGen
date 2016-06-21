@@ -7,6 +7,8 @@ object Signal {
     case dr: DataRequest => dr.copy(channelId = newChannelId)
     case da: DataAcknowledge => da.copy(channelId = newChannelId)
   }
+
+  val ActivateAcknowledge = Acknowledge(1)
 }
 
 sealed trait Signal {

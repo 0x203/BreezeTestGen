@@ -8,30 +8,13 @@ import de.hpi.asg.breezetestgen.testgeneration.constraintsolving._
 import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
 import de.hpi.asg.breezetestgen.actors.HandshakeActor.{GetState, MyState}
 import components.BrzComponentBehaviour.{DecisionPossibilities, DecisionRequired, NormalFlowReaction}
+import de.hpi.asg.breezetestgen.testgeneration.TestGenerator._
 import de.hpi.asg.breezetestgen.testing.coverage.ChannelActivationCoverage
-import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
 
 import scala.collection.mutable
 
 object TestGenerationActor {
   case object Start
-
-  private sealed trait StopReason
-  private case object Done extends StopReason
-  private case object AbortGeneration extends StopReason
-  private case object GenerationProblem extends StopReason
-
-  case class ResumableRun(infoHubState: InformationHub.State, decision: Decision, netlistState: Option[Netlist.State])
-
-
-  private def signalOnPort(port: Port): Signal = port match {
-    case sp: SyncPort => sp.createSignal()
-    case dp: DataPort =>
-      val v = new Variable(dp.name, dp.bitCount, dp.isSigned)
-      val d = new VariableData(v, null)
-      dp.createSignal(d)
-  }
-
 
   private[this] var curRunId = -1
   private def nextRunId(): Netlist.Id = {
@@ -45,32 +28,23 @@ object TestGenerationActor {
 class TestGenerationActor(protected val netlist: Netlist) extends Actor with MainNetlistCreator with Loggable {
   import TestGenerationActor._
 
+  val testGenerator = new TestGenerator(netlist)
   var inquirer: ActorRef = _
+  val mainNetlistActors = mutable.Map.empty[Netlist.Id, ActorRef]
+
   val collectedTests = new CollectedTests(ChannelActivationCoverage.forNetlist(netlist))
+
 
   def receive = {
     case Start =>
-      info("Starting test generation")
       inquirer = sender()
       val runId = nextRunId()
 
-      val inits = initialRequests(runId)
-
-      val informationHub = InformationHub.fromInitialSignals(netlist, inits)
-      val netlistActor = newNetlistActor(runId, None, Some(self))
-      running += runId -> (informationHub, netlistActor)
-
-      // send inits out; activate (lowest chanID) first
-      sendOutSignals(runId, inits.toSeq.sortBy(_.channelId))
+      performActions(testGenerator.start(runId))
 
     case HandshakeActor.Signal(runId :: _, ds, testEvent) =>
       info(s"Got signal from MainNetlist: $ds")
-      val informationHub = running(runId)._1
-      val successor = informationHub.newIOEvent(ds, testEvent)
-      if(ds == Acknowledge(1))  //stop for other reasons?!
-        testFinished(runId)
-      else
-        mirrorSignal(runId, ds, successor)
+      performActions(testGenerator.onPortSignal(runId, ds, testEvent))
 
     case HandshakeActor.NormalFlowReaction(runId :: _, nf: NormalFlowReaction) =>
       trace("recording normalFlowReaction")
@@ -122,26 +96,56 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       val resumable = resumable2BContinued
       info("continue with resumable")
       val netlistActor = running(runId)._2
-      running.update(runId, (InformationHub.fromState(resumable.infoHubState), netlistActor))
+      running.update(runId, (InformationHub.fromState(netlist, resumable.infoHubState), netlistActor))
 
       info("send decision to inquirer")
       netlistActor ! resumable.decision
   }
 
+
+  private def performActions(actions: List[TestGenerationAction]) =
+    for(action <- actions)
+      performAction(action)
+
+  private def performAction(action: TestGenerationAction) =
+    action match {
+      case CreateMainNetlist(runId, stateO) =>
+        info(s"$runId: Creating new MainNetlist")
+        mainNetlistActors += runId -> newNetlistActor(runId, stateO, Some(self))
+
+      case StopMainNetlist(runId) =>
+        info(s"$runId: Stopping main NetlistActor")
+        for (actor <- mainNetlistActors.remove(runId))
+          context.stop(actor)
+
+      case SendToMainNetlist(runId, signals) =>
+        info(s"$runId: Sending signals to main netlist")
+        val mainNetlistActor = mainNetlistActors(runId)
+        for(signal <- signals)
+          mainNetlistActor ! signal
+
+      case RequestWholeState(runId) =>
+        info(s"$runId: Requesting the main netlist's state")
+        val mainNetlistActor = mainNetlistActors(runId)
+        mainNetlistActor ! GetState
+
+      case SendDecision(runId, decision) =>
+        info(s"$runId: Sending decision to netlist")
+        val mainNetlistActor = mainNetlistActors(runId)
+        mainNetlistActor ! decision
+
+      case FinishedGeneration(result) =>
+        info("finished test generation, will stop now.")
+        inquirer ! result
+        context.stop(self)
+    }
+
+
+
   private var resumable2BContinued: ResumableRun = _
   private var waitingForState: Set[Netlist.Id] = _
   private val backlog = mutable.Map.empty[Netlist.Id, ResumableRun]
   private val running = mutable.Map.empty[Netlist.Id, (InformationHub, ActorRef)]
-
-  private def initialRequests(runId: Netlist.Id): Set[Signal] = {
-    netlist.activePorts.map(signalOnPort)
-  }
-
-  private def sendOutSignals(runId: Netlist.Id, signals: Traversable[Signal], teO: Option[TestEvent] = None) = {
-    signals
-      .map{ds => HandshakeActor.Signal(runId :: Nil, ds, teO getOrElse IOEvent(ds))} // create understandable signals
-      .foreach(running(runId)._2 ! _)  // send them out
-  }
 
   private def createFeasibleCCs(baseCC: ConstraintCollection, possibilities: DecisionPossibilities): Map[ConstraintVariable, ConstraintCollection] =
     possibilities.keys
@@ -155,83 +159,6 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
       // this should give us the possibility with most acknowledges, which should lead to an early finish
       tpl._2.signals.count(_.isInstanceOf[SignalFromPassive])
     }).last._1
-  }
-
-  private val channelIdToPortId = portConnections.map(_.swap)
-
-  /** reacts to a signal from the netlist with the counter-signal on the same port
-    *
-    * @param nlId netlistId
-    * @param signal signal to be mirrored
-    * @param testEvent predecessor of new one
-    */
-  private def mirrorSignal(nlId: Netlist.Id, signal: Signal, testEvent: TestEvent) = {
-    val portId = channelIdToPortId(signal.channelId)
-    val answerSignal = signalOnPort(netlist.ports(portId))
-    val informationHub = running(nlId)._1
-
-    val followerEvent = informationHub.newIOEvent(answerSignal, testEvent)
-    sendOutSignals(nlId, Option(answerSignal), Option(followerEvent))
-  }
-
-  private var gencount = 5
-
-  private def testFinished(runId: Netlist.Id): Unit = {
-    info(s"Test $runId finished.")
-    val (informationHub, netlistActor) = running(runId)
-    context.stop(netlistActor)
-    gencount -= 1
-
-    val (cc, tb, coverage) = informationHub.state()
-    info(s"Current ConstraintCollection: $cc")
-
-    TestInstantiator.random(cc, tb) match {
-      case Some(test) => collectedTests.foundNewTest(GeneratedTest(test, coverage))
-      case None       => info("Not even found a test.")
-    }
-
-    if(collectedTests.combinedCoverage.isComplete) {
-      stop(Done)
-    } else if(gencount == 0 | backlog.isEmpty) {
-      stop(AbortGeneration)
-    } else {
-      val (id, resumable) = backlog.head
-      resumeTest(id, resumable)
-    }
-  }
-
-  private def resumeTest(id: Netlist.Id, resumableRun: ResumableRun): Unit = {
-    info(s"resuming test with id $id")
-    backlog.remove(id)
-
-    val newInfoHub = InformationHub.fromState(resumableRun.infoHubState)
-    info(s"resumed infohub-state: ${newInfoHub.state()}")
-    info(s"resumed netlistState: ${resumableRun.netlistState}")
-    val netlistActor = newNetlistActor(id, resumableRun.netlistState, Some(self))
-
-    running += id -> (newInfoHub, netlistActor)
-
-    netlistActor ! resumableRun.decision
-  }
-
-  private def stop(reason: StopReason) = {
-    reason match {
-      case Done =>
-        val tests = collectedTests.testCollection
-        info(s"Reached complete coverage with ${tests.size} tests.")
-        inquirer ! CompleteCoverage(tests)
-
-      case AbortGeneration =>
-        val testsSoFar = collectedTests.testCollection
-        info(s"Aborting test generation having ${testsSoFar.size} tests until generated.")
-        inquirer ! PartialCoverage(testsSoFar)
-
-      case GenerationProblem =>
-        info("Somewhere a problem occurred.")
-        inquirer ! GenerationError("something went wrong")
-    }
-
-    context.stop(self)
   }
 
 }
