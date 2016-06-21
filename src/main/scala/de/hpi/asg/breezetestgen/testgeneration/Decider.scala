@@ -33,28 +33,24 @@ trait Decider extends Loggable {
     info(s"Got state of main netlist:$runId: $state")
     val wfs = waitingForState.remove(runId).get
 
-    //TODO: instead of deciding one could copy at this point
-    val decisionCV = decide(wfs.possibilities)
+    val ids: Map[ConstraintVariable, Netlist.Id] = wfs.possibilities.map{case (cv, _) => cv -> nextRunId()}
 
-    // add others to backlog
-    val others = (wfs.sleepingExecutions - decisionCV).map{ case (_, r) =>
-      val i = nextRunId()
-      i -> (r, state)
-    }
-    backlog ++= others
+    // add all to backlog
+    backlog ++= wfs.sleepingExecutions.map{ case (cv, r) => ids(cv) -> (r, state) }
 
-    // resume selected one in current run
-    val toBeResumed = wfs.sleepingExecutions(decisionCV)
-    informationHubs.update(runId, InformationHub.fromState(runId, netlist, toBeResumed.infoHubState))
-
-    List(SendDecision(runId, toBeResumed.decision))
+    // decide for some possibilities and resume them all
+    decide(wfs.possibilities)
+      .map(ids)
+      .map(resumeTest)
+      .fold(StopMainNetlist(runId) :: Nil)(_ ++ _)
   }
 
-  private def decide(possibilities: DecisionPossibilities): ConstraintVariable = {
-    possibilities.mapValues(_._1).toSeq.sortBy(tpl => {
+  private def decide(possibilities: DecisionPossibilities): Set[ConstraintVariable] = {
+    val acknowledging = possibilities.mapValues(_._1).toSeq.sortBy(tpl => {
       // sort ascending by SignalFromPassive and choose last
       // this should give us the possibility with most acknowledges, which should lead to an early finish
       tpl._2.signals.count(_.isInstanceOf[SignalFromPassive])
     }).last._1
+    Set(acknowledging)
   }
 }
