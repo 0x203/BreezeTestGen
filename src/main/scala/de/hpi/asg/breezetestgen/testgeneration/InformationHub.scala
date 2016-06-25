@@ -20,7 +20,8 @@ class InformationHub(private val runId: Netlist.Id,
                      private val netlist: Netlist,
                      var cc: ConstraintCollection,
                      testBuilder: TestBuilder,
-                     var coverage: Coverage) {
+                     var coverage: Coverage,
+                     var remainingLoopExecs: Int) {
   import InformationHub._
 
   /** records reaction from [[de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour]]
@@ -61,7 +62,7 @@ class InformationHub(private val runId: Netlist.Id,
   }
 
   /** returns the current state, maybe used for duplication or such things later */
-  def state(): InformationHub.State = (cc, testBuilder.duplicate(), coverage)
+  def state(): InformationHub.State = InformationHub.State(cc, testBuilder.duplicate(), coverage, remainingLoopExecs)
 
   /** returns the requests that should be sent initially*/
   def initialRequests(): Seq[HandshakeActor.Signal] =
@@ -79,7 +80,7 @@ class InformationHub(private val runId: Netlist.Id,
     val remainingPossibilities = possibilities.filterKeys(newCCs.keySet contains _)
 
     remainingPossibilities.map { case (cv, (reaction, newState)) =>
-      val newInformationHub = new InformationHub(runId, netlist, newCCs(cv), testBuilder, coverage)
+      val newInformationHub = new InformationHub(runId, netlist, newCCs(cv), testBuilder, coverage, remainingLoopExecs)
       val testEventO = newInformationHub.handleReaction(reaction)
       val decision = Decision(idChain, componentId, newState, reaction.signals, testEventO)
       cv -> SleepingExecution(newInformationHub.state(), decision)
@@ -119,12 +120,16 @@ class InformationHub(private val runId: Netlist.Id,
 }
 
 object InformationHub {
-  type State = (ConstraintCollection, TestBuilder, Coverage)
+  case class State(constraintCollection: ConstraintCollection,
+                   testBuilder: TestBuilder,
+                   coverage: Coverage,
+                   remainingLoopExecs: Int)
 
   def fromState(runId: Netlist.Id, netlist: Netlist, state: State): InformationHub =
-    new InformationHub(runId, netlist, state._1, state._2, state._3)
+    new InformationHub(runId, netlist, state.constraintCollection, state.testBuilder, state.coverage,
+      state.remainingLoopExecs)
 
-  def forNetlist(runId: Netlist.Id, netlist: Netlist): InformationHub = {
+  def forNetlist(runId: Netlist.Id, netlist: Netlist, maxLoopExecs: Int): InformationHub = {
     val initialSignals = initialRequestsForNetlist(netlist).toSet
     new InformationHub(
       runId, netlist,
@@ -134,7 +139,8 @@ object InformationHub {
       TestBuilder.withOrigins(
         initialSignals.map(IOEvent(_))
       ),
-      ChannelActivationCoverage.forNetlist(netlist).withSignals(initialSignals)
+      ChannelActivationCoverage.forNetlist(netlist).withSignals(initialSignals),
+      maxLoopExecs
     )
   }
 

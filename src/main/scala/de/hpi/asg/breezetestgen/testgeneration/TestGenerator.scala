@@ -4,13 +4,12 @@ import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
 import de.hpi.asg.breezetestgen.actors.HandshakeActor
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.{DecisionPossibilities, NormalFlowReaction}
-import de.hpi.asg.breezetestgen.domain.components.brzcomponents.Loop
 import de.hpi.asg.breezetestgen.domain.{Netlist, Signal}
 import de.hpi.asg.breezetestgen.testgeneration.constraintsolving.ConstraintVariable
 import de.hpi.asg.breezetestgen.testing.TestEvent
 import de.hpi.asg.breezetestgen.testing.coverage.ChannelActivationCoverage
 
-class TestGenerator(protected val netlist: Netlist) extends Decider with Loggable {
+class TestGenerator(val netlist: Netlist, maxLoopExecs: Int) extends Decider with Loggable {
   import TestGenerator._
 
   val collectedTests = new CollectedTests(ChannelActivationCoverage.forNetlist(netlist))
@@ -21,7 +20,7 @@ class TestGenerator(protected val netlist: Netlist) extends Decider with Loggabl
   def start(): List[TestGenerationAction] = {
     info("Starting test generation")
     val runId = nextRunId()
-    val informationHub = InformationHub.forNetlist(runId, netlist)
+    val informationHub = InformationHub.forNetlist(runId, netlist, maxLoopExecs)
     informationHubs += runId -> informationHub
 
     List(
@@ -42,7 +41,9 @@ class TestGenerator(protected val netlist: Netlist) extends Decider with Loggabl
   def onNormalFlow(implicit runId: Netlist.Id, idChain: List[Netlist.Id], nf: NormalFlowReaction): List[TestGenerationAction]= {
     trace("recording normalFlowReaction")
     //TODO: check for loops
-    ReturnTestEvent(informationHub.handleReaction(nf))
+    List(
+      ReturnTestEvent(informationHub.handleReaction(nf))
+    )
   }
 
   private def testFinished(runId: Netlist.Id, generatedTestO: Option[GeneratedTest]): List[TestGenerationAction] = {

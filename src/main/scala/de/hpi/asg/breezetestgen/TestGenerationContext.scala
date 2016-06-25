@@ -35,12 +35,13 @@ class TestGenerationContext(config: Config) extends Loggable {
     import akka.actor.{ActorSystem, Props, Inbox}
     import actors.TestGenerationActor
 
+    val testGenerator = createTestGenerator(mainNetlist)
     val system = ActorSystem("TestGen")
     info("Start testfinding...")
-    val testGenerator = system.actorOf(Props(classOf[TestGenerationActor], mainNetlist))
+    val testGenerationActor = system.actorOf(Props(classOf[TestGenerationActor], testGenerator))
     val box = Inbox.create(system)
 
-    box.send(testGenerator, TestGenerationActor.Start)
+    box.send(testGenerationActor, TestGenerationActor.Start)
     try {
       val result = box.receive(timeout)
 
@@ -54,5 +55,10 @@ class TestGenerationContext(config: Config) extends Loggable {
     } finally {
       system.terminate()
     }
+  }
+
+  private def createTestGenerator(mainNetlist: Netlist): TestGenerator = {
+    val maxLoopExecs = config.getInt("breeze-test-gen.max-loop-executions")
+    new TestGenerator(mainNetlist, maxLoopExecs)
   }
 }

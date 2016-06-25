@@ -14,13 +14,11 @@ object TestGenerationActor {
   case object Start
 }
 
-class TestGenerationActor(protected val netlist: Netlist) extends Actor with MainNetlistCreator with Loggable {
+class TestGenerationActor(private val testGenerator: TestGenerator) extends Actor with MainNetlistCreator with Loggable {
   import TestGenerationActor._
 
-  private val testGenerator = new TestGenerator(netlist)
   private var inquirer: ActorRef = _
   private val mainNetlistActors = mutable.Map.empty[Netlist.Id, ActorRef]
-
 
   def receive = {
     case Start =>
@@ -81,4 +79,7 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
         inquirer ! result
         context.stop(self)
     }
+
+  // this is needed for implementing the mainNetlistCreator interface
+  protected def netlist: Netlist = testGenerator.netlist
 }
