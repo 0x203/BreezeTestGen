@@ -123,6 +123,8 @@ class InformationHub(private val runId: Int,
     val answerSignal = signalOnPort(netlist.ports(portId))
     val answerEvent = newIOEvent(answerSignal, testEvent)
 
+    info(s"Will mirror signal on port $portId (channel ${signal.channelId}) with $answerSignal")
+
     packSignals(List(answerSignal), Option(answerEvent))
   }
   private val channelIdToPortId = netlist.ports.values.map{p => p.channelId -> p.id}.toMap[Channel.Id, Port.Id]
