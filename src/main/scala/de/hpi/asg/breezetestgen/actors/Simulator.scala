@@ -51,7 +51,7 @@ class Simulator(protected val netlist: Netlist) extends Actor with MainNetlistCr
   }
 
   private def packSignal(testId: TestId, signal: Signal): HandshakeActor.Signal =
-    HandshakeActor.Signal(testId, Nil, signal, IOEvent(signal))
+    HandshakeActor.Signal(testId, Nil, signal, TestEvent.newIOEvent(signal))
 
   private var nextTestId = -1
   private val runningTests = collection.mutable.Map.empty[TestId, RunningTest]

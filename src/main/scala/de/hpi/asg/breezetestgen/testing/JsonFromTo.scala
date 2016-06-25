@@ -30,6 +30,8 @@ object JsonFromTo {
 
   /** adds an ID to an IOEvent in order to be addressable by edges */
   private case class TestEventWithID(id: Int, orig: TestEvent)
+  // note that this seems a bit stragne since TestEvents got their own ID in the meantime
+  // still, newly created IDs are smaller, cause they just need to be unique for within one test
 
   /** transform a testgraph without IDs to one with IDs */
   private def addIDs(orig: Test): scalax.collection.Graph[TestEventWithID, DiEdge] = {
@@ -47,30 +49,30 @@ object JsonFromTo {
     {
       //extract TestEventWithId from JsonAst
       case JObject(JField("type", JString("Merge")) :: JField("id", JInt(id)) :: Nil) =>
-        TestEventWithID(id.intValue, new MergeEvent)
+        TestEventWithID(id.intValue, MergeEvent(id.intValue()))
 
       case JObject(JField("type", JString("Request")) :: JField("id", JInt(id)) :: JField("channelId", JInt(cId)) :: Nil) =>
-        TestEventWithID(id.intValue, IOEvent(Request(cId.intValue)))
+        TestEventWithID(id.intValue, IOEvent(id.intValue(), Request(cId.intValue)))
 
       case JObject(JField("type", JString("Acknowledge")) :: JField("id", JInt(id)) :: JField("channelId", JInt(cId)) :: Nil) =>
-        TestEventWithID(id.intValue, IOEvent(Acknowledge(cId.intValue)))
+        TestEventWithID(id.intValue, IOEvent(id.intValue(), Acknowledge(cId.intValue)))
 
       case JObject(JField("type", JString("DataRequest")) :: JField("id", JInt(id)) ::
           JField("channelId", JInt(cId)) :: JField("data", JObject(data)) :: Nil) =>
         val const = JObject(data).extract[Constant]
-        TestEventWithID(id.intValue, IOEvent(DataRequest(cId.intValue, const)))
+        TestEventWithID(id.intValue, IOEvent(id.intValue(), DataRequest(cId.intValue, const)))
 
       case JObject(JField("type", JString("DataAcknowledge")) :: JField("id", JInt(id)) ::
         JField("channelId", JInt(cId)) :: JField("data", JObject(data)) :: Nil) =>
         val const = JObject(data).extract[Constant]
-        TestEventWithID(id.intValue, IOEvent(DataAcknowledge(cId.intValue, const)))
+        TestEventWithID(id.intValue, IOEvent(id.intValue(), DataAcknowledge(cId.intValue, const)))
     },
     {
       // transform TestEventWithId to JsonAst
       case TestEventWithID(id, _:MergeEvent) =>
         JObject(JField("type", JString("Merge")) :: JField("id", JInt(id)) :: Nil)
 
-      case TestEventWithID(id, IOEvent(s: Signal)) =>
+      case TestEventWithID(id, IOEvent(_, s: Signal)) =>
         val d = decompose(s)
         val typeString = s match {
           case _: Request => "Request"

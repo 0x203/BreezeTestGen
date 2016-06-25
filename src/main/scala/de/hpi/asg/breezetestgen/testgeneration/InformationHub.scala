@@ -9,7 +9,7 @@ import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.{Decisio
 import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent
 import de.hpi.asg.breezetestgen.testgeneration.TestGenerator.SleepingExecution
 import de.hpi.asg.breezetestgen.testing.coverage.{ChannelActivationCoverage, Coverage}
-import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
+import de.hpi.asg.breezetestgen.testing.TestEvent
 
 /** Central place for gathering information according a single a test/simulation run.
   *
@@ -110,7 +110,7 @@ class InformationHub(private val runId: Int,
     //record coverage
     coverage = coverage.withSignal(signal)
     //create succeeding TestEvent
-    testBuilder.addSuccessor(testEvent, IOEvent(signal))
+    testBuilder.addSuccessor(testEvent, TestEvent.newIOEvent(signal))
   }
 
   /** reacts to a signal from the netlist with the counter-signal on the same port
@@ -132,7 +132,7 @@ class InformationHub(private val runId: Int,
   /** transform domain signals to HandshakeActor.Signals which can be send to the actors */
   private def packSignals(signals: Seq[Signal], teO: Option[TestEvent] = None) =
     signals
-      .map{ds => HandshakeActor.Signal(runId, Nil, ds, teO getOrElse IOEvent(ds))} // create understandable signals
+      .map{ds => HandshakeActor.Signal(runId, Nil, ds, teO getOrElse TestEvent.newIOEvent(ds))} // create understandable signals
 
   /** returns a generated test if one exists */
   private def generateTest(): Option[GeneratedTest] =
@@ -157,7 +157,7 @@ object InformationHub {
         variables = initialSignals.collect{case DataRequest(_, vd :VariableData) => vd.underlying}
       ),
       TestBuilder.withOrigins(
-        initialSignals.map(IOEvent(_))
+        initialSignals.map(TestEvent.newIOEvent)
       ),
       ChannelActivationCoverage.forNetlist(netlist).withSignals(initialSignals),
       maxLoopExecs

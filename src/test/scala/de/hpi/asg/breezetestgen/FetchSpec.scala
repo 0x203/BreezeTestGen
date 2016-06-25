@@ -12,7 +12,7 @@ class FetchSpec extends UnitTest {
   val activateId: Channel.Spec[SyncChannel[_]] = 1
   val inpId: Channel.Spec[PullChannel[_]] = 2
   val outId: Channel.Spec[PushChannel[_]] = 3
-  val te: TestEvent = new MergeEvent()
+  val te: TestEvent = TestEvent.newMergeEvent()
 
   val fetch = new Fetch(id = 0 :: Nil, activateId, inpId, outId)
 

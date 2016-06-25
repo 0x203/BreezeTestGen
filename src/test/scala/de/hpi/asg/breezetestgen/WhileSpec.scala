@@ -15,7 +15,7 @@ class WhileSpec extends UnitTest {
   val guardId = 3
   val outId = 7
 
-  val te: TestEvent = new MergeEvent()
+  val te: TestEvent = TestEvent.newMergeEvent()
 
   def normalReactionWith(ds: domain.Signal): NormalFlowReaction =
     NormalFlowReaction(Set(ds), Follow(te))

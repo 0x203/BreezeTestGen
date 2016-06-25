@@ -42,7 +42,7 @@ class TestBuilder private(graph: mutable.Graph[TestEvent, DiEdge]) {
   /** returns a nodeId which represents a state where all given nodes are processed */
   def merge(ns: Set[TestEvent]) =
     if (ns.size > 1) {
-      val m = new MergeEvent()
+      val m = TestEvent.newMergeEvent()
       graph ++= ns.map{_ ~> m}
       m
     } else {
@@ -68,8 +68,8 @@ class TestBuilder private(graph: mutable.Graph[TestEvent, DiEdge]) {
   def instantiate(f: VariableFixator): Test = {
     de.hpi.asg.breezetestgen.util.Graph.mapNodes[TestEvent, TestEvent](graph,
       {x: TestEvent => x.value match {
-        case IOEvent(x @ DataRequest(_, v: VariableData)) => IOEvent(x.copy(data = f(v.underlying)))
-        case IOEvent(x @ DataAcknowledge(_, v: VariableData)) => IOEvent(x.copy(data = f(v.underlying)))
+        case IOEvent(id, x @ DataRequest(_, v: VariableData)) => IOEvent(id, x.copy(data = f(v.underlying)))
+        case IOEvent(id, x @ DataAcknowledge(_, v: VariableData)) => IOEvent(id, x.copy(data = f(v.underlying)))
         case e => e
       }
     })

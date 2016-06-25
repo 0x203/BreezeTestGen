@@ -17,19 +17,19 @@ object GCDTest {
     val binId = findPort("bin").channelId
     val oId = findPort("o").channelId
 
-    val activateReq = IOEvent(Request(activateId))
-    val activateAck = IOEvent(Acknowledge(activateId))
+    val activateReq = TestEvent.newIOEvent(Request(activateId))
+    val activateAck = TestEvent.newIOEvent(Acknowledge(activateId))
 
-    val ainReq = IOEvent(Request(ainId))
-    val ainAck = IOEvent(DataAcknowledge(ainId, Constant(ain)))
+    val ainReq = TestEvent.newIOEvent(Request(ainId))
+    val ainAck = TestEvent.newIOEvent(DataAcknowledge(ainId, Constant(ain)))
 
-    val binReq = IOEvent(Request(binId))
-    val binAck = IOEvent(DataAcknowledge(binId, Constant(bin)))
+    val binReq = TestEvent.newIOEvent(Request(binId))
+    val binAck = TestEvent.newIOEvent(DataAcknowledge(binId, Constant(bin)))
 
-    val oReq = IOEvent(DataRequest(oId, Constant(o)))
-    val oAck = IOEvent(Acknowledge(oId))
+    val oReq = TestEvent.newIOEvent(DataRequest(oId, Constant(o)))
+    val oAck = TestEvent.newIOEvent(Acknowledge(oId))
 
-    val merge = new MergeEvent
+    val merge = TestEvent.newMergeEvent()
 
     Graph[TestEvent, DiEdge](
       activateReq ~> ainReq,

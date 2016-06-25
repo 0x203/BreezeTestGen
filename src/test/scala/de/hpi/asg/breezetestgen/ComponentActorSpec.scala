@@ -7,14 +7,14 @@ import de.hpi.asg.breezetestgen.baseclasses.AkkaIntegrationSpec
 import de.hpi.asg.breezetestgen.domain._
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponentBehaviour, HandshakeComponent}
 import de.hpi.asg.breezetestgen.domain.components.brzcomponents.Fetch
-import de.hpi.asg.breezetestgen.testing.IOEvent
+import de.hpi.asg.breezetestgen.testing.TestEvent
 
 class ComponentActorSpec extends AkkaIntegrationSpec("ComponentActorSpec") {
   val runId = 1
   val compId = -1 :: 1 :: Nil
   val (aChan, iChan, oChan) = (5, 6, 7)
   val sampleFetch = new Fetch(compId, aChan, iChan, oChan)
-  val sampleTestEvent = IOEvent(Request(700))
+  val sampleTestEvent = TestEvent.newIOEvent(Request(700))
 
   def freshBehaviour() = sampleFetch.behaviour(None)
 

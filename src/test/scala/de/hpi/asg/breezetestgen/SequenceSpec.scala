@@ -11,7 +11,7 @@ import de.hpi.asg.breezetestgen.testgeneration.Follow
 class SequenceSpec extends baseclasses.UnitTest {
   val activateId: Channel.Spec[SyncChannel[_]] = 1
   val outIds: Seq[Channel.Spec[SyncChannel[_]]] = Seq(2, 3, 4)
-  val te: TestEvent = new MergeEvent()
+  val te: TestEvent = TestEvent.newMergeEvent()
 
   val sequence = new Sequence(id = -1 :: 0 :: Nil, activateId, outIds)
 
