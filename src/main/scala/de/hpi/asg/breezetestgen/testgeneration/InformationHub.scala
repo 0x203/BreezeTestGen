@@ -32,8 +32,8 @@ class InformationHub(private val runId: Int,
     */
   def handleReaction(reaction: NormalFlowReaction,
                      id: HandshakeComponent.Id): Either[TestEvent , Option[GeneratedTest]] =
-    if (enoughLoopExecutions(id)) {
-      Right(None)
+    if (enoughLoopExecutions(id) || coverage.isComplete) {
+      Right(generateTest())
     } else
       Left(handleNormalReaction(reaction))
 
