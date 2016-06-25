@@ -124,6 +124,7 @@ object ComponentExtractors {
           channel(0), channel(1)
         )
       case "BrzFetch" => new Fetch(id, channel(0), channel(1), channel(2))
+      case "BrzLoop" => new Loop(id, channel(0), channel(1))
       case "BrzSequence" => new Sequence(id, channel(0), channelSeq(1))
       case "BrzVariable" =>
         new Variable(id, stringParam(2), VariableReaderSpec.fromString(stringParam(3)), channel(0), channelSeq(1))
