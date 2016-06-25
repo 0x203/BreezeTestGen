@@ -22,7 +22,7 @@ class Concur(id: HandshakeComponent.Id,
     case object Idle extends ControlState
     case object Called extends ControlState
 
-    case class Requests(pending: Int, testEvents: Set[TestEvent])
+    case class Requests(pending: Int, preTestEvent: TestEvent, testEvents: Set[TestEvent])
 
     val freshState: HandshakeComponent.State[ControlState, D] = HandshakeComponent.State(Idle, None)
   }
@@ -36,19 +36,19 @@ class Concur(id: HandshakeComponent.Id,
       case Req(`activate`, _) =>
         info("Requested!")
         outs.foreach{request(_)}
-        goto(Called) using Some(Requests(outs.size, Set.empty))
+        goto(Called) using Some(Requests(outs.size, testEvent, Set.empty))
     }
 
     when(Called) {
-      case Ack(out, Some(Requests(i, testEvents))) if outs contains out =>
+      case Ack(out, Some(Requests(i, preTestEvent, testEvents))) if outs contains out =>
         val newTestEvents = testEvents + testEvent
         if (i != 1) {
           info(s"Channel acknowledged. ${i - 1} still pending...")
-          stay using Option(Requests(i - 1, newTestEvents))
+          stay using Option(Requests(i - 1, preTestEvent, newTestEvents))
         } else {
           info("all finished. acknowledging...")
           acknowledge(activate)
-          mergeAfter(newTestEvents)
+          mergeAfter(newTestEvents - preTestEvent)
           goto(Idle)
         }
     }
