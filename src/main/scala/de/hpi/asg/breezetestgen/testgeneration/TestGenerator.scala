@@ -17,6 +17,8 @@ class TestGenerator(val netlist: Netlist, maxLoopExecs: Int) extends Decider wit
   val waitingForState = scala.collection.mutable.Map.empty[Netlist.Id, WaitingForState]
   val backlog = scala.collection.mutable.Map.empty[Netlist.Id, (SleepingExecution, Netlist.State)]
 
+  info(s"Loops in this netlist: ${netlist.loopIds}")
+
   def start(): List[TestGenerationAction] = {
     info("Starting test generation")
     val runId = nextRunId()
@@ -38,12 +40,15 @@ class TestGenerator(val netlist: Netlist, maxLoopExecs: Int) extends Decider wit
     }
   }
 
-  def onNormalFlow(implicit runId: Netlist.Id, idChain: List[Netlist.Id], nf: NormalFlowReaction): List[TestGenerationAction]= {
+  def onNormalFlow(implicit runId: Netlist.Id,
+                   idChain: List[Netlist.Id],
+                   nf: NormalFlowReaction): List[TestGenerationAction] = {
     trace("recording normalFlowReaction")
-    //TODO: check for loops
-    List(
-      ReturnTestEvent(informationHub.handleReaction(nf))
-    )
+    informationHub.handleReaction(nf, idChain) match {
+      case Left(testEvent) => List(ReturnTestEvent(testEvent))
+      case Right(generatedTestO) => throw new RuntimeException("loop finishing")
+        testFinished(runId, generatedTestO)
+    }
   }
 
   private def testFinished(runId: Netlist.Id, generatedTestO: Option[GeneratedTest]): List[TestGenerationAction] = {

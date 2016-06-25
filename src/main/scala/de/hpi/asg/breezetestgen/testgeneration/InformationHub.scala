@@ -23,13 +23,21 @@ class InformationHub(private val runId: Netlist.Id,
                      var coverage: Coverage,
                      var remainingLoopExecs: Int) {
   import InformationHub._
-
   /** records reaction from [[de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour]]
     *
     * @param reaction reaction from handshake component
+    * @param idChain hierarchical id of component which sent this
     * @return a [[TestEvent]] for further building of tests, if a [[TestOp]] was specified
     */
-  def handleReaction(reaction: NormalFlowReaction): TestEvent = {
+  def handleReaction(reaction: NormalFlowReaction,
+                     idChain: List[HandshakeComponent.Id]): Either[TestEvent , Option[GeneratedTest]] =
+    if (enoughLoopExecutions(idChain)) {
+      Right(None)
+    } else
+      Left(handleNormalReaction(reaction))
+
+
+  private def handleNormalReaction(reaction: NormalFlowReaction): TestEvent = {
     reaction.signals
       .collect{case dataSignal: SignalWithData => dataSignal.data}
       .collect{case vd: VariableData => vd}
@@ -47,6 +55,15 @@ class InformationHub(private val runId: Netlist.Id,
       case Merge(te) => testBuilder.merge(te)
       case Follow(te) => te
     }
+  }
+
+  private val loopIds = netlist.loopIds
+  def enoughLoopExecutions(idChain: List[Netlist.Id]): Boolean = {
+    if (loopIds contains idChain) {
+      remainingLoopExecs -= 1
+      remainingLoopExecs >= 0
+    } else
+      false
   }
 
   def handlePortSignal(signal: Signal, testEvent: TestEvent):
@@ -81,7 +98,7 @@ class InformationHub(private val runId: Netlist.Id,
 
     remainingPossibilities.map { case (cv, (reaction, newState)) =>
       val newInformationHub = new InformationHub(runId, netlist, newCCs(cv), testBuilder, coverage, remainingLoopExecs)
-      val testEventO = newInformationHub.handleReaction(reaction)
+      val testEventO = newInformationHub.handleNormalReaction(reaction)
       val decision = Decision(idChain, componentId, newState, reaction.signals, testEventO)
       cv -> SleepingExecution(newInformationHub.state(), decision)
     }
