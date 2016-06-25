@@ -47,8 +47,7 @@ class TestGenerator(val netlist: Netlist, maxLoopExecs: Int) extends Decider wit
     trace("recording normalFlowReaction")
     informationHub.handleReaction(nf, compId) match {
       case Left(testEvent) => List(ReturnTestEvent(testEvent))
-      case Right(generatedTestO) => throw new RuntimeException("loop finishing")
-        testFinished(runId, generatedTestO)
+      case Right(generatedTestO) => testFinished(runId, generatedTestO)
     }
   }
 
@@ -67,6 +66,7 @@ class TestGenerator(val netlist: Netlist, maxLoopExecs: Int) extends Decider wit
   }
 
   protected def runIsOver(runId: Int): List[TestGenerationAction] = {
+    informationHubs -= runId
     if(backlog.nonEmpty) {
       //TODO decide more intelligent here
       val id = backlog.keySet.head
@@ -102,7 +102,7 @@ class TestGenerator(val netlist: Netlist, maxLoopExecs: Int) extends Decider wit
 
       case AbortGeneration =>
         val testsSoFar = collectedTests.testCollection
-        info(s"Aborting test generation having ${testsSoFar.size} tests until generated.")
+        info(s"Aborting test generation having ${testsSoFar.size} tests generated so far.")
         PartialCoverage(testsSoFar)
 
       case GenerationProblem =>

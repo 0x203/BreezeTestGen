@@ -1,5 +1,6 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
+import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.testgeneration.constraintsolving._
 import de.hpi.asg.breezetestgen.actors.HandshakeActor
 import de.hpi.asg.breezetestgen.actors.HandshakeActor.Decision
@@ -21,7 +22,7 @@ class InformationHub(private val runId: Int,
                      var cc: ConstraintCollection,
                      testBuilder: TestBuilder,
                      var coverage: Coverage,
-                     var remainingLoopExecs: Int) {
+                     var remainingLoopExecs: Int) extends Loggable{
   import InformationHub._
   /** records reaction from [[de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour]]
     *
@@ -61,7 +62,8 @@ class InformationHub(private val runId: Int,
   def enoughLoopExecutions(id: HandshakeComponent.Id): Boolean = {
     if (loopIds contains id) {
       remainingLoopExecs -= 1
-      remainingLoopExecs >= 0
+      info(s"Detected Loop execution! Remaining: $remainingLoopExecs")
+      remainingLoopExecs < 0
     } else
       false
   }
