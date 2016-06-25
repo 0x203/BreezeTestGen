@@ -4,6 +4,7 @@ import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
 import de.hpi.asg.breezetestgen.actors.HandshakeActor
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.{DecisionPossibilities, NormalFlowReaction}
+import de.hpi.asg.breezetestgen.domain.components.brzcomponents.Loop
 import de.hpi.asg.breezetestgen.domain.{Netlist, Signal}
 import de.hpi.asg.breezetestgen.testgeneration.constraintsolving.ConstraintVariable
 import de.hpi.asg.breezetestgen.testing.TestEvent
@@ -38,10 +39,10 @@ class TestGenerator(protected val netlist: Netlist) extends Decider with Loggabl
     }
   }
 
-  // in contrast to the other handlers, this one just returns the result directly. cause it's such a simple use case
-  def onNormalFlow(implicit runId: Netlist.Id, nf: NormalFlowReaction): TestEvent = {
+  def onNormalFlow(implicit runId: Netlist.Id, idChain: List[Netlist.Id], nf: NormalFlowReaction): List[TestGenerationAction]= {
     trace("recording normalFlowReaction")
-    informationHub.handleReaction(nf)
+    //TODO: check for loops
+    ReturnTestEvent(informationHub.handleReaction(nf))
   }
 
   private def testFinished(runId: Netlist.Id, generatedTestO: Option[GeneratedTest]): List[TestGenerationAction] = {
@@ -116,6 +117,7 @@ object TestGenerator {
   case class StopMainNetlist(runId: Netlist.Id) extends TestGenerationAction
   case class SendToMainNetlist(runId: Netlist.Id, signals: Seq[HandshakeActor.Signal]) extends TestGenerationAction
   case class RequestWholeState(runId: Netlist.Id) extends TestGenerationAction
+  case class ReturnTestEvent(testEvent: TestEvent) extends TestGenerationAction
   case class SendDecision(runId: Netlist.Id, decision: Decision) extends TestGenerationAction
   case class FinishedGeneration(generationResult: GenerationResult) extends TestGenerationAction
 

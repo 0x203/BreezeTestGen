@@ -25,28 +25,27 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
   def receive = {
     case Start =>
       inquirer = sender()
-      performActions(testGenerator.start())
+      performActions(sender(), testGenerator.start())
 
     case HandshakeActor.Signal(runId :: _, ds, testEvent) =>
-      performActions(testGenerator.onPortSignal(runId, ds, testEvent))
+      performActions(sender(), testGenerator.onPortSignal(runId, ds, testEvent))
 
-    case HandshakeActor.NormalFlowReaction(runId :: _, nf: NormalFlowReaction) =>
-      // reply with TestEvent
-      sender() ! testGenerator.onNormalFlow(runId, nf)
+    case HandshakeActor.NormalFlowReaction(runId :: idChain, nf: NormalFlowReaction) =>
+      performActions(sender(), testGenerator.onNormalFlow(runId, idChain, nf))
 
     case HandshakeActor.DecisionRequired(runId:: idChain, componentId, DecisionRequired(possibilities)) =>
-      performActions(testGenerator.onDecisionRequired(runId, idChain, componentId, possibilities))
+      performActions(sender(), testGenerator.onDecisionRequired(runId, idChain, componentId, possibilities))
 
     case MyState(runId :: _, _, state: Netlist.State) =>
-      performActions(testGenerator.onWholeState(runId, state))
+      performActions(sender(), testGenerator.onWholeState(runId, state))
   }
 
 
-  private def performActions(actions: List[TestGenerationAction]) =
+  private def performActions(sender: ActorRef, actions: List[TestGenerationAction]) =
     for(action <- actions)
-      performAction(action)
+      performAction(sender, action)
 
-  private def performAction(action: TestGenerationAction) =
+  private def performAction(sender: ActorRef, action: TestGenerationAction) =
     action match {
       case CreateMainNetlist(runId, stateO) =>
         info(s"$runId: Creating new MainNetlist")
@@ -67,6 +66,10 @@ class TestGenerationActor(protected val netlist: Netlist) extends Actor with Mai
         info(s"$runId: Requesting the main netlist's state")
         val mainNetlistActor = mainNetlistActors(runId)
         mainNetlistActor ! GetState
+
+      case ReturnTestEvent(testEvent) =>
+        trace("sending new test Event to component")
+        sender ! testEvent
 
       case SendDecision(runId, decision) =>
         info(s"$runId: Sending decision to netlist")
