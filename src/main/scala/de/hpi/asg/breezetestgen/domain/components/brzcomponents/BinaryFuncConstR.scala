@@ -1,12 +1,13 @@
 package de.hpi.asg.breezetestgen.domain.components.brzcomponents
 
-import de.hpi.asg.breezetestgen.domain.{Constant, Data}
-import de.hpi.asg.breezetestgen.domain.components.BrzComponent._
-import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, BrzComponentBehaviour, HandshakeComponent}
+import de.hpi.asg.breezetestgen.domain
+import domain.Data
+import domain.components.{BrzComponent, BrzComponentBehaviour, HandshakeComponent}
+import BrzComponent._
 
 class BinaryFuncConstR(id: HandshakeComponent.Id,
                        operator: String,
-                       bData: Constant,
+                       bData: domain.Constant,
                        out: PullSpec,
                        inpA: PullSpec) extends BrzComponent(id) {
   type Behaviour = BinaryFuncConstRBehaviour

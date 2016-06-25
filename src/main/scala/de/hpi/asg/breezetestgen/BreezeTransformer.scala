@@ -1,8 +1,8 @@
 package de.hpi.asg.breezetestgen
 
 import com.typesafe.config.Config
-import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, HandshakeComponent}
 import de.hpi.asg.breezetestgen.domain._
+import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, HandshakeComponent}
 import de.uni_potsdam.hpi.asg.common.breeze.model._
 import de.uni_potsdam.hpi.asg.common.io.WorkingdirGenerator
 
@@ -116,6 +116,7 @@ object ComponentExtractors {
       case "BrzCallMux" => new CallMux(id, channelSet(0), channel(1))
       case "BrzCase" => new Case(id, CaseSpecParser.fromString(stringParam(2), intParam(0)), channel(0), channelSeq(1))
       case "BrzConcur" => new Concur(id, channel(0), channelSet(1))
+      case "BrzConstant" => new Constant(id, channel(0), Constant(intParam(1), intParam(0)))
       case "BrzBinaryFunc" => new BinaryFunc(id, stringParam(3), channel(0), channel(1), channel(2))
       case "BrzBinaryFuncConstR" =>
         new BinaryFuncConstR(id, stringParam(3),
