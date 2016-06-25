@@ -24,7 +24,7 @@ class ComponentActor(runId: Int,
   receiue{
     case GetState => sender() ! MyState(runId, componentId, component.state)
 
-    case Decision(`runId`, `componentId`, newState, domainSignals, testEvent) =>
+    case Decision(`componentId`, newState, domainSignals, testEvent) =>
       info(s"$componentId: Got Decision: $newState; $domainSignals; $testEvent")
       component.state = newState
       for(ds <- domainSignals)

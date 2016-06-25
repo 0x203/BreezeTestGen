@@ -122,9 +122,10 @@ class NetlistActor(runId: Int,
         componentStates = freshComponentStates()
       }
 
-    case Decision(`runId`, componentId, ns, ds, te) =>
+    case Decision(componentId, ns, ds, te) =>
+      info("Got Decision attempting to forward")
       componentId.drop(netlist.id.size) match {
-        case cId :: Nil => componentActors(componentId) ! Decision(runId, componentId, ns, ds, te)
+        case cId :: Nil => componentActors(componentId) ! Decision(componentId, ns, ds, te)
         case subNetlistId :: _ =>
           // TODO: implement me for hierarchical netlists
           // subNetlists(netlist.id :+ subNetlistId) ! Decision(componentId, ns, ds, te)

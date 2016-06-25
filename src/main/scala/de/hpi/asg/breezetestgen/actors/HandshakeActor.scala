@@ -22,8 +22,7 @@ object HandshakeActor {
   case object GetState
   case class MyState(runId: Int, id: CompId, state: HandshakeComponent.State[_, _])
 
-  case class Decision(runId: Int,
-                      componentId: HandshakeComponent.Id,
+  case class Decision(componentId: HandshakeComponent.Id,
                       newState: HandshakeComponent.State[_, _],
                       domainSignals: Set[domain.Signal],
                       testEvent: TestEvent)

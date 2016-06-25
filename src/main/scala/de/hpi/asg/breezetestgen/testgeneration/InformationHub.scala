@@ -98,7 +98,7 @@ class InformationHub(private val runId: Int,
     remainingPossibilities.map { case (cv, (reaction, newState)) =>
       val newInformationHub = new InformationHub(runId, netlist, newCCs(cv), testBuilder, coverage, remainingLoopExecs)
       val testEventO = newInformationHub.handleNormalReaction(reaction)
-      val decision = Decision(runId, componentId, newState, reaction.signals, testEventO)
+      val decision = Decision(componentId, newState, reaction.signals, testEventO)
       cv -> SleepingExecution(newInformationHub.state(), decision)
     }
   }

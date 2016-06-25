@@ -70,7 +70,7 @@ class TestGenerationActor(private val testGenerator: TestGenerator) extends Acto
         sender ! testEvent
 
       case SendDecision(runId, decision) =>
-        info(s"$runId: Sending decision to netlist")
+        info(s"$runId: Sending decision to netlist: $decision")
         val mainNetlistActor = mainNetlistActors(runId)
         mainNetlistActor ! decision
 
