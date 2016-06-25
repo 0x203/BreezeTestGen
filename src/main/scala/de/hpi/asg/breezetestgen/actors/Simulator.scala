@@ -10,7 +10,7 @@ object Simulator {
   case class RunTest(test: Test)
 
   private case class RunningTest(testRunner: TestRunner, invoker: ActorRef, netlistActor: ActorRef)
-  private type TestId = Netlist.Id
+  private type TestId = Int
 }
 
 /** performs a test on a netlist
@@ -21,7 +21,7 @@ class Simulator(protected val netlist: Netlist) extends Actor with MainNetlistCr
 
   def receive = {
     case RunTest(test) => newTest(test, sender())
-    case HandshakeActor.Signal(testId :: Nil, domainSignal, _) => handleSignal(testId, domainSignal)
+    case HandshakeActor.Signal(testId, Nil, domainSignal, _) => handleSignal(testId, domainSignal)
   }
 
   private def newTest(test: Test, invoker: ActorRef) = {
@@ -51,7 +51,7 @@ class Simulator(protected val netlist: Netlist) extends Actor with MainNetlistCr
   }
 
   private def packSignal(testId: TestId, signal: Signal): HandshakeActor.Signal =
-    HandshakeActor.Signal(testId :: Nil, signal, IOEvent(signal))
+    HandshakeActor.Signal(testId, Nil, signal, IOEvent(signal))
 
   private var nextTestId = -1
   private val runningTests = collection.mutable.Map.empty[TestId, RunningTest]

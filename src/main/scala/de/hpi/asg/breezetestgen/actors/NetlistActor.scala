@@ -2,8 +2,7 @@ package de.hpi.asg.breezetestgen.actors
 
 import akka.actor.{ActorRef, Props}
 import de.hpi.asg.breezetestgen.Loggable
-import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
-import de.hpi.asg.breezetestgen.actors.HandshakeActor.{GetState, MyState}
+import de.hpi.asg.breezetestgen.actors.HandshakeActor.{Decision, GetState, MyState}
 import de.hpi.asg.breezetestgen.domain
 import de.hpi.asg.breezetestgen.domain.Channel.{CompEndpoint, PortEndpoint}
 import de.hpi.asg.breezetestgen.domain._
@@ -11,7 +10,8 @@ import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, BrzComponentBeh
 import de.hpi.asg.breezetestgen.testing.TestEvent
 
 
-class NetlistActor(netlist: domain.Netlist,
+class NetlistActor(runId: Int,
+                   netlist: domain.Netlist,
                    portConnectionsOut: Map[Port.Id, Channel.Id],
                    initialState: Option[Netlist.State],
                    infoHub: Option[ActorRef]) extends HandshakeActor with Loggable {
@@ -20,7 +20,7 @@ class NetlistActor(netlist: domain.Netlist,
   private val idOfParent = netlist.id.take(netlist.id.size - 1)
   private val componentActors = netlist.components
     .mapValues(createBehaviour)
-    .map{case (id, comp) => id -> Props(classOf[ComponentActor], id, comp, infoHub)}  //create Props
+    .map{case (id, comp) => id -> Props(classOf[ComponentActor], runId, id, comp, infoHub)}  //create Props
     .mapValues(context.actorOf)
     .view.force
 
@@ -45,7 +45,7 @@ class NetlistActor(netlist: domain.Netlist,
     val (outgoingId, newSignal, receiver) =
       if (senderId == idOfParent) handleExternal(ds) else handleInternal(ds)
 
-    val packedSignal = HandshakeActor.Signal(outgoingId, newSignal, te)
+    val packedSignal = HandshakeActor.Signal(runId, outgoingId, newSignal, te)
 
     receiver ! packedSignal
   }
@@ -109,21 +109,22 @@ class NetlistActor(netlist: domain.Netlist,
       stateInvoker = sender()
       componentActors.values.foreach{_ ! GetState}
 
-    case MyState(compId, compState) =>
+    case MyState(`runId`, compId, compState) =>
       componentStates += compId -> compState
 
       if(componentStates.size == netlist.components.size) {
         info("Got all component states")
         stateInvoker ! MyState(
+            runId,
             netlist.id,
             Netlist.State(collection.immutable.Map.empty ++ componentStates)
         )
         componentStates = freshComponentStates()
       }
 
-    case Decision(componentId, ns, ds, te) =>
+    case Decision(`runId`, componentId, ns, ds, te) =>
       componentId.drop(netlist.id.size) match {
-        case cId :: Nil => componentActors(componentId) ! Decision(componentId, ns, ds, te)
+        case cId :: Nil => componentActors(componentId) ! Decision(runId, componentId, ns, ds, te)
         case subNetlistId :: _ =>
           // TODO: implement me for hierarchical netlists
           // subNetlists(netlist.id :+ subNetlistId) ! Decision(componentId, ns, ds, te)

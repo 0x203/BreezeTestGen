@@ -5,12 +5,7 @@ import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, HandshakeCompon
 
 object Netlist {
   type Id = List[Int]
-
-  private[this] var currentId: Int = 0
-  def nextId: Id = {
-    currentId += 1
-    currentId :: Nil
-  }
+  val TopLevelId: Id = -1 :: Nil
 
   type State = HandshakeComponent.State[Null, Map[HandshakeComponent.Id, HandshakeComponent.State[_, _]]]
   object State {

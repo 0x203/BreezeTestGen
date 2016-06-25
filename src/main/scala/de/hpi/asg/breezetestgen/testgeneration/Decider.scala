@@ -12,12 +12,11 @@ import de.hpi.asg.breezetestgen.testgeneration.constraintsolving.ConstraintVaria
 trait Decider extends Loggable {
   self: TestGenerator =>
 
-  def onDecisionRequired(implicit runId: Netlist.Id,
-                         idChain: List[Netlist.Id],
+  def onDecisionRequired(implicit runId: Int,
                          componentId: HandshakeComponent.Id,
                          possibilities: DecisionPossibilities): List[TestGenerationAction] = {
     info(s"DecisionRequired: ${possibilities.keys}")
-    val sleepingExecutions = informationHubs(runId).createSleepingExecutions(idChain, componentId, possibilities)
+    val sleepingExecutions = informationHubs(runId).createSleepingExecutions(componentId, possibilities)
 
     info(s"created ${sleepingExecutions.size} sleeping executions")
 
@@ -29,11 +28,11 @@ trait Decider extends Loggable {
     List(RequestWholeState(runId))
   }
 
-  def onWholeState(implicit runId: Netlist.Id, state: Netlist.State): List[TestGenerationAction] = {
+  def onWholeState(implicit runId: Int, state: Netlist.State): List[TestGenerationAction] = {
     info(s"Got state of main netlist:$runId: $state")
     val wfs = waitingForState.remove(runId).get
 
-    val ids: Map[ConstraintVariable, Netlist.Id] = wfs.possibilities.map{case (cv, _) => cv -> nextRunId()}
+    val ids: Map[ConstraintVariable, Int] = wfs.possibilities.map{case (cv, _) => cv -> nextRunId()}
 
     // add all to backlog
     backlog ++= wfs.sleepingExecutions.map{ case (cv, r) => ids(cv) -> (r, state) }

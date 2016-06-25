@@ -6,7 +6,7 @@ import akka.util.Timeout
 
 import concurrent.duration._
 import concurrent.Future
-import de.hpi.asg.breezetestgen.actors.HandshakeActor.{DecisionRequired, GetState, MyState, Signal, NormalFlowReaction}
+import de.hpi.asg.breezetestgen.actors.HandshakeActor._
 import de.hpi.asg.breezetestgen.domain
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponentBehaviour, HandshakeComponent}
 import de.hpi.asg.breezetestgen.domain.{SignalFromActive, SignalFromPassive}
@@ -14,21 +14,21 @@ import de.hpi.asg.breezetestgen.testing.TestEvent
 
 
 
-class ComponentActor(componentId: HandshakeComponent.Id,
+class ComponentActor(runId: Int,
+                     componentId: HandshakeComponent.Id,
                      component: BrzComponentBehaviour[_, _],
                      infoHub: Option[ActorRef]) extends HandshakeActor {
-  import ComponentActor._
   import context.dispatcher
   implicit val askTimeout = Timeout(5 seconds)
 
   receiue{
-    case GetState => sender() ! MyState(componentId, component.state)
+    case GetState => sender() ! MyState(runId, componentId, component.state)
 
-    case Decision(`componentId`, newState, domainSignals, testEvent) =>
+    case Decision(`runId`, `componentId`, newState, domainSignals, testEvent) =>
       info(s"$componentId: Got Decision: $newState; $domainSignals; $testEvent")
       component.state = newState
       for(ds <- domainSignals)
-        receiverOf(ds) ! Signal(componentId, ds, testEvent)
+        receiverOf(ds) ! Signal(runId, componentId, ds, testEvent)
   }
 
   override protected def handleSignal(senderId: HandshakeComponent.Id, ds: domain.Signal, testEvent: TestEvent) = {
@@ -40,7 +40,7 @@ class ComponentActor(componentId: HandshakeComponent.Id,
 
   private def handleDecisionRequired(testEvent: TestEvent, ddr: BrzComponentBehaviour.DecisionRequired) = {
     infoHub match {
-      case Some(hub) => hub ! DecisionRequired(componentId, ddr)
+      case Some(hub) => hub ! DecisionRequired(runId, componentId, ddr)
       case None =>
           error(s"$componentId: No InformationHub given, but DecisionRequired!")
           context.stop(self)
@@ -49,12 +49,12 @@ class ComponentActor(componentId: HandshakeComponent.Id,
 
   private def handleNormalFlow(testEvent: TestEvent, nf: BrzComponentBehaviour.NormalFlowReaction) = {
     val newTestEventF: Future[TestEvent] = infoHub match {
-      case Some(hub) => (hub ? NormalFlowReaction(componentId, nf)).mapTo[TestEvent]
+      case Some(hub) => (hub ? NormalFlowReaction(runId, componentId, nf)).mapTo[TestEvent]
       case None => Future.successful(testEvent)
     }
 
     for (signal <- nf.signals) {
-      newTestEventF.map(Signal(componentId, signal, _)) pipeTo receiverOf(signal)
+      newTestEventF.map(Signal(runId, componentId, signal, _)) pipeTo receiverOf(signal)
     }
   }
 
@@ -63,11 +63,4 @@ class ComponentActor(componentId: HandshakeComponent.Id,
     case _:SignalFromPassive => channels(signal.channelId).active
   }
 
-}
-
-object ComponentActor {
-  case class Decision(componentId: HandshakeComponent.Id,
-                      newState: HandshakeComponent.State[_, _],
-                      domainSignals: Set[domain.Signal],
-                      testEvent: TestEvent)
 }

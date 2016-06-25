@@ -1,8 +1,8 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
-import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
 import de.hpi.asg.breezetestgen.testgeneration.constraintsolving._
 import de.hpi.asg.breezetestgen.actors.HandshakeActor
+import de.hpi.asg.breezetestgen.actors.HandshakeActor.Decision
 import de.hpi.asg.breezetestgen.domain.{DataPort, SyncPort, _}
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.{DecisionPossibilities, NormalFlowReaction}
 import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent
@@ -16,7 +16,7 @@ import de.hpi.asg.breezetestgen.testing.{IOEvent, TestEvent}
   * a [[constraintsolving.ConstraintCollection]] and (later) coverage statistics.
   *
   */
-class InformationHub(private val runId: Netlist.Id,
+class InformationHub(private val runId: Int,
                      private val netlist: Netlist,
                      var cc: ConstraintCollection,
                      testBuilder: TestBuilder,
@@ -26,12 +26,12 @@ class InformationHub(private val runId: Netlist.Id,
   /** records reaction from [[de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour]]
     *
     * @param reaction reaction from handshake component
-    * @param idChain hierarchical id of component which sent this
+    * @param id hierarchical id of component which sent this
     * @return a [[TestEvent]] for further building of tests, if a [[TestOp]] was specified
     */
   def handleReaction(reaction: NormalFlowReaction,
-                     idChain: List[HandshakeComponent.Id]): Either[TestEvent , Option[GeneratedTest]] =
-    if (enoughLoopExecutions(idChain)) {
+                     id: HandshakeComponent.Id): Either[TestEvent , Option[GeneratedTest]] =
+    if (enoughLoopExecutions(id)) {
       Right(None)
     } else
       Left(handleNormalReaction(reaction))
@@ -58,8 +58,8 @@ class InformationHub(private val runId: Netlist.Id,
   }
 
   private val loopIds = netlist.loopIds
-  def enoughLoopExecutions(idChain: List[Netlist.Id]): Boolean = {
-    if (loopIds contains idChain) {
+  def enoughLoopExecutions(id: HandshakeComponent.Id): Boolean = {
+    if (loopIds contains id) {
       remainingLoopExecs -= 1
       remainingLoopExecs >= 0
     } else
@@ -83,11 +83,10 @@ class InformationHub(private val runId: Netlist.Id,
 
   /** returns the requests that should be sent initially*/
   def initialRequests(): Seq[HandshakeActor.Signal] =
-    packSignals(runId, initialRequestsForNetlist(netlist))
+    packSignals(initialRequestsForNetlist(netlist))
 
   /** creates a [[ConstraintCollection]] for each possibility that is feasible after this */
-  def createSleepingExecutions(idChain: List[Netlist.Id],
-                               componentId: HandshakeComponent.Id,
+  def createSleepingExecutions(componentId: HandshakeComponent.Id,
                                possibilities: DecisionPossibilities): Map[ConstraintVariable, SleepingExecution] = {
     val newCCs = possibilities.keys
       .map{case constraint => constraint -> cc.fork().add(List(constraint))}
@@ -99,7 +98,7 @@ class InformationHub(private val runId: Netlist.Id,
     remainingPossibilities.map { case (cv, (reaction, newState)) =>
       val newInformationHub = new InformationHub(runId, netlist, newCCs(cv), testBuilder, coverage, remainingLoopExecs)
       val testEventO = newInformationHub.handleNormalReaction(reaction)
-      val decision = Decision(idChain, componentId, newState, reaction.signals, testEventO)
+      val decision = Decision(runId, componentId, newState, reaction.signals, testEventO)
       cv -> SleepingExecution(newInformationHub.state(), decision)
     }
   }
@@ -122,14 +121,14 @@ class InformationHub(private val runId: Netlist.Id,
     val answerSignal = signalOnPort(netlist.ports(portId))
     val answerEvent = newIOEvent(answerSignal, testEvent)
 
-    packSignals(runId, List(answerSignal), Option(answerEvent))
+    packSignals(List(answerSignal), Option(answerEvent))
   }
   private val channelIdToPortId = netlist.ports.values.map{p => p.channelId -> p.id}.toMap[Channel.Id, Port.Id]
 
   /** transform domain signals to HandshakeActor.Signals which can be send to the actors */
-  private def packSignals(runId: Netlist.Id, signals: Seq[Signal], teO: Option[TestEvent] = None) =
+  private def packSignals(signals: Seq[Signal], teO: Option[TestEvent] = None) =
     signals
-      .map{ds => HandshakeActor.Signal(runId :: Nil, ds, teO getOrElse IOEvent(ds))} // create understandable signals
+      .map{ds => HandshakeActor.Signal(runId, Nil, ds, teO getOrElse IOEvent(ds))} // create understandable signals
 
   /** returns a generated test if one exists */
   private def generateTest(): Option[GeneratedTest] =
@@ -142,11 +141,11 @@ object InformationHub {
                    coverage: Coverage,
                    remainingLoopExecs: Int)
 
-  def fromState(runId: Netlist.Id, netlist: Netlist, state: State): InformationHub =
+  def fromState(runId: Int, netlist: Netlist, state: State): InformationHub =
     new InformationHub(runId, netlist, state.constraintCollection, state.testBuilder, state.coverage,
       state.remainingLoopExecs)
 
-  def forNetlist(runId: Netlist.Id, netlist: Netlist, maxLoopExecs: Int): InformationHub = {
+  def forNetlist(runId: Int, netlist: Netlist, maxLoopExecs: Int): InformationHub = {
     val initialSignals = initialRequestsForNetlist(netlist).toSet
     new InformationHub(
       runId, netlist,

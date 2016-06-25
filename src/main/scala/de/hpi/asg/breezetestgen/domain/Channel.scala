@@ -11,6 +11,9 @@ object Channel {
   case class CompEndpoint(id: HandshakeComponent.Id) extends Endpoint
   case class PortEndpoint(id: Port.Id) extends Endpoint
 
+  // the next one exists because there was a strange exception when i tried creating it directly
+  def newCompEndpoint(netlistId: Netlist.Id, i: Int): CompEndpoint = CompEndpoint(netlistId :+ i)
+
   implicit def brzCompId2CompEndpoint(id: HandshakeComponent.Id): CompEndpoint = CompEndpoint(id)
   implicit def portId2PortEndpoint(id: Port.Id): PortEndpoint = PortEndpoint(id)
 }

@@ -10,8 +10,8 @@ import de.hpi.asg.breezetestgen.domain.components.brzcomponents.Fetch
 import de.hpi.asg.breezetestgen.testing.IOEvent
 
 class ComponentActorSpec extends AkkaIntegrationSpec("ComponentActorSpec") {
-  val nlId = 0 :: Nil
-  val compId = 1
+  val runId = 1
+  val compId = -1 :: 1 :: Nil
   val (aChan, iChan, oChan) = (5, 6, 7)
   val sampleFetch = new Fetch(compId, aChan, iChan, oChan)
   val sampleTestEvent = IOEvent(Request(700))
@@ -27,12 +27,12 @@ class ComponentActorSpec extends AkkaIntegrationSpec("ComponentActorSpec") {
   }
 
   def newActor(behaviour: BrzComponentBehaviour[_, _]) =
-    system.actorOf(Props(classOf[ComponentActor], nlId, compId, behaviour, None))
+    system.actorOf(Props(classOf[ComponentActor], runId, compId, behaviour, None))
 
   val setChannels = SetChannels(id => SyncChannel(id, self, self)) // type of channel wont get checked
 
-  def toHSASignal(signal: Signal): HandshakeActor.Signal = HandshakeActor.Signal(nlId, signal, sampleTestEvent)
-  def toMyState(state: HandshakeComponent.State[_, _]): MyState = MyState(nlId, compId, state)
+  def toHSASignal(signal: Signal): HandshakeActor.Signal = HandshakeActor.Signal(runId, Nil, signal, sampleTestEvent)
+  def toMyState(state: HandshakeComponent.State[_, _]): MyState = MyState(runId, compId, state)
 
   "A ComponentActor" should "react correctly according to behaviour" in {
     val uut = newActor(freshBehaviour())
@@ -40,7 +40,7 @@ class ComponentActorSpec extends AkkaIntegrationSpec("ComponentActorSpec") {
     uut ! setChannels
 
     uut ! toHSASignal(Request(aChan))
-    expectMsg(toHSASignal(Request(iChan)))
+    expectMsg(HandshakeActor.Signal(runId, compId, Request(iChan), sampleTestEvent))
   }
 
   it should "answer with current state if asked" in {
@@ -67,7 +67,7 @@ class ComponentActorSpec extends AkkaIntegrationSpec("ComponentActorSpec") {
 
     val data = Constant(232)
     uut ! toHSASignal(DataAcknowledge(iChan, data))
-    expectMsg(toHSASignal(DataRequest(oChan, data)))
+    expectMsg(HandshakeActor.Signal(runId, compId, DataRequest(oChan, data), sampleTestEvent))
 
     uut ! GetState
     expectMsg(toMyState(stateAfterReqAndData))

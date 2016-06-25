@@ -10,20 +10,22 @@ import fixtures.gcdNetlist
 
 class NetlistActorSpec extends AkkaIntegrationSpec("NetlistActorSpec") {
   val netlist = gcdNetlist()
-  val extId = -1 :: Nil
+  val runId = 1
   val portConnections = netlist.ports.values.map{p => p.id -> p.channelId}.toMap[Port.Id, Channel.Id]
 
   val freshState = Netlist.State(netlist.components.mapValues(_.behaviour(None).state))
   val setChannels = SetChannels(id => SyncChannel(id, self, self)) // type of channel wont get checked
 
   def newActor(state: Option[Netlist.State]) = system.actorOf(
-    Props(classOf[NetlistActor], netlist, extId, portConnections, state, None)
+    Props(classOf[NetlistActor], runId, netlist, portConnections, state, None)
   )
 
   def assertState(uut: ActorRef, state: Netlist.State) = {
     uut ! GetState
-    expectMsg(MyState(extId , netlist.id, state))
+    expectMsg(MyState(runId , netlist.id, state))
   }
+
+  def toHSASignal(signal: Signal): HandshakeActor.Signal = HandshakeActor.Signal(runId, Nil, signal, null)
 
   "A NetlistActor" should "create all components in fresh state" in {
     assertState(newActor(None), freshState)
@@ -33,7 +35,7 @@ class NetlistActorSpec extends AkkaIntegrationSpec("NetlistActorSpec") {
     val actor1 = newActor(None)
     actor1 ! setChannels
 
-    actor1 ! HandshakeActor.Signal(extId, Request(1), null)
+    actor1 ! toHSASignal(Request(1))
     expectMsgClass(classOf[HandshakeActor.Signal])  // ain (or bin)
     expectMsgClass(classOf[HandshakeActor.Signal])  // bin (or ain)
 
@@ -41,7 +43,7 @@ class NetlistActorSpec extends AkkaIntegrationSpec("NetlistActorSpec") {
     val maybeState = receiveOne(5 seconds)
     assert(maybeState.isInstanceOf[MyState])
     val myState = maybeState.asInstanceOf[MyState]
-    assert(myState.idChain == extId)
+    assert(myState.runId == runId)
     assert(myState.id == netlist.id)
 
     system.stop(actor1)
@@ -55,8 +57,8 @@ class NetlistActorSpec extends AkkaIntegrationSpec("NetlistActorSpec") {
 
     assertState(actor2, preservedState)
 
-    actor2 ! HandshakeActor.Signal(extId, DataAcknowledge(2, Constant(15)), null)
-    actor2 ! HandshakeActor.Signal(extId, DataAcknowledge(3, Constant(7)), null)
-    expectMsg(HandshakeActor.Signal(extId, DataRequest(4, Constant(1)), null))
+    actor2 ! toHSASignal(DataAcknowledge(2, Constant(15)))
+    actor2 ! toHSASignal(DataAcknowledge(3, Constant(7)))
+    expectMsg(toHSASignal(DataRequest(4, Constant(1))))
   }
 }

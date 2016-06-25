@@ -15,12 +15,18 @@ object HandshakeActor {
   case object Uninitialized extends States
   case object Initialized extends States
 
-  case class NormalFlowReaction(id: CompId, domainReaction: BrzComponentBehaviour.NormalFlowReaction)
-  case class Signal(id: CompId, domainSignal: domain.Signal, testEvent: TestEvent)
-  case class DecisionRequired(id: CompId, domainDR: domain.components.BrzComponentBehaviour.DecisionRequired)
+  case class NormalFlowReaction(runId: Int, id: CompId, domainReaction: BrzComponentBehaviour.NormalFlowReaction)
+  case class Signal(runId: Int, id: CompId, domainSignal: domain.Signal, testEvent: TestEvent)
+  case class DecisionRequired(runId: Int, id: CompId, domainDR: domain.components.BrzComponentBehaviour.DecisionRequired)
 
   case object GetState
-  case class MyState(id: CompId, state: HandshakeComponent.State[_, _])
+  case class MyState(runId: Int, id: CompId, state: HandshakeComponent.State[_, _])
+
+  case class Decision(runId: Int,
+                      componentId: HandshakeComponent.Id,
+                      newState: HandshakeComponent.State[_, _],
+                      domainSignals: Set[domain.Signal],
+                      testEvent: TestEvent)
 }
 
 abstract class HandshakeActor extends FSM[HandshakeActor.States, HandshakeActor.ChannelMap] with Loggable {
@@ -35,7 +41,7 @@ abstract class HandshakeActor extends FSM[HandshakeActor.States, HandshakeActor.
   }
 
   when(Initialized) {
-    case Event(Signal(id, domainSignal, testEvent), _) =>
+    case Event(Signal(_, id, domainSignal, testEvent), _) =>
       trace("received something in Initialized state")
       handleSignal(id, domainSignal, testEvent)
       stay()

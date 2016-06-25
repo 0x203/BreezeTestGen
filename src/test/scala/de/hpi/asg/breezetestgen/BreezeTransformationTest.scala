@@ -1,6 +1,6 @@
 package de.hpi.asg.breezetestgen
 
-import de.hpi.asg.breezetestgen.domain.{Channel, Port, SyncChannel, components}
+import de.hpi.asg.breezetestgen.domain._
 import fixtures._
 
 /** checks weather a parsed .breeze-file is correctly transformed to a netlist */
@@ -54,7 +54,7 @@ class BreezeTransformationTest extends baseclasses.UnitTest {
     val activateChannel = netlist.channels(1)
     assert(activateChannel.isInstanceOf[SyncChannel[Channel.Endpoint]])
     assert(activateChannel.active == Channel.PortEndpoint(-1))
-    assert(activateChannel.passive == Channel.CompEndpoint(4))
+    assert(activateChannel.passive == Channel.CompEndpoint(Netlist.TopLevelId :+ 4))
 
     // Test other channels, too?
   }
@@ -64,10 +64,10 @@ class BreezeTransformationTest extends baseclasses.UnitTest {
 
     for ((id, component) <- netlist.components) assert(id == component.id)
 
-    val doWhile= netlist.components(8)
+    val doWhile= netlist.components(Netlist.TopLevelId :+ 8)
     assert(doWhile.isInstanceOf[components.brzcomponents.While])
 
-    val aVar = netlist.components(0)
+    val aVar = netlist.components(Netlist.TopLevelId :+ 0)
     assert(aVar.isInstanceOf[components.brzcomponents.Variable])
 
     // Test other components, too?

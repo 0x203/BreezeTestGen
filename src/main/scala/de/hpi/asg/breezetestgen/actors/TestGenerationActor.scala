@@ -18,23 +18,23 @@ class TestGenerationActor(private val testGenerator: TestGenerator) extends Acto
   import TestGenerationActor._
 
   private var inquirer: ActorRef = _
-  private val mainNetlistActors = mutable.Map.empty[Netlist.Id, ActorRef]
+  private val mainNetlistActors = mutable.Map.empty[Int, ActorRef]
 
   def receive = {
     case Start =>
       inquirer = sender()
       performActions(sender(), testGenerator.start())
 
-    case HandshakeActor.Signal(runId :: _, ds, testEvent) =>
+    case HandshakeActor.Signal(runId, Nil, ds, testEvent) =>
       performActions(sender(), testGenerator.onPortSignal(runId, ds, testEvent))
 
-    case HandshakeActor.NormalFlowReaction(runId :: idChain, nf: NormalFlowReaction) =>
-      performActions(sender(), testGenerator.onNormalFlow(runId, idChain, nf))
+    case HandshakeActor.NormalFlowReaction(runId, componentId, nf: NormalFlowReaction) =>
+      performActions(sender(), testGenerator.onNormalFlow(runId, componentId, nf))
 
-    case HandshakeActor.DecisionRequired(runId:: idChain, componentId, DecisionRequired(possibilities)) =>
-      performActions(sender(), testGenerator.onDecisionRequired(runId, idChain, componentId, possibilities))
+    case HandshakeActor.DecisionRequired(runId, componentId, DecisionRequired(possibilities)) =>
+      performActions(sender(), testGenerator.onDecisionRequired(runId, componentId, possibilities))
 
-    case MyState(runId :: _, _, state: Netlist.State) =>
+    case MyState(runId, _, state: Netlist.State) =>
       performActions(sender(), testGenerator.onWholeState(runId, state))
   }
 

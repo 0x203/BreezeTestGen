@@ -1,9 +1,10 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
 import de.hpi.asg.breezetestgen.Loggable
-import de.hpi.asg.breezetestgen.actors.ComponentActor.Decision
 import de.hpi.asg.breezetestgen.actors.HandshakeActor
+import de.hpi.asg.breezetestgen.actors.HandshakeActor.Decision
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.{DecisionPossibilities, NormalFlowReaction}
+import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent
 import de.hpi.asg.breezetestgen.domain.{Netlist, Signal}
 import de.hpi.asg.breezetestgen.testgeneration.constraintsolving.ConstraintVariable
 import de.hpi.asg.breezetestgen.testing.TestEvent
@@ -13,9 +14,9 @@ class TestGenerator(val netlist: Netlist, maxLoopExecs: Int) extends Decider wit
   import TestGenerator._
 
   val collectedTests = new CollectedTests(ChannelActivationCoverage.forNetlist(netlist))
-  val informationHubs = scala.collection.mutable.Map.empty[Netlist.Id, InformationHub]
-  val waitingForState = scala.collection.mutable.Map.empty[Netlist.Id, WaitingForState]
-  val backlog = scala.collection.mutable.Map.empty[Netlist.Id, (SleepingExecution, Netlist.State)]
+  val informationHubs = scala.collection.mutable.Map.empty[Int, InformationHub]
+  val waitingForState = scala.collection.mutable.Map.empty[Int, WaitingForState]
+  val backlog = scala.collection.mutable.Map.empty[Int, (SleepingExecution, Netlist.State)]
 
   info(s"Loops in this netlist: ${netlist.loopIds}")
 
@@ -31,7 +32,7 @@ class TestGenerator(val netlist: Netlist, maxLoopExecs: Int) extends Decider wit
     )
   }
 
-  def onPortSignal(implicit runId: Netlist.Id, signal: Signal, testEvent: TestEvent): List[TestGenerationAction] = {
+  def onPortSignal(implicit runId: Int, signal: Signal, testEvent: TestEvent): List[TestGenerationAction] = {
     info(s"Got signal from MainNetlist: $signal")
     val informationHub = informationHubs(runId)
     informationHub.handlePortSignal(signal, testEvent) match {
@@ -40,18 +41,18 @@ class TestGenerator(val netlist: Netlist, maxLoopExecs: Int) extends Decider wit
     }
   }
 
-  def onNormalFlow(implicit runId: Netlist.Id,
-                   idChain: List[Netlist.Id],
+  def onNormalFlow(implicit runId: Int,
+                   compId: HandshakeComponent.Id,
                    nf: NormalFlowReaction): List[TestGenerationAction] = {
     trace("recording normalFlowReaction")
-    informationHub.handleReaction(nf, idChain) match {
+    informationHub.handleReaction(nf, compId) match {
       case Left(testEvent) => List(ReturnTestEvent(testEvent))
       case Right(generatedTestO) => throw new RuntimeException("loop finishing")
         testFinished(runId, generatedTestO)
     }
   }
 
-  private def testFinished(runId: Netlist.Id, generatedTestO: Option[GeneratedTest]): List[TestGenerationAction] = {
+  private def testFinished(runId: Int, generatedTestO: Option[GeneratedTest]): List[TestGenerationAction] = {
     info(s"Test $runId finished.")
 
     generatedTestO match {
@@ -65,7 +66,7 @@ class TestGenerator(val netlist: Netlist, maxLoopExecs: Int) extends Decider wit
       runIsOver(runId)
   }
 
-  protected def runIsOver(runId: Netlist.Id): List[TestGenerationAction] = {
+  protected def runIsOver(runId: Int): List[TestGenerationAction] = {
     if(backlog.nonEmpty) {
       //TODO decide more intelligent here
       val id = backlog.keySet.head
@@ -76,7 +77,7 @@ class TestGenerator(val netlist: Netlist, maxLoopExecs: Int) extends Decider wit
       stop(AbortGeneration)
   }
 
-  protected def resumeTest(runId: Netlist.Id): List[TestGenerationAction] = {
+  protected def resumeTest(runId: Int): List[TestGenerationAction] = {
     info(s"resuming test with id $runId")
     val (sleepingExecution, netlistState) = backlog.remove(runId).get
 
@@ -113,18 +114,18 @@ class TestGenerator(val netlist: Netlist, maxLoopExecs: Int) extends Decider wit
     informationHubs.keys.map(StopMainNetlist(_)).toList :+ FinishedGeneration(result)
   }
 
-  implicit private def informationHub(implicit runId: Netlist.Id) = informationHubs(runId)
+  implicit private def informationHub(implicit runId: Int) = informationHubs(runId)
 }
 
 object TestGenerator {
 
   sealed trait TestGenerationAction
-  case class CreateMainNetlist(runId: Netlist.Id, stateO: Option[Netlist.State]) extends TestGenerationAction
-  case class StopMainNetlist(runId: Netlist.Id) extends TestGenerationAction
-  case class SendToMainNetlist(runId: Netlist.Id, signals: Seq[HandshakeActor.Signal]) extends TestGenerationAction
-  case class RequestWholeState(runId: Netlist.Id) extends TestGenerationAction
+  case class CreateMainNetlist(runId: Int, stateO: Option[Netlist.State]) extends TestGenerationAction
+  case class StopMainNetlist(runId: Int) extends TestGenerationAction
+  case class SendToMainNetlist(runId: Int, signals: Seq[HandshakeActor.Signal]) extends TestGenerationAction
+  case class RequestWholeState(runId: Int) extends TestGenerationAction
   case class ReturnTestEvent(testEvent: TestEvent) extends TestGenerationAction
-  case class SendDecision(runId: Netlist.Id, decision: Decision) extends TestGenerationAction
+  case class SendDecision(runId: Int, decision: Decision) extends TestGenerationAction
   case class FinishedGeneration(generationResult: GenerationResult) extends TestGenerationAction
 
 
@@ -137,10 +138,10 @@ object TestGenerator {
   private case object AbortGeneration extends StopReason
   private case object GenerationProblem extends StopReason
 
-  private[this] var curRunId = -1
-  def nextRunId(): Netlist.Id = {
+  private[this] var curRunId = 1
+  def nextRunId(): Int = {
     val r = curRunId
-    curRunId -= 1
+    curRunId += 1
     r
   }
 }

@@ -14,7 +14,7 @@ class FetchSpec extends UnitTest {
   val outId: Channel.Spec[PushChannel[_]] = 3
   val te: TestEvent = new MergeEvent()
 
-  val fetch = new Fetch(id = 0, activateId, inpId, outId)
+  val fetch = new Fetch(id = 0 :: Nil, activateId, inpId, outId)
 
   def normalReactionWith(ds: Signal): NormalFlowReaction =
     NormalFlowReaction(Set(ds), Follow(te))

@@ -20,7 +20,7 @@ class WhileSpec extends UnitTest {
   def normalReactionWith(ds: domain.Signal): NormalFlowReaction =
     NormalFlowReaction(Set(ds), Follow(te))
 
-  val brzWhile = new While(id = 0, activateId, guardId, outId)
+  val brzWhile = new While(id = -1 :: 0 :: Nil, activateId, guardId, outId)
   val evaluatingState: State[brzWhile.C, brzWhile.D] = State(brzWhile.WhileBehaviour.Evaluating, null)
 
   val noEnterReaction = normalReactionWith(Acknowledge(activateId))

@@ -13,7 +13,7 @@ class SequenceSpec extends baseclasses.UnitTest {
   val outIds: Seq[Channel.Spec[SyncChannel[_]]] = Seq(2, 3, 4)
   val te: TestEvent = new MergeEvent()
 
-  val sequence = new Sequence(id = 0, activateId, outIds)
+  val sequence = new Sequence(id = -1 :: 0 :: Nil, activateId, outIds)
 
   def normalReactionWith(ds: Signal): NormalFlowReaction =
     NormalFlowReaction(Set(ds), Follow(te))

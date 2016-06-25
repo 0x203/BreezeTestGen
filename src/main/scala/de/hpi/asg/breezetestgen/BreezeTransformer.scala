@@ -20,15 +20,13 @@ object BreezeTransformer {
 
   def transformProject(breezeProject: BreezeProject): Option[Netlist] =
     breezeProject.getSortedNetlists.toArray().
-      lastOption.collectFirst{case a: AbstractBreezeNetlist=> a}.map(transformNetlist)
+      lastOption.collectFirst{case a: AbstractBreezeNetlist=> a}.map(transformNetlist(_, Netlist.TopLevelId))
 
-  def transformNetlist(baseNetlist: AbstractBreezeNetlist): Netlist = {
-
-    val id = Netlist.nextId
+  def transformNetlist(baseNetlist: AbstractBreezeNetlist, id: Netlist.Id): Netlist = {
     val ports: Map[Port.Id, Port] = extractPorts(baseNetlist)
 
-    val channels: Map[Channel.Id, Channel[Channel.Endpoint]] = extractChannels(baseNetlist)
-    val components: Map[HandshakeComponent.Id, BrzComponent] = extractComponents(baseNetlist)
+    val channels: Map[Channel.Id, Channel[Channel.Endpoint]] = extractChannels(id, baseNetlist)
+    val components: Map[HandshakeComponent.Id, BrzComponent] = extractComponents(id, baseNetlist)
 
     Netlist(id, ports, channels, components)
   }
@@ -66,15 +64,15 @@ object BreezeTransformer {
     }
   }
 
-  private def extractChannels(netlist: AbstractBreezeNetlist): Map[Channel.Id, Channel[Channel.Endpoint]] = {
+  private def extractChannels(netlistId: Netlist.Id, netlist: AbstractBreezeNetlist): Map[Channel.Id, Channel[Channel.Endpoint]] = {
     import collection.JavaConversions.collectionAsScalaIterable
-    netlist.getChannelList.values.map(extractChannel).map{case c => c.id -> c}.toMap
+    netlist.getChannelList.values.map(extractChannel(netlistId, _)).map{case c => c.id -> c}.toMap
   }
 
-  private def extractChannel(raw: HSChannel): Channel[Channel.Endpoint] = {
+  private def extractChannel(netlistId: Netlist.Id, raw: HSChannel): Channel[Channel.Endpoint] = {
     val id: Channel.Id = raw.getId
-    val active: Channel.Endpoint = asEndpoint(raw.getActive)
-    val passive: Channel.Endpoint = asEndpoint(raw.getPassive)
+    val active: Channel.Endpoint = asEndpoint(netlistId, raw.getActive)
+    val passive: Channel.Endpoint = asEndpoint(netlistId, raw.getPassive)
 
     if (raw.getDatawidth == 0)
       SyncChannel(id, active, passive)
@@ -84,15 +82,15 @@ object BreezeTransformer {
     }
   }
 
-  private def asEndpoint(compInst: ComponentInst): Channel.Endpoint = compInst match {
+  private def asEndpoint(netlistId: Netlist.Id, compInst: ComponentInst): Channel.Endpoint = compInst match {
     case port: PortComponent => Channel.PortEndpoint(port.getId)
-    case hsComp: HSComponentInst => Channel.CompEndpoint(hsComp.getId)
+    case hsComp: HSComponentInst => Channel.newCompEndpoint(netlistId, hsComp.getId)
     case subNetlist: BreezeNetlistInst => throw new RuntimeException("Did not expect a subNetlist as target of channel")
   }
 
-  private def extractComponents(netlist: AbstractBreezeNetlist): Map[HandshakeComponent.Id, BrzComponent] = {
+  private def extractComponents(netlistId: Netlist.Id, netlist: AbstractBreezeNetlist): Map[HandshakeComponent.Id, BrzComponent] = {
     import collection.JavaConversions.collectionAsScalaIterable
-    netlist.getAllHSInstances.map{ComponentExtractors.extract(_)}.map{case c => c.id -> c}.toMap
+    netlist.getAllHSInstances.map{ComponentExtractors.extract(netlistId)(_)}.map{case c => c.id -> c}.toMap
   }
 
   private def surroundWithTempDir[R](f: => R)(implicit config: Config): R =
