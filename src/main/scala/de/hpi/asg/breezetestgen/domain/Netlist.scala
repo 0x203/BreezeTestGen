@@ -4,12 +4,12 @@ import de.hpi.asg.breezetestgen.domain.components.brzcomponents.Loop
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, HandshakeComponent}
 
 object Netlist {
-  type Id = Int
+  type Id = List[Int]
 
-  private[this] var currentId: Id = 0
+  private[this] var currentId: Int = 0
   def nextId: Id = {
     currentId += 1
-    currentId
+    currentId :: Nil
   }
 
   type State = HandshakeComponent.State[Null, Map[HandshakeComponent.Id, HandshakeComponent.State[_, _]]]
@@ -32,17 +32,17 @@ case class Netlist(id: Netlist.Id,
   def passivePorts: Set[Port] = ports.values.collect{case p: Port if p.sense == Port.Passive => p}.toSet
 
   /** return all ids of loop components within this netlist */
-  def loopIds: Set[List[HandshakeComponent.Id]] = {
+  def loopIds: Set[HandshakeComponent.Id] = {
     components.collect {
-      case (i, l: Loop) => id ::  i :: Nil
-      //case (i, snl: Netlist) => i :: snl.loopIds  // for hierarchical netlists
+      case (i, _: Loop) => i
     }.toSet
+    // union subNetlists.map(_.loopIds)
   }
   /* //sadly, the general version won't work because of type erasure
   def componentTypeIds[C <: BrzComponent]: Set[List[HandshakeComponent.Id]] = {
-    components.collect{
-      case (i, c) if c.isInstanceOf[C] => i :: Nil
-      //case (i, snl: Netlist) if snl.isInstanceOf[Netlist] => i :: snl.componentTypeIds[C]  // for hierarchical netlists
+    components.collect {
+      case (i, _: C) => i
     }.toSet
+    // union subNetlists.map(_.loopIds)
   }*/
 }

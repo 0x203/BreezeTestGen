@@ -111,7 +111,8 @@ object ComponentExtractors {
 
   type Extractor = HSComponentInst => Option[BrzComponent]
 
-  def extract(implicit raw: HSComponentInst): BrzComponent = {
+  def extract(netlistId: Netlist.Id)(implicit raw: HSComponentInst): BrzComponent = {
+    val id: HandshakeComponent.Id = netlistId :+ raw.getId
     raw.getBrzStr match {
       case "BrzCallMux" => new CallMux(id, channelSet(0), channel(1))
       case "BrzCase" => new Case(id, CaseSpecParser.fromString(stringParam(2), intParam(0)), channel(0), channelSeq(1))
@@ -132,9 +133,6 @@ object ComponentExtractors {
       case unknown => throw new RuntimeException(s"Unknown component with name: $unknown")
     }
   }
-
-  /** extracts the id from an implicit HSComponentInst */
-  private def id(implicit raw: HSComponentInst): HandshakeComponent.Id = raw.getId
 
   /** returns the single channel at the given parameter position from an implicit HSComponentInst */
   private def channel(i: Int)(implicit raw: HSComponentInst): Channel.Id = {

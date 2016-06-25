@@ -12,17 +12,15 @@ import de.hpi.asg.breezetestgen.testing.TestEvent
 
 
 class NetlistActor(netlist: domain.Netlist,
-                   idChain: List[Netlist.Id],
                    portConnectionsOut: Map[Port.Id, Channel.Id],
                    initialState: Option[Netlist.State],
                    infoHub: Option[ActorRef]) extends HandshakeActor with Loggable {
   info(s"NetlistActor created for netlist id ${netlist.id}")
 
-  private val internalIdChain = idChain :+ netlist.id
-
+  private val idOfParent = netlist.id.take(netlist.id.size - 1)
   private val componentActors = netlist.components
     .mapValues(createBehaviour)
-    .map{case (id, comp) => id -> Props(classOf[ComponentActor], internalIdChain, id, comp, infoHub)}  //create Props
+    .map{case (id, comp) => id -> Props(classOf[ComponentActor], id, comp, infoHub)}  //create Props
     .mapValues(context.actorOf)
     .view.force
 
@@ -42,12 +40,12 @@ class NetlistActor(netlist: domain.Netlist,
   val setChannels = HandshakeActor.SetChannels(channelMap)
   componentActors.values.foreach(_ ! setChannels)
 
-  def handleSignal(senderIdChain: List[domain.Netlist.Id], ds: domain.Signal,  te: TestEvent) = {
+  def handleSignal(senderId: HandshakeComponent.Id, ds: domain.Signal,  te: TestEvent) = {
     info(s"getting: $ds")
-    val (outIdChain, newSignal, receiver) =
-      if (senderIdChain == idChain) handleExternal(ds) else handleInternal(ds)
+    val (outgoingId, newSignal, receiver) =
+      if (senderId == idOfParent) handleExternal(ds) else handleInternal(ds)
 
-    val packedSignal = HandshakeActor.Signal(outIdChain, newSignal, te)
+    val packedSignal = HandshakeActor.Signal(outgoingId, newSignal, te)
 
     receiver ! packedSignal
   }
@@ -62,7 +60,7 @@ class NetlistActor(netlist: domain.Netlist,
   }
 
   /** return type of internal and external handler */
-  private type HandlerResult = (List[Netlist.Id], domain.Signal, ActorRef)
+  private type HandlerResult = (HandshakeComponent.Id, domain.Signal, ActorRef)
 
   /** lift an internal signal to an external one */
   private def handleInternal(ds: domain.Signal): HandlerResult = {
@@ -81,7 +79,7 @@ class NetlistActor(netlist: domain.Netlist,
     val externalSignal = Signal.changeChannelId(ds, externalChannel)
     val receiver = channels.andThen(otherSideOfChannel)(externalChannel)
 
-    (idChain, externalSignal, receiver)
+    (idOfParent, externalSignal, receiver)
   }
 
   /** adapt an external signal to an internal one */
@@ -95,7 +93,7 @@ class NetlistActor(netlist: domain.Netlist,
 
     val internalSignal = Signal.changeChannelId(ds, channel.id)
 
-    (internalIdChain, internalSignal, componentActors(internalReceiverId))
+    (netlist.id, internalSignal, componentActors(internalReceiverId))
   }
 
   // state gathering
@@ -111,25 +109,25 @@ class NetlistActor(netlist: domain.Netlist,
       stateInvoker = sender()
       componentActors.values.foreach{_ ! GetState}
 
-    case MyState(`internalIdChain`, compId, compState) =>
+    case MyState(compId, compState) =>
       componentStates += compId -> compState
 
       if(componentStates.size == netlist.components.size) {
         info("Got all component states")
         stateInvoker ! MyState(
-            idChain,
             netlist.id,
             Netlist.State(collection.immutable.Map.empty ++ componentStates)
         )
         componentStates = freshComponentStates()
       }
 
-    case Decision(netlist.id :: tail, componentId, ns, ds, te) =>
-      if (tail.isEmpty) {
-        componentActors(componentId) ! Decision(Nil, componentId, ns, ds, te)
-      } else {
-        //TODO: imeplement me for hirarchical netlists
-        throw new NotImplementedError()
+    case Decision(componentId, ns, ds, te) =>
+      componentId.drop(netlist.id.size) match {
+        case cId :: Nil => componentActors(componentId) ! Decision(componentId, ns, ds, te)
+        case subNetlistId :: _ =>
+          // TODO: implement me for hierarchical netlists
+          // subNetlists(netlist.id :+ subNetlistId) ! Decision(componentId, ns, ds, te)
+          throw new NotImplementedError()
       }
   }
 }

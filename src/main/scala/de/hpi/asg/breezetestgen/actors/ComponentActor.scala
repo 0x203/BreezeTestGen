@@ -9,13 +9,12 @@ import concurrent.Future
 import de.hpi.asg.breezetestgen.actors.HandshakeActor.{DecisionRequired, GetState, MyState, Signal, NormalFlowReaction}
 import de.hpi.asg.breezetestgen.domain
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponentBehaviour, HandshakeComponent}
-import de.hpi.asg.breezetestgen.domain.{Netlist, SignalFromActive, SignalFromPassive}
+import de.hpi.asg.breezetestgen.domain.{SignalFromActive, SignalFromPassive}
 import de.hpi.asg.breezetestgen.testing.TestEvent
 
 
 
-class ComponentActor(idChain: List[Netlist.Id],
-                     componentId: HandshakeComponent.Id,
+class ComponentActor(componentId: HandshakeComponent.Id,
                      component: BrzComponentBehaviour[_, _],
                      infoHub: Option[ActorRef]) extends HandshakeActor {
   import ComponentActor._
@@ -23,18 +22,16 @@ class ComponentActor(idChain: List[Netlist.Id],
   implicit val askTimeout = Timeout(5 seconds)
 
   receiue{
-    case GetState => sender() ! MyState(idChain, componentId, component.state)
+    case GetState => sender() ! MyState(componentId, component.state)
 
-    case Decision(_, `componentId`, newState, domainSignals, testEvent) =>
+    case Decision(`componentId`, newState, domainSignals, testEvent) =>
       info(s"$componentId: Got Decision: $newState; $domainSignals; $testEvent")
       component.state = newState
       for(ds <- domainSignals)
-        receiverOf(ds) ! Signal(idChain, ds, testEvent)
+        receiverOf(ds) ! Signal(componentId, ds, testEvent)
   }
 
-  override protected def handleSignal(senderIdChain: List[Netlist.Id], ds: domain.Signal, testEvent: TestEvent) = {
-    require(idChain == senderIdChain)
-
+  override protected def handleSignal(senderId: HandshakeComponent.Id, ds: domain.Signal, testEvent: TestEvent) = {
     component.handleSignal(ds, testEvent) match {
       case nf: BrzComponentBehaviour.NormalFlowReaction => handleNormalFlow(testEvent, nf)
       case dr: BrzComponentBehaviour.DecisionRequired => handleDecisionRequired(testEvent, dr)
@@ -43,7 +40,7 @@ class ComponentActor(idChain: List[Netlist.Id],
 
   private def handleDecisionRequired(testEvent: TestEvent, ddr: BrzComponentBehaviour.DecisionRequired) = {
     infoHub match {
-      case Some(hub) => hub ! DecisionRequired(idChain, componentId, ddr)
+      case Some(hub) => hub ! DecisionRequired(componentId, ddr)
       case None =>
           error(s"$componentId: No InformationHub given, but DecisionRequired!")
           context.stop(self)
@@ -52,12 +49,12 @@ class ComponentActor(idChain: List[Netlist.Id],
 
   private def handleNormalFlow(testEvent: TestEvent, nf: BrzComponentBehaviour.NormalFlowReaction) = {
     val newTestEventF: Future[TestEvent] = infoHub match {
-      case Some(hub) => (hub ? NormalFlowReaction(idChain, nf)).mapTo[TestEvent]
+      case Some(hub) => (hub ? NormalFlowReaction(componentId, nf)).mapTo[TestEvent]
       case None => Future.successful(testEvent)
     }
 
     for (signal <- nf.signals) {
-      newTestEventF.map(Signal(idChain, signal, _)) pipeTo receiverOf(signal)
+      newTestEventF.map(Signal(componentId, signal, _)) pipeTo receiverOf(signal)
     }
   }
 
@@ -69,8 +66,7 @@ class ComponentActor(idChain: List[Netlist.Id],
 }
 
 object ComponentActor {
-  case class Decision(idChain: List[Netlist.Id],
-                      componentId: HandshakeComponent.Id,
+  case class Decision(componentId: HandshakeComponent.Id,
                       newState: HandshakeComponent.State[_, _],
                       domainSignals: Set[domain.Signal],
                       testEvent: TestEvent)
