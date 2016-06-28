@@ -44,6 +44,7 @@ object ChocoSolver {
         tc.b match {
           case Left(v) =>
             val bVar = variables(v)
+            //we need to model the operation with other constructs, as sum over array or such
             val c: C = tc.op match {
               case Plus => ICF.sum(Array(aVar, bVar), "=", resultVar)
               case Minus => ICF.sum(Array(aVar, VF.minus(bVar)), "=", resultVar)
@@ -52,6 +53,7 @@ object ChocoSolver {
             }
             postOrReify(c, tc.reifyWith)
           case Right(i) =>
+            // with constants we can use the operator directly
             val c = ICF.arithm(resultVar, "=", aVar, tc.operator, i)
             postOrReify(c, tc.reifyWith)
         }
