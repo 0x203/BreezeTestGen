@@ -122,6 +122,8 @@ object ComponentExtractors {
           Constant(intParam(7), intParam(2), boolParam(6)),
           channel(0), channel(1)
         )
+      case "BrzFalseVariable" =>
+        new FalseVariable(id, VariableReaderSpec.fromString(stringParam(2)), channel(0), channel(1), channelSeq(2))
       case "BrzFetch" => new Fetch(id, channel(0), channel(1), channel(2))
       case "BrzLoop" => new Loop(id, channel(0), channel(1))
       case "BrzSequence" => new Sequence(id, channel(0), channelSeq(1))
