@@ -32,17 +32,17 @@ class CaseFetch(id: HandshakeComponent.Id,
 
     when(Idle) {
       case Req(`out`, _) =>
-        info(s"Requested! Will fetch index...")
+        info(s"$id: Requested! Will fetch index...")
         request(index)
         goto(Evaluating)
     }
 
     when(Evaluating) {
       case DataAck(`index`, data, _) =>
-        info(s"got index data $data")
+        info(s"$id: got index data $data")
         val possibilities = selector.usableValueConstraints(data).mapValues{ index => () => {
           val inp = inps(index)
-          info(s"Index $index maps to channel $inp")
+          info(s"$id: Index $index maps to channel $inp")
           request(inp)
           goto(Fetching)
         }}.view.force
@@ -53,8 +53,8 @@ class CaseFetch(id: HandshakeComponent.Id,
     }
 
     when(Fetching) {
-      case DataAck(inp, data, _) if inps contains out =>
-        info("Got data to return...")
+      case DataAck(inp, data, _) if inps contains inp =>
+        info(s"$id: Got data to return...")
         dataAcknowledge(out, data)
         goto(Idle)
     }
