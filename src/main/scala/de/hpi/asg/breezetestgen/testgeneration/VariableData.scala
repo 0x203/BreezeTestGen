@@ -35,9 +35,13 @@ class VariableData(private[testgeneration] val underlying: Variable,
     val constraint = BitwiseNot(underlying, newUnderlying, None)
     new VariableData(newUnderlying, constraint)
   }
+  def selectBits(range: Range): VariableData = {
+    val newUnderlying = Variable(s"${underlying.name}[${range.start}:${range.end}]", range.size, isSigned = false)
+    val constraint = SelectBits(underlying, range.start, range.end, newUnderlying, None)
+    new VariableData(newUnderlying, constraint)
+  }
 
   def constMinus(o: Constant): VariableData = throw new NoSuchElementException //TODO: implement me
-  def selectBits(range: Range): VariableData = throw new NoSuchElementException  //TODO: implement me
   def xor(o: Data): VariableData = throw new NoSuchElementException //TODO: arithOp(Xor, o)
   def combineWithMoreSignificant(o: Data): Data = throw new NoSuchElementException //TODO: implement me
   def combineWitLessSignificant(o: Data): Data = throw new NoSuchElementException //TODO: implement me
