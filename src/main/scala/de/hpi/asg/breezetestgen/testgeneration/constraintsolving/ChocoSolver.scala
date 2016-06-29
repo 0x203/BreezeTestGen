@@ -6,6 +6,7 @@ import org.chocosolver.solver.Solver
 import org.chocosolver.solver.search.loop.monitors.SearchMonitorFactory
 import org.chocosolver.solver.variables.{VariableFactory => VF}
 import org.chocosolver.solver.constraints.{IntConstraintFactory => ICF}
+import org.chocosolver.solver.constraints.{LogicalConstraintFactory => LCF}
 
 object ChocoSolver {
   type V = org.chocosolver.solver.variables.IntVar
@@ -22,6 +23,18 @@ object ChocoSolver {
     val variables: Map[Variable, V] = boolVariables ++  cc.allVariables.filterNot(_.isInstanceOf[BoolVariable]).map{
       case v: Variable => v -> VF.enumerated(v.name, v.minValue, v.maxValue, solver)
     }.toMap
+
+    val variableBitArrays = collection.immutable.Map.empty[Variable, Array[BV]]
+    val variableBitArray = (v: Variable) => variableBitArrays.get(v) match {
+      case Some(a) => a
+      case None =>
+        val bits = VF.boolArray(s"${v.name}_bits", v.bitCount, solver)
+        ICF.bit_channeling(bits, variables(v))
+        bits
+    }
+
+    // also ich habe variables. dann habe ich VariableData mit underlying  und constraint, jeweils in CC.
+    // ich will Constraint "selectbits", "adapt", "combine", "XOR" haben
 
     val postOrReify = (c: C,r: Option[BoolVariable]) => r match {
       case Some(v) => c.reifyWith(boolVariables(v))
@@ -57,6 +70,9 @@ object ChocoSolver {
             val c = ICF.arithm(resultVar, "=", aVar, tc.operator, i)
             postOrReify(c, tc.reifyWith)
         }
+      case BitwiseNot(a, b, rO) =>
+        for ((bitA, bitB) <- variableBitArray(a).zip(variableBitArray(b)))
+          postOrReify(ICF.arithm(bitA, "!=", bitB), rO)
     }
     (solver, variables)
   }

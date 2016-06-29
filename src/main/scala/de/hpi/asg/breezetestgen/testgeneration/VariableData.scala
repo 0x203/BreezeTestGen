@@ -30,9 +30,14 @@ class VariableData(private[testgeneration] val underlying: Variable,
   def lessOrEqual(o: Data): VariableData = booleanOp(LessOrEqual, o)
   def greaterOrEqual(o: Data): VariableData = booleanOp(GreaterOrEqual, o)
 
-  def not(): Data = throw new NoSuchElementException  //TODO: implement me
-  def selectBits(range: Range): VariableData = throw new NoSuchElementException  //TODO: implement me
+  def not(): Data = {
+    val newUnderlying = Variable(s"!${underlying.name}", bitCount, isSigned)
+    val constraint = BitwiseNot(underlying, newUnderlying, None)
+    new VariableData(newUnderlying, constraint)
+  }
+
   def constMinus(o: Constant): VariableData = throw new NoSuchElementException //TODO: implement me
+  def selectBits(range: Range): VariableData = throw new NoSuchElementException  //TODO: implement me
   def xor(o: Data): VariableData = throw new NoSuchElementException //TODO: arithOp(Xor, o)
   def combineWithMoreSignificant(o: Data): Data = throw new NoSuchElementException //TODO: implement me
   def combineWitLessSignificant(o: Data): Data = throw new NoSuchElementException //TODO: implement me
