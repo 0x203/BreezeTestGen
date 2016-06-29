@@ -112,6 +112,7 @@ object ComponentExtractors {
   def extract(netlistId: Netlist.Id)(implicit raw: HSComponentInst): BrzComponent = {
     val id: HandshakeComponent.Id = netlistId :+ raw.getId
     raw.getBrzStr match {
+      case "BrzAdapt" => new Adapt(id, intParam(0), intParam(1), boolParam(2), boolParam(3), channel(0), channel(1))
       case "BrzCallMux" => new CallMux(id, channelSet(0), channel(1))
       case "BrzCase" => new Case(id, CaseSpecParser.fromString(stringParam(2), intParam(0)), channel(0), channelSeq(1))
       case "BrzCaseFetch" =>
