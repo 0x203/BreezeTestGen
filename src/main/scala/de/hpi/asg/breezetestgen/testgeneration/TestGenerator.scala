@@ -51,6 +51,11 @@ class TestGenerator(val netlist: Netlist, maxLoopExecs: Int) extends Decider wit
     }
   }
 
+  def onUnexpectedTermination(implicit runId: Int): List[TestGenerationAction] = {
+    info(s"Actors of test $runId stopped unexpectedly.")
+    runIsOver(runId)
+  }
+
   private def testFinished(runId: Int, generatedTestO: Option[GeneratedTest]): List[TestGenerationAction] = {
     info(s"Test $runId finished.")
 

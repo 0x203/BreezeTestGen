@@ -1,6 +1,6 @@
 package de.hpi.asg.breezetestgen.actors
 
-import akka.actor.{Actor, ActorRef}
+import akka.actor.{Actor, ActorRef, Terminated}
 import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.domain._
 import components.BrzComponentBehaviour.{DecisionRequired, NormalFlowReaction}
@@ -36,6 +36,12 @@ class TestGenerationActor(private val testGenerator: TestGenerator) extends Acto
 
     case MyState(runId, _, state: Netlist.State) =>
       performActions(sender(), testGenerator.onWholeState(runId, state))
+
+    case Terminated(mainNetlistActor) =>
+      mainNetlistActors.find(_._2 == mainNetlistActor) match {
+        case Some((runId, _)) => performActions(sender(), testGenerator.onUnexpectedTermination(runId))
+        case None => info("A netlist actor died, but I didn't knew him.")
+      }
   }
 
 
@@ -47,12 +53,16 @@ class TestGenerationActor(private val testGenerator: TestGenerator) extends Acto
     action match {
       case CreateMainNetlist(runId, stateO) =>
         info(s"$runId: Creating new MainNetlist")
-        mainNetlistActors += runId -> newNetlistActor(runId, stateO, Some(self))
+        val freshNetlistActor = newNetlistActor(runId, stateO, Some(self))
+        mainNetlistActors += runId -> freshNetlistActor
+        context.watch(freshNetlistActor)
 
       case StopMainNetlist(runId) =>
         info(s"$runId: Stopping main NetlistActor")
-        for (actor <- mainNetlistActors.remove(runId))
+        for (actor <- mainNetlistActors.remove(runId)) {
+          context.unwatch(actor)
           context.stop(actor)
+        }
 
       case SendToMainNetlist(runId, signals) =>
         info(s"$runId: Sending signals to main netlist")

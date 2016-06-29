@@ -1,6 +1,6 @@
 package de.hpi.asg.breezetestgen.actors
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.{ActorRef, Props, Terminated}
 import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.actors.HandshakeActor.{Decision, GetState, MyState}
 import de.hpi.asg.breezetestgen.domain
@@ -39,6 +39,7 @@ class NetlistActor(runId: Int,
   }
   val setChannels = HandshakeActor.SetChannels(channelMap)
   componentActors.values.foreach(_ ! setChannels)
+  componentActors.values.foreach(context.watch)
 
   def handleSignal(senderId: HandshakeComponent.Id, ds: domain.Signal,  te: TestEvent) = {
     info(s"getting: $ds")
@@ -97,7 +98,6 @@ class NetlistActor(runId: Int,
   }
 
   // state gathering
-
   private def freshComponentStates() =
     collection.mutable.Map.empty[HandshakeComponent.Id, HandshakeComponent.State[_, _]]
   var componentStates = freshComponentStates()
@@ -131,5 +131,10 @@ class NetlistActor(runId: Int,
           // subNetlists(netlist.id :+ subNetlistId) ! Decision(componentId, ns, ds, te)
           throw new NotImplementedError()
       }
+
+    case Terminated(_) =>
+      error("A component actor of mine died. I'll follow him.")
+      componentActors.values.foreach(context.stop)
+      context.stop(self)
   }
 }
