@@ -44,7 +44,9 @@ class Variable(id: HandshakeComponent.Id,
       case Req(reader, Some(data)) if reads contains reader =>
         val filteredData: Data = readerSpec(reads.indexOf(reader)) match {
           case Some(range) if range.isEmpty => data
-          case Some(range) => data.selectBits(range)
+          case Some(range) =>
+            info(s"$id: selecting $range of bits from data $data")
+            data.selectBits(range)
           case None =>
             error("could not find specified range!")
             data

@@ -9,8 +9,8 @@ class Adapt(id: HandshakeComponent.Id,
             inWidth: Int,
             outSigned: Boolean,
             inSigned: Boolean,
-            inp: PullSpec,
-            out: PullSpec) extends BrzComponent(id) {
+            out: PullSpec,
+            inp: PullSpec) extends BrzComponent(id) {
   type Behaviour = AdaptBehaviour
   type C = AdaptBehaviour.ControlState
   type D = Null
@@ -39,18 +39,20 @@ class Adapt(id: HandshakeComponent.Id,
   class AdaptBehaviour(initState: HandshakeComponent.State[C, D]) extends BrzComponentBehaviour[C, D](initState) {
     import AdaptBehaviour._
 
-    info(s"AdaptBehaviour created in state: $initState")
+    info(s"$id AdaptBehaviour created in state: $initState")
 
     when(Idle) {
       case Req(`out`, _) =>
-        info(s"Requested!")
+        info(s"$id: Requested!")
         request(inp)
         goto(Fetching)
     }
 
     when(Fetching) {
       case DataAck(`inp`, inData, _) =>
-        info(s"Got input data: $inData")
+        info(s"$id Got input data: $inData")
+        info(s"Expecting bitcount $inWidth and signed $inSigned; got ${inData.bitCount} and ${inData.isSigned}")
+
         if ((inData.bitCount != inWidth) | (inData.isSigned != inSigned))
           error(s"Expecting bitcount $inWidth and signed $inSigned; got ${inData.bitCount} and ${inData.isSigned}")
 
