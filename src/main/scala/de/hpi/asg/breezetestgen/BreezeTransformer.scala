@@ -117,6 +117,7 @@ object ComponentExtractors {
       case "BrzCase" => new Case(id, CaseSpecParser.fromString(stringParam(2), intParam(0)), channel(0), channelSeq(1))
       case "BrzCaseFetch" =>
         new CaseFetch(id, CaseSpecParser.fromString(stringParam(3), intParam(1)), channel(0), channel(1), channelSeq(2))
+      case "BrzCombine" => new Combine(id, intParam(0), intParam(1), intParam(2), channel(0), channel(1), channel(2))
       case "BrzConcur" => new Concur(id, channel(0), channelSet(1))
       case "BrzConstant" => new Constant(id, channel(0), Constant(intParam(1), intParam(0)))
       case "BrzBinaryFunc" => new BinaryFunc(id, stringParam(3), channel(0), channel(1), channel(2))
