@@ -32,9 +32,15 @@ class ComponentActor(runId: Int,
   }
 
   override protected def handleSignal(senderId: HandshakeComponent.Id, ds: domain.Signal, testEvent: TestEvent) = {
-    component.handleSignal(ds, testEvent) match {
-      case nf: BrzComponentBehaviour.NormalFlowReaction => handleNormalFlow(testEvent, nf)
-      case dr: BrzComponentBehaviour.DecisionRequired => handleDecisionRequired(testEvent, dr)
+    try {
+      component.handleSignal(ds, testEvent) match {
+        case nf: BrzComponentBehaviour.NormalFlowReaction => handleNormalFlow(testEvent, nf)
+        case dr: BrzComponentBehaviour.DecisionRequired => handleDecisionRequired(testEvent, dr)
+      }
+    } catch {
+      case e: Exception =>
+        error(e, s"$componentId: Problem at handling signal $ds from $senderId by componentBehaviour")
+        context.stop(self)
     }
   }
 

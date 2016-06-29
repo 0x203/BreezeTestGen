@@ -39,10 +39,12 @@ class FalseVariable(id: HandshakeComponent.Id,
 
     when(Active) {
       case Ack(`signal`, _) =>
+        info(s"$id: isch over, will acknowledge")
         acknowledge(write)
         goto(Idle) using None
 
       case Req(reader, Some(data)) if reads contains reader =>
+        info(s"$id: reader #${reads.indexOf(reader)} wants to read me")
         val filteredData: Data = readerSpec(reads.indexOf(reader)) match {
           case Some(range) if range.isEmpty => data
           case Some(range) => data.selectBits(range)
