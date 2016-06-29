@@ -16,6 +16,9 @@ class Combine(id: HandshakeComponent.Id,
   type C = CombineBehaviour.ControlState
   type D = Option[Data]
 
+  if(lsInputWidth + msInputWidth != outWidth)
+    error(s"$id: withs don't match: $lsInputWidth + $msInputWidth != $outWidth")
+
   def behaviour(state: Option[HandshakeComponent.State[C, D]]): Behaviour =
     new CombineBehaviour(state getOrElse CombineBehaviour.freshState)
 
@@ -25,8 +28,7 @@ class Combine(id: HandshakeComponent.Id,
     else if(msData.bitCount != msInputWidth)
       error(s"got ${msData.bitCount} bits on msInp, expected $msInputWidth")
 
-    //TODO: imeplement me
-    throw new NotImplementedError("combining two data values not implemented")
+    lsData.combineWithMoreSignificant(msData)
   }
 
   object CombineBehaviour {

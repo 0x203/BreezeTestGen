@@ -13,6 +13,8 @@ trait Data {
   def isEqualConst(o: Constant): Data.ConstraintOrBool = isEqual(o)
 
   def selectBits(range: Range): Data
+  def adapt(targetBitCount: Int, targetSigned: Boolean,
+            sourceBitCount: Int = bitCount, sourceSigned: Boolean = isSigned): Data
 
   private val domainSize: Int =  math.pow(2, bitCount).toInt
   val minValue: Int = if (isSigned) -domainSize/2 else 0
@@ -30,6 +32,8 @@ trait Data {
   def or(o: Data): Data
   def xor(o: Data): Data
   def not(): Data
+  def combineWithMoreSignificant(o: Data): Data
+  def combineWitLessSignificant(o: Data): Data
 
   def plusConst(o: Constant): Data = plus(o)
   def minusConst(o: Constant): Data = minus(o)
@@ -42,6 +46,8 @@ trait Data {
   def andConst(o: Constant): Data = and(o)
   def orConst(o: Constant): Data = or(o)
   def xorConst(o: Constant): Data = xor(o)
+  def combineWithMoreSignificantConst(o: Constant): Data = combineWithMoreSignificant(o)
+  def combineWitLessSignificantConst(o: Constant): Data = combineWitLessSignificant(o)
 
   def constMinus(o: Constant): Data // this is needed for double dispatch
 

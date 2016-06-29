@@ -34,6 +34,11 @@ class VariableData(private[testgeneration] val underlying: Variable,
   def selectBits(range: Range): VariableData = throw new NoSuchElementException  //TODO: implement me
   def constMinus(o: Constant): VariableData = throw new NoSuchElementException //TODO: implement me
   def xor(o: Data): VariableData = throw new NoSuchElementException //TODO: arithOp(Xor, o)
+  def combineWithMoreSignificant(o: Data): Data = throw new NoSuchElementException //TODO: implement me
+  def combineWitLessSignificant(o: Data): Data = throw new NoSuchElementException //TODO: implement me
+  def adapt(targetBitCount: Int, targetSigned: Boolean,
+            sourceBitCount: Int = bitCount, sourceSigned: Boolean = isSigned): Data =
+    throw new NoSuchElementException //TODO: implement me
 
   /** creates new [[VariableData]] with an underlying [[Variable]] which reifies the according arithmetic operation */
   private def arithOp(op: ArithOperator, o: Data): VariableData = {

@@ -22,8 +22,7 @@ class Adapt(id: HandshakeComponent.Id,
     if(outSigned == inSigned && outSigned >= inSigned)
       in
     else {
-      //TODO implement me
-      throw new NotImplementedError("Don't have a way to declare adaption of values")
+      in.adapt(outWidth, outSigned, inWidth, inSigned)
     }
   }
 
@@ -51,7 +50,6 @@ class Adapt(id: HandshakeComponent.Id,
     when(Fetching) {
       case DataAck(`inp`, inData, _) =>
         info(s"$id Got input data: $inData")
-        info(s"Expecting bitcount $inWidth and signed $inSigned; got ${inData.bitCount} and ${inData.isSigned}")
 
         if ((inData.bitCount != inWidth) | (inData.isSigned != inSigned))
           error(s"Expecting bitcount $inWidth and signed $inSigned; got ${inData.bitCount} and ${inData.isSigned}")
