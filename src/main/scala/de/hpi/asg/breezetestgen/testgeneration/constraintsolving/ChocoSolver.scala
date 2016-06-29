@@ -29,12 +29,9 @@ object ChocoSolver {
       case Some(a) => a
       case None =>
         val bits = VF.boolArray(s"${v.name}_bits", v.bitCount, solver)
-        ICF.bit_channeling(bits, variables(v))
+        solver.post(ICF.bit_channeling(bits, variables(v)))
         bits
     }
-
-    // also ich habe variables. dann habe ich VariableData mit underlying  und constraint, jeweils in CC.
-    // ich will Constraint "selectbits", "adapt", "combine", "XOR" haben
 
     val postOrReify = (c: C,r: Option[BoolVariable]) => r match {
       case Some(v) => c.reifyWith(boolVariables(v))
@@ -71,8 +68,10 @@ object ChocoSolver {
             postOrReify(c, tc.reifyWith)
         }
       case BitwiseNot(a, b, rO) =>
-        for ((bitA, bitB) <- variableBitArray(a).zip(variableBitArray(b)))
+        for ((bitA, bitB) <- variableBitArray(a).zip(variableBitArray(b))) {
+          println(s"post inequavilance of ${bitA.getName} and ${bitB.getName} ")
           postOrReify(ICF.arithm(bitA, "!=", bitB), rO)
+        }
     }
     (solver, variables)
   }
