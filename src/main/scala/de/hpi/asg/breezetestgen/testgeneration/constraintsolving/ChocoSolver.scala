@@ -69,8 +69,14 @@ object ChocoSolver {
         }
       case BitwiseNot(a, b, rO) =>
         for ((bitA, bitB) <- variableBitArray(a).zip(variableBitArray(b))) {
-          println(s"post inequavilance of ${bitA.getName} and ${bitB.getName} ")
           postOrReify(ICF.arithm(bitA, "!=", bitB), rO)
+        }
+      case SelectBits(source, from, to, target, rO) =>
+        // source[from:to] should equal target
+        val sourceA = variableBitArray(source).drop(from)
+        val targetA = variableBitArray(target).take(to - from + 1)
+        for ((bitA, bitB) <- targetA.zip(sourceA)) {
+          postOrReify(ICF.arithm(bitA, "=", bitB), rO)
         }
     }
     (solver, variables)
