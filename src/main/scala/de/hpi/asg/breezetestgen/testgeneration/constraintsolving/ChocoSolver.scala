@@ -58,8 +58,8 @@ object ChocoSolver {
             val c: C = tc.op match {
               case Plus => ICF.sum(Array(aVar, bVar), "=", resultVar)
               case Minus => ICF.sum(Array(aVar, VF.minus(bVar)), "=", resultVar)
-              case And => ICF.minimum(resultVar, aVar, bVar) //TODO: implement me correctly
-              case Or => ICF.maximum(resultVar, aVar, bVar) //TODO: implement me correctly
+              case And => throw new NotImplementedError() //TODO: implement me correctly
+              case Or => throw new NotImplementedError() //TODO: implement me correctly
             }
             postOrReify(c, tc.reifyWith)
           case Right(i) =>
