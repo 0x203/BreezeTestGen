@@ -90,7 +90,9 @@ abstract class BrzComponentBehaviour[C, D] protected(initState: HandshakeCompone
   protected def dataAcknowledge(channelId: Channel.Spec[PullChannel[_]], data: Data) = addSignal(DataAcknowledge(channelId, data))
 
   /** helper method for setting testOp*/
-  protected def mergeAfter(tes: Set[TestEvent]) = normalFlowReaction = normalFlowReaction.copy(testOp = Merge(tes))
+  protected def mergeAfter(tes: Set[TestEvent]) =
+    if (tes.nonEmpty)
+      normalFlowReaction = normalFlowReaction.copy(testOp = Merge(tes))
 
 
   // Message Event Extractors
