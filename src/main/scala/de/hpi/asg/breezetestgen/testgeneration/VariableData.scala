@@ -86,7 +86,7 @@ class VariableData(private[testgeneration] val underlying: Variable,
 
 private object VariableData {
   private def combine(ls: Data, ms: Data): VariableData = {
-    val newUnderlying = Variable(s"${ls}⁀$ms", ls.bitCount + ms.bitCount, ms.isSigned)
+    val newUnderlying = Variable(s"concatinated", ls.bitCount + ms.bitCount, ms.isSigned)
     val constraint = (ls, ms) match {
       case (c_ls: Constant, v_ms: VariableData) =>
         Combine(v_ms.underlying, Left(c_ls), aIsLeastSignificant = false, newUnderlying, None)
