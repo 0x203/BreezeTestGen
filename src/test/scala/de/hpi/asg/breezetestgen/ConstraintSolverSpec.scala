@@ -54,4 +54,21 @@ class ConstraintSolverSpec extends baseclasses.UnitTest {
       assert((b >> 3) == a) // upper part is like bits3
     }
   }
+
+  it should "work with single bit, too" in {
+    val bit = Variable("bit", 1, isSigned = false)
+    val byte = Variable("byte", 8, isSigned = false)
+    val combined = Variable("combined", 9, isSigned = false)
+    val constraint = Combine(bit, Right(byte), aIsLeastSignificant = true, combined, None)
+
+    val cc = ConstraintCollection().addVariable(byte).addVariable(bit).addVariable(combined).addConstraint(constraint)
+    val solutions = new ChocoSolver(cc)
+    for (solution <- solutions) {
+      val bitV = solution(bit).value
+      val byteV = solution(byte).value
+      val combinedV = solution(combined).value
+      assert(combinedV % 2 == bitV)    // bit is ls part
+      assert((combinedV >> 1) == byteV) // upper part is like bits3
+    }
+  }
 }

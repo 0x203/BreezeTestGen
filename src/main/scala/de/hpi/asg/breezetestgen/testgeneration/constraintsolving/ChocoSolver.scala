@@ -28,9 +28,13 @@ object ChocoSolver {
     val variableBitArray = (v: Variable) => variableBitArrays.get(v) match {
       case Some(a) => a
       case None =>
-        val bits = VF.boolArray(s"${v.name}_bits", v.bitCount, solver)
-        solver.post(ICF.bit_channeling(bits, variables(v)))
-        bits
+        v.bitCount match {
+          case 1 => Array(variables(v))
+          case _ =>
+            val bits = VF.boolArray(s"${v.name}_bits", v.bitCount, solver)
+            solver.post(ICF.bit_channeling(bits, variables(v)))
+            bits
+        }
     }
 
     val postOrReify = (c: C,r: Option[BoolVariable]) => r match {
