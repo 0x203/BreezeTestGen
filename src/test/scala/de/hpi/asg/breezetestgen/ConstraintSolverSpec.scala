@@ -1,5 +1,6 @@
 package de.hpi.asg.breezetestgen
 
+import de.hpi.asg.breezetestgen.domain.Constant
 import de.hpi.asg.breezetestgen.testgeneration.constraintsolving._
 
 class ConstraintSolverSpec extends baseclasses.UnitTest {
@@ -35,6 +36,22 @@ class ConstraintSolverSpec extends baseclasses.UnitTest {
       val a = solution(bits3).value
       val b = solution(selected).value
       assert((a >> 1) == b)
+    }
+  }
+
+  "Combine" should "work" in {
+    val const2 = Constant(3, 3, isSigned = false)
+    val bits3 = Variable("bits3", 3, isSigned = false)
+    val combined = Variable("combined", 6, isSigned = false)
+    val constraint = Combine(bits3, Left(const2), aIsLeastSignificant = false, combined, None)
+
+    val cc = ConstraintCollection().addVariable(bits3).addVariable(combined).addConstraint(constraint)
+    val solutions = new ChocoSolver(cc)
+    for (solution <- solutions) {
+      val a = solution(bits3).value
+      val b = solution(combined).value
+      assert(b % 8 == 3)    // constant is ls part
+      assert((b >> 3) == a) // upper part is like bits3
     }
   }
 }

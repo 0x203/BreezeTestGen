@@ -74,4 +74,9 @@ case class Constant(v: Constant.Underlying, bitCount: Int = 8, isSigned: Boolean
   override def xorConst(o: Constant): Constant = Constant(value ^ o.value)
   override def combineWithMoreSignificantConst(o: Constant): Data = combine(this, o)
   override def combineWitLessSignificantConst(o: Constant): Data = combine(o, this)
+
+  def asBitArray: Seq[Int] = {
+    val binaryValue = value.toBinaryString.map(_.asDigit).reverse
+    Seq.fill(bitCount - binaryValue.length){0} ++ binaryValue
+  }
 }

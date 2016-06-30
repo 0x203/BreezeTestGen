@@ -78,6 +78,36 @@ object ChocoSolver {
         for ((bitA, bitB) <- targetA.zip(sourceA)) {
           postOrReify(ICF.arithm(bitA, "=", bitB), rO)
         }
+      case Combine(a, Right(b: Variable), aIsLeastSignificant, together, rO) =>
+        val as = variableBitArray(a)
+        val bs = variableBitArray(b)
+        val ts = variableBitArray(together)
+        val concatenated = if (aIsLeastSignificant) as ++ bs else bs ++ as
+        for ((bitA, bitB) <- ts.zip(concatenated)) {
+          postOrReify(ICF.arithm(bitA, "=", bitB), rO)
+        }
+      case Combine(a, Left(b: Constant), aIsLeastSignificant, together, rO) =>
+        val as = variableBitArray(a)
+        val bs = b.asBitArray.reverse
+        val ts = variableBitArray(together)
+
+        // need to separate between this cases, because although arithm is overloaded with boolvar and int types,
+        // concatenation of Seq[BoolVar] and Seq[Int] won't work without loosing type information
+        if (aIsLeastSignificant) {
+          for ((bitA, bitT) <- as.zip(ts)) {
+            postOrReify(ICF.arithm(bitA, "=", bitT), rO)
+          }
+          for ((bitB, bitT) <- bs.zip(ts.drop(as.length))) {
+            postOrReify(ICF.arithm(bitT, "=", bitB), rO)
+          }
+        } else {
+          for ((bitB, bitT) <- bs.zip(ts)) {
+            postOrReify(ICF.arithm(bitT, "=", bitB), rO)
+          }
+          for ((bitA, bitT) <- as.zip(ts.drop(bs.length))) {
+            postOrReify(ICF.arithm(bitT, "=", bitA), rO)
+          }
+        }
     }
     (solver, variables)
   }
