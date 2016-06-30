@@ -38,13 +38,22 @@ trait Decider extends Loggable {
     backlog ++= wfs.sleepingExecutions.map{ case (cv, r) => ids(cv) -> (r, state) }
 
     // decide for some possibilities and resume them all
-    decide(wfs.possibilities)
+    decideForOne(wfs.possibilities)
       .map(ids)
       .map(resumeTest)
       .fold(StopMainNetlist(runId) :: Nil)(_ ++ _)
   }
 
-  private def decide(possibilities: DecisionPossibilities): Set[ConstraintVariable] = {
+  private def decideForOne(possibilities: DecisionPossibilities): Set[ConstraintVariable] = {
+    val acknowledging = possibilities.mapValues(_._1).toSeq.sortBy(tpl => {
+      // sort ascending by SignalFromPassive and choose last
+      // this should give us the possibility with most acknowledges, which should lead to an early finish
+      tpl._2.signals.count(_.isInstanceOf[SignalFromPassive])
+    }).last._1
+    Set(acknowledging)
+  }
+
+  private def takeAll(possibilities: DecisionPossibilities): Set[ConstraintVariable] = {
     possibilities.keySet
   }
 }
