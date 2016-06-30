@@ -135,8 +135,14 @@ class InformationHub(private val runId: Int,
       .map{ds => HandshakeActor.Signal(runId, Nil, ds, teO getOrElse TestEvent.newIOEvent(ds))} // create understandable signals
 
   /** returns a generated test if one exists */
-  private def generateTest(): Option[GeneratedTest] =
-    TestInstantiator.random(cc, testBuilder).map(GeneratedTest(_, coverage))
+  private def generateTest(): Option[GeneratedTest] = {
+    println("directly before test generation")
+    println(cc.allVariables)
+    println(cc.allConstraints)
+    val r = TestInstantiator.first(cc, testBuilder).map(GeneratedTest(_, coverage))
+    println("directly after test generation")
+    r
+  }
 }
 
 object InformationHub {

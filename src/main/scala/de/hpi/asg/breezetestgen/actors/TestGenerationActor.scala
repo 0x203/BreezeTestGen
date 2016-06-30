@@ -56,6 +56,7 @@ class TestGenerationActor(private val testGenerator: TestGenerator) extends Acto
         val freshNetlistActor = newNetlistActor(runId, stateO, Some(self))
         mainNetlistActors += runId -> freshNetlistActor
         context.watch(freshNetlistActor)
+        println(s"create mainlist for run $runId")
 
       case StopMainNetlist(runId) =>
         info(s"$runId: Stopping main NetlistActor")
