@@ -88,6 +88,7 @@ object ChocoSolver {
         val as = variableBitArray(a)
         val bs = variableBitArray(b)
         val ts = variableBitArray(together)
+        require(as.length + bs.length == ts.length)
         val concatenated = if (aIsLeastSignificant) as ++ bs else bs ++ as
         for ((bitA, bitB) <- ts.zip(concatenated)) {
           postOrReify(ICF.arithm(bitA, "=", bitB), rO)
@@ -96,6 +97,7 @@ object ChocoSolver {
         val as = variableBitArray(a)
         val bs = b.asBitArray.reverse
         val ts = variableBitArray(together)
+        require(as.length + bs.length == ts.length)
 
         // need to separate between this cases, because although arithm is overloaded with boolvar and int types,
         // concatenation of Seq[BoolVar] and Seq[Int] won't work without loosing type information
@@ -113,7 +115,7 @@ object ChocoSolver {
           for ((bitA, bitT) <- as.zip(ts.drop(bs.length))) {
             postOrReify(ICF.arithm(bitT, "=", bitA), rO)
           }
-        }
+      }
     }
     (solver, variables)
   }

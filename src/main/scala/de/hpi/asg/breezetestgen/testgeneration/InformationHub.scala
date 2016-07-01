@@ -42,13 +42,7 @@ class InformationHub(private val runId: Int,
     reaction.signals
       .collect{case dataSignal: SignalWithData => dataSignal.data}
       .collect{case vd: VariableData => vd}
-      .foreach(vd => {
-        // TODO refactor this badly
-        cc = cc.addVariable(vd.underlying)
-        val cons = vd.constraint
-        if (cons != null)
-          cc = cc.addConstraint(cons)
-      })
+      .foreach(vd => cc = vd.addToConstraintCollection(cc))
 
     coverage = coverage.withSignals(reaction.signals)
 
@@ -154,9 +148,7 @@ object InformationHub {
     val initialSignals = initialRequestsForNetlist(netlist).toSet
     new InformationHub(
       runId, netlist,
-      ConstraintCollection(
-        variables = initialSignals.collect{case DataRequest(_, vd :VariableData) => vd.underlying}
-      ),
+      ConstraintCollection(variables = initialSignals.collect{case DataRequest(_, vd :VariableData) => vd.underlying}),
       TestBuilder.withOrigins(
         initialSignals.map(TestEvent.newIOEvent)
       ),
@@ -173,7 +165,7 @@ object InformationHub {
     case sp: SyncPort => sp.createSignal()
     case dp: DataPort =>
       val v = new Variable(dp.name, dp.bitCount, dp.isSigned)
-      val d = new VariableData(v, null)
+      val d = new VariableData(v)
       dp.createSignal(d)
   }
 }

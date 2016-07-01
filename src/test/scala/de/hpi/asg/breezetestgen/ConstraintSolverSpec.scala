@@ -1,6 +1,7 @@
 package de.hpi.asg.breezetestgen
 
 import de.hpi.asg.breezetestgen.domain.Constant
+import de.hpi.asg.breezetestgen.testgeneration.VariableData
 import de.hpi.asg.breezetestgen.testgeneration.constraintsolving._
 
 class ConstraintSolverSpec extends baseclasses.UnitTest {
@@ -39,7 +40,22 @@ class ConstraintSolverSpec extends baseclasses.UnitTest {
     }
   }
 
-  "Combine" should "work" in {
+  it should "work again" in {
+    val till16 = Variable("till16", 4, isSigned = false)
+    val till16DV = new VariableData(till16)
+    val till4DV = till16DV.selectBits(1 to 2)
+
+    val cc = till4DV.addToConstraintCollection(ConstraintCollection().addVariable(till16))
+    new ChocoSolver(cc).printSolutions(Seq(till16, till4DV.underlying), 30)
+    val solutions = new ChocoSolver(cc)
+    for(solution <- solutions) {
+      val t16v = solution(till16)
+      val t4v = solution(till4DV.underlying)
+      assert((t16v.v >> 1) % 4 == t4v.v)
+    }
+  }
+
+  "Combine" should "work using a constant" in {
     val const2 = Constant(3, 3, isSigned = false)
     val bits3 = Variable("bits3", 3, isSigned = false)
     val combined = Variable("combined", 6, isSigned = false)

@@ -1,12 +1,16 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
 import constraintsolving._
+import de.hpi.asg.breezetestgen.domain.Constant.Underlying
 import de.hpi.asg.breezetestgen.domain.{Constant, Data}
+import de.hpi.asg.breezetestgen.testgeneration.TestBuilder.VariableFixator
 
 
-class VariableData(private[testgeneration] val underlying: Variable,
-                   private[testgeneration] val constraint: Constraint) extends Data {
+class VariableData(val underlying: Variable, constraintO: Option[Constraint]) extends Data {
   import VariableData._
+
+  def this(underlying: Variable) = this(underlying, None)
+  def this(underlying: Variable, constraint: Constraint) = this(underlying, Option(constraint))
 
   def bitCount = underlying.bitCount
   def isSigned = underlying.isSigned
@@ -37,8 +41,10 @@ class VariableData(private[testgeneration] val underlying: Variable,
     new VariableData(newUnderlying, constraint)
   }
   def selectBits(range: Range): VariableData = {
+    require(range.start < bitCount, s"${underlying.name}: selection starts at ${range.start}, just have $bitCount")
+    require(range.last < bitCount, s"${underlying.name}: selection ends at ${range.last}, just have $bitCount")
     val newUnderlying = Variable(s"${underlying.name}[${range.start}:${range.end}]", range.size, isSigned = false)
-    val constraint = SelectBits(underlying, range.start, range.end, newUnderlying, None)
+    val constraint = SelectBits(underlying, range.start, range.last, newUnderlying, None)
     new VariableData(newUnderlying, constraint)
   }
   def combineWithMoreSignificant(o: Data): Data = combine(this, o)
@@ -81,7 +87,12 @@ class VariableData(private[testgeneration] val underlying: Variable,
     )
   }
 
-  override def toString = s"VariableData($underlying, $constraint)"
+  def addToConstraintCollection(cc: ConstraintCollection): ConstraintCollection = constraintO match {
+    case None => cc.addVariable(underlying)
+    case Some(constraint) => cc.addVariable(underlying).addConstraint(constraint)
+  }
+
+  override def toString = s"VariableData($underlying, $constraintO)"
 }
 
 private object VariableData {
