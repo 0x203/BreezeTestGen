@@ -18,14 +18,6 @@ class Adapt(id: HandshakeComponent.Id,
   def behaviour(state: Option[HandshakeComponent.State[C, D]]): Behaviour =
     new AdaptBehaviour(state getOrElse AdaptBehaviour.freshState)
 
-  def adapt(in: Data): Data = {
-    if(outSigned == inSigned && outSigned == inSigned)
-      in
-    else {
-      in.adapt(outWidth, outSigned, inWidth, inSigned)
-    }
-  }
-
 
   object AdaptBehaviour {
     sealed trait ControlState
@@ -54,7 +46,7 @@ class Adapt(id: HandshakeComponent.Id,
         if ((inData.bitCount != inWidth) | (inData.isSigned != inSigned))
           error(s"Expecting bitcount $inWidth and signed $inSigned; got ${inData.bitCount} and ${inData.isSigned}")
 
-        val outData = adapt(inData)
+        val outData = inData.adapt(outWidth, outSigned, inWidth, inSigned)
         dataAcknowledge(out, outData)
         goto(Idle)
     }
