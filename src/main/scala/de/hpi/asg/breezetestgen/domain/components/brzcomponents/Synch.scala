@@ -3,18 +3,18 @@ package de.hpi.asg.breezetestgen.domain.components.brzcomponents
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, BrzComponentBehaviour, HandshakeComponent}
 import BrzComponent._
 
-class Sync(id: HandshakeComponent.Id,
-           inps: Set[SyncSpec],
-           out: SyncSpec) extends BrzComponent(id) {
-  type Behaviour = SyncBehaviour
-  type C = SyncBehaviour.ControlState
+class Synch(id: HandshakeComponent.Id,
+            inps: Set[SyncSpec],
+            out: SyncSpec) extends BrzComponent(id) {
+  type Behaviour = SynchBehaviour
+  type C = SynchBehaviour.ControlState
   type D = Int
 
   def behaviour(state: Option[HandshakeComponent.State[C, D]]): Behaviour =
-    new SyncBehaviour(state getOrElse SyncBehaviour.freshState)
+    new SynchBehaviour(state getOrElse SynchBehaviour.freshState)
 
 
-  object SyncBehaviour {
+  object SynchBehaviour {
     sealed trait ControlState
     case object Waiting extends ControlState
     case object Calling extends ControlState
@@ -22,8 +22,8 @@ class Sync(id: HandshakeComponent.Id,
     val freshState: HandshakeComponent.State[C, D] = HandshakeComponent.State(Waiting, 0)
   }
 
-  class SyncBehaviour(initState: HandshakeComponent.State[C, D]) extends BrzComponentBehaviour[C, D](initState) {
-    import SyncBehaviour._
+  class SynchBehaviour(initState: HandshakeComponent.State[C, D]) extends BrzComponentBehaviour[C, D](initState) {
+    import SynchBehaviour._
 
     info(s"$id: SyncBehaviour created in state: $initState")
 
