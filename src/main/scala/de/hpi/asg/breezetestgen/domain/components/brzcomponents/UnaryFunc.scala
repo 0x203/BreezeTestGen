@@ -2,6 +2,7 @@ package de.hpi.asg.breezetestgen.domain.components.brzcomponents
 
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, BrzComponentBehaviour, HandshakeComponent}
 import BrzComponent._
+import de.hpi.asg.breezetestgen.domain.Data
 
 class UnaryFunc(id: HandshakeComponent.Id,
                 operator: String,
@@ -16,6 +17,14 @@ class UnaryFunc(id: HandshakeComponent.Id,
   def behaviour(state: Option[HandshakeComponent.State[C, D]]): Behaviour =
     new UnaryFuncBehaviour(state getOrElse UnaryFuncBehaviour.freshState)
 
+  def invert(data: Data): Data = data.not()
+  def negate(data: Data): Data = throw new NotImplementedError() //TODO: implement me
+
+  val func: Data => Data = operator match {
+    case "Invert" => invert _
+    case "Negate" => negate _
+  }
+
 
   object UnaryFuncBehaviour {
     sealed trait ControlState
@@ -28,7 +37,7 @@ class UnaryFunc(id: HandshakeComponent.Id,
   class UnaryFuncBehaviour(initState: HandshakeComponent.State[C, D]) extends BrzComponentBehaviour[C, D](initState) {
     import UnaryFuncBehaviour._
 
-    info(s"$id: UnaryFuncBehaviour created in state: $initState")
+    info(s"$id: UnaryFuncBehaviour $operator created in state: $initState")
 
     when(Idle) {
       case Req(`out`, _) =>
@@ -40,10 +49,7 @@ class UnaryFunc(id: HandshakeComponent.Id,
     when(Fetching) {
       case DataAck(`inp`, inData, _) =>
         info(s"$id got $inData on input!")
-        val outData = operator match {
-          case "Invert" => inData.not()
-          case "Negate" => throw new NotImplementedError() // TODO: implement me
-        }
+        val outData = func(inData)
         dataAcknowledge(out, outData)
         goto(Idle)
     }
