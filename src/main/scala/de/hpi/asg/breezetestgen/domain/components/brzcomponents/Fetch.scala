@@ -27,25 +27,25 @@ class Fetch(id: HandshakeComponent.Id,
   class FetchBehaviour(initState: HandshakeComponent.State[C, D]) extends BrzComponentBehaviour[C, D](initState) {
     import FetchBehaviour._
 
-    info(s"Created FetchBehaviour with state: $initState")
+    info(s"$id: Created FetchBehaviour with state: $initState")
 
     when(Idle) {
       case Req(`activate`, _) =>
-        info("Activated")
+        info(s"$id: Activated")
         request(inp)
         goto(WaitForInp)
     }
 
     when(WaitForInp) {
       case DataAck(`inp`, data, _) =>
-        info(s"read $data")
+        info(s"$id: read $data")
         dataRequest(out, data)  // no new constraint, because data is just passed through
         goto(WaitForOut)
     }
 
     when(WaitForOut) {
       case Ack(`out`, _) =>
-        info("wrote")
+        info(s"$id: wrote")
         acknowledge(activate)
         goto(Idle)
     }

@@ -6,7 +6,6 @@ import org.chocosolver.solver.Solver
 import org.chocosolver.solver.search.loop.monitors.SearchMonitorFactory
 import org.chocosolver.solver.variables.{VariableFactory => VF}
 import org.chocosolver.solver.constraints.{IntConstraintFactory => ICF}
-import org.chocosolver.solver.constraints.{LogicalConstraintFactory => LCF}
 
 object ChocoSolver {
   type V = org.chocosolver.solver.variables.IntVar
@@ -21,7 +20,13 @@ object ChocoSolver {
     }.toMap
 
     val variables: Map[Variable, V] = boolVariables ++  cc.allVariables.filterNot(_.isInstanceOf[BoolVariable]).map{
-      case v: Variable => v -> VF.enumerated(v.name, v.minValue, v.maxValue, solver)
+      case v: Variable =>
+        val newVar: V =
+          if(v.bitCount <= 16)
+            VF.enumerated(v.name, v.minValue, v.maxValue, solver)
+          else
+            VF.bounded(v.name, v.minValue, v.maxValue, solver)
+        v -> newVar
     }.toMap
 
     val variableBitArrays = collection.mutable.Map.empty[Variable, Array[BV]]

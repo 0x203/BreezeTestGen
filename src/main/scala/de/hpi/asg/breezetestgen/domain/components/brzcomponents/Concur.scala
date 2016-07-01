@@ -43,10 +43,10 @@ class Concur(id: HandshakeComponent.Id,
       case Ack(out, Some(Requests(i, preTestEvent, testEvents))) if outs contains out =>
         val newTestEvents = testEvents + testEvent
         if (i != 1) {
-          info(s"Channel acknowledged. ${i - 1} still pending...")
+          info(s"$id: Channel acknowledged. ${i - 1} still pending...")
           stay using Option(Requests(i - 1, preTestEvent, newTestEvents))
         } else {
-          info("all finished. acknowledging...")
+          info(s"$id: all finished. acknowledging...")
           acknowledge(activate)
           mergeAfter(newTestEvents - preTestEvent)
           goto(Idle)
