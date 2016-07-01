@@ -26,6 +26,32 @@ class ConstraintSolverSpec extends baseclasses.UnitTest {
     }
   }
 
+  "Adapt" should "work slicing down" in {
+    val bits3 = new VariableData(Variable("bits3", 3, isSigned = false))
+    val just2bits = bits3.adapt(2, targetSigned = false)
+
+    val cc = just2bits.addToConstraintCollection(bits3.addToConstraintCollection(ConstraintCollection()))
+    val solutions = new ChocoSolver(cc)
+    for (solution <- solutions) {
+      val a = solution(bits3.underlying).value
+      val b = solution(just2bits.underlying).value
+      assert(a % 4 == b)
+    }
+  }
+
+  it should "work adding up" in {
+    val bits3 = new VariableData(Variable("bits3", 3, isSigned = false))
+    val even6bits = bits3.adapt(6, targetSigned = false)
+
+    val cc = even6bits.addToConstraintCollection(bits3.addToConstraintCollection(ConstraintCollection()))
+    val solutions = new ChocoSolver(cc)
+    for (solution <- solutions) {
+      val a = solution(bits3.underlying).value
+      val b = solution(even6bits.underlying).value
+      assert(a == b)
+    }
+  }
+
   "SelectBits" should "work" in {
     val bits3  = Variable("bits3", 3, isSigned = false)
     val selected = Variable("selected", 2, isSigned = false)

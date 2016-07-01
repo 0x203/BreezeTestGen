@@ -53,7 +53,7 @@ class VariableData(val underlying: Variable, constraintO: Option[Constraint]) ex
   def constMinus(o: Constant): VariableData = throw new NoSuchElementException //TODO: implement me
   def xor(o: Data): VariableData = throw new NoSuchElementException //TODO: arithOp(Xor, o)
   def adapt(targetBitCount: Int, targetSigned: Boolean,
-            sourceBitCount: Int = bitCount, sourceSigned: Boolean = isSigned): Data =
+            sourceBitCount: Int = bitCount, sourceSigned: Boolean = isSigned): VariableData =
     throw new NoSuchElementException //TODO: implement me
 
   /** creates new [[VariableData]] with an underlying [[Variable]] which reifies the according arithmetic operation */

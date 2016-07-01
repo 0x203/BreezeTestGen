@@ -19,7 +19,7 @@ class Adapt(id: HandshakeComponent.Id,
     new AdaptBehaviour(state getOrElse AdaptBehaviour.freshState)
 
   def adapt(in: Data): Data = {
-    if(outSigned == inSigned && outSigned >= inSigned)
+    if(outSigned == inSigned && outSigned == inSigned)
       in
     else {
       in.adapt(outWidth, outSigned, inWidth, inSigned)
