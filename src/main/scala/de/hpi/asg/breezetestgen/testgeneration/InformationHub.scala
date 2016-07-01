@@ -32,7 +32,7 @@ class InformationHub(private val runId: Int,
     */
   def handleReaction(reaction: NormalFlowReaction,
                      id: HandshakeComponent.Id): Either[TestEvent , Option[GeneratedTest]] =
-    if (enoughLoopExecutions(id) || coverage.isComplete) {
+    if (enoughLoopExecutions(id)) {
       Right(generateTest())
     } else
       Left(handleNormalReaction(reaction))
@@ -57,7 +57,7 @@ class InformationHub(private val runId: Int,
     if (loopIds contains id) {
       remainingLoopExecs -= 1
       info(s"Detected Loop execution! Remaining: $remainingLoopExecs")
-      remainingLoopExecs < 0
+      remainingLoopExecs < 0 || coverage.isComplete
     } else
       false
   }
