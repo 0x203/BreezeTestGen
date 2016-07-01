@@ -60,7 +60,7 @@ class WhileSpec extends UnitTest {
   it should "return DecisionRequired if guard is DataVariable" in {
     val whileBehaviour = createBehaviour(Some(evaluatingState))
     val boolVariable = constraintsolving.BoolVariable("guard")
-    val guardVar = new VariableData(boolVariable, null)
+    val guardVar = new VariableData(boolVariable)
 
     val reaction = whileBehaviour.handleSignal(DataAcknowledge(guardId, guardVar), te)
 
