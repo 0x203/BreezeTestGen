@@ -73,6 +73,15 @@ object ChocoSolver {
             val c = ICF.arithm(resultVar, "=", aVar, tc.operator, i)
             postOrReify(c, tc.reifyWith)
         }
+      case Adapt(from, to, reifyWith) =>
+        val fromV = variables(from)
+        val toV = variables(to)
+        if(to.bitCount > from.bitCount) {
+          postOrReify(ICF.arithm(fromV, "=", toV), reifyWith)
+        } else {
+          val moduloValue = VF.fixed(1 << from.bitCount, solver)
+          postOrReify(ICF.mod(fromV, moduloValue, toV), reifyWith)
+        }
       case BitwiseNot(a, b, rO) =>
         for ((bitA, bitB) <- variableBitArray(a).zip(variableBitArray(b))) {
           postOrReify(ICF.arithm(bitA, "!=", bitB), rO)

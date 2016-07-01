@@ -54,7 +54,18 @@ class VariableData(val underlying: Variable, constraintO: Option[Constraint]) ex
   def xor(o: Data): VariableData = throw new NoSuchElementException //TODO: arithOp(Xor, o)
   def adapt(targetBitCount: Int, targetSigned: Boolean,
             sourceBitCount: Int = bitCount, sourceSigned: Boolean = isSigned): VariableData =
-    throw new NoSuchElementException //TODO: implement me
+    if(targetBitCount == sourceBitCount && targetSigned == sourceSigned)
+      this
+    else {
+      require(targetBitCount > 0)
+      val newUnderlying = Variable(s"${underlying.name}[0:$targetBitCount]", targetBitCount, targetSigned)
+      val newConstraint = Adapt(underlying, newUnderlying, None)
+
+      new VariableData(
+        newUnderlying,
+        newConstraint
+      )
+    }
 
   /** creates new [[VariableData]] with an underlying [[Variable]] which reifies the according arithmetic operation */
   private def arithOp(op: ArithOperator, o: Data): VariableData = {

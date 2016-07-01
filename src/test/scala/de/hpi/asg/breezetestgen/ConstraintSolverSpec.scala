@@ -72,7 +72,6 @@ class ConstraintSolverSpec extends baseclasses.UnitTest {
     val till4DV = till16DV.selectBits(1 to 2)
 
     val cc = till4DV.addToConstraintCollection(ConstraintCollection().addVariable(till16))
-    new ChocoSolver(cc).printSolutions(Seq(till16, till4DV.underlying), 30)
     val solutions = new ChocoSolver(cc)
     for(solution <- solutions) {
       val t16v = solution(till16)
