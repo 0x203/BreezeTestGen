@@ -24,17 +24,19 @@ object ChocoSolver {
       case v: Variable => v -> VF.enumerated(v.name, v.minValue, v.maxValue, solver)
     }.toMap
 
-    val variableBitArrays = collection.immutable.Map.empty[Variable, Array[BV]]
+    val variableBitArrays = collection.mutable.Map.empty[Variable, Array[BV]]
     val variableBitArray = (v: Variable) => variableBitArrays.get(v) match {
       case Some(a) => a
       case None =>
-        v.bitCount match {
-          case 1 => Array(variables(v))
+        val bvs: Array[BV] = v match {
+          case bv: BoolVariable => Array(boolVariables(bv))
           case _ =>
             val bits = VF.boolArray(s"${v.name}_bits", v.bitCount, solver)
             solver.post(ICF.bit_channeling(bits, variables(v)))
             bits
         }
+        variableBitArrays += v -> bvs
+        bvs
     }
 
     val postOrReify = (c: C,r: Option[BoolVariable]) => r match {
