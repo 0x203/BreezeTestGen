@@ -11,7 +11,7 @@ class DecisionWait(id: HandshakeComponent.Id,
 
   type Behaviour = DecisionWaitBehaviour
   type C = DecisionWaitBehaviour.ControlState
-  type D = Null
+  type D = Option[Int]  // index of requesting input
 
   def behaviour(state: Option[HandshakeComponent.State[C, D]]): Behaviour =
     new DecisionWaitBehaviour(state getOrElse DecisionWaitBehaviour.freshState)
@@ -23,7 +23,7 @@ class DecisionWait(id: HandshakeComponent.Id,
     case object Activated extends ControlState
     case object Executing extends ControlState
 
-    val freshState: HandshakeComponent.State[C, D] = HandshakeComponent.State(Idle, null)
+    val freshState: HandshakeComponent.State[C, D] = HandshakeComponent.State(Idle, None)
   }
 
   class DecisionWaitBehaviour(initState: HandshakeComponent.State[C, D]) extends BrzComponentBehaviour[C, D](initState) {
@@ -32,9 +32,17 @@ class DecisionWait(id: HandshakeComponent.Id,
     info(s"$id DecisionWaitBehaviour created in state: $initState")
 
     when(Idle) {
-      case Req(`activate`, _) =>
+      case Req(`activate`, None) =>
         info(s"$id Requested!")
         goto(Activated)
+      case Req(`activate`, Some(index)) =>
+        info(s"$id Requested and already have index")
+        request(outs(index))
+        goto(Executing)
+      case Req(inp, None) if inps contains inp =>
+        val index = inps.indexOf(inp)
+        info(s"$id was requested on input number $index, but aren't activated yet")
+        stay using Some(index)
     }
 
     when(Activated) {
@@ -50,7 +58,8 @@ class DecisionWait(id: HandshakeComponent.Id,
         val index = outs.indexOf(out)
         info(s"$id got acknowledge on output number $index")
         acknowledge(inps(index))
-        goto(Idle)
+        acknowledge(activate)
+        goto(Idle) using None
     }
 
     initialize()
