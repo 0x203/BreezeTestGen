@@ -134,6 +134,7 @@ object ComponentExtractors {
       case "BrzLoop" => new Loop(id, channel(0), channel(1))
       case "BrzSequence" => new Sequence(id, channel(0), channelSeq(1))
       case "BrzSynch" => new Synch(id, channelSet(0), channel(1))
+      case "BrzUnaryFunc" => new UnaryFunc(id, stringParam(2), channel(0), channel(1))
       case "BrzVariable" =>
         new Variable(id, stringParam(2), VariableReaderSpec.fromString(stringParam(3)), channel(0), channelSeq(1))
       case "BrzWireFork" => new Concur(id, channel(0), channelSet(1)) // maybe implement real fork someday

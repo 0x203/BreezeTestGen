@@ -23,5 +23,4 @@ case class Combine(a: Variable,
                    together: Variable,
                    override val reifyWith: Option[BoolVariable]) extends Constraint(reifyWith)
 
-
 //xor(o: Data)
