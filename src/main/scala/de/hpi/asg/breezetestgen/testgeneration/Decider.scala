@@ -38,7 +38,7 @@ trait Decider extends Loggable {
     backlog ++= wfs.sleepingExecutions.map{ case (cv, r) => ids(cv) -> (r, state) }
 
     // decide for some possibilities and resume them all
-    decideForOne(wfs.possibilities)
+    takeAll(wfs.possibilities)
       .map(ids)
       .map(resumeTest)
       .fold(StopMainNetlist(runId) :: Nil)(_ ++ _)

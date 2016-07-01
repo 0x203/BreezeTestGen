@@ -136,12 +136,7 @@ class InformationHub(private val runId: Int,
 
   /** returns a generated test if one exists */
   private def generateTest(): Option[GeneratedTest] = {
-    println("directly before test generation")
-    println(cc.allVariables)
-    println(cc.allConstraints)
-    val r = TestInstantiator.first(cc, testBuilder).map(GeneratedTest(_, coverage))
-    println("directly after test generation")
-    r
+    TestInstantiator.random(cc, testBuilder).map(GeneratedTest(_, coverage))
   }
 }
 
