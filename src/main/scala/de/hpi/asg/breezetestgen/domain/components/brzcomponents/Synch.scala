@@ -28,14 +28,15 @@ class Synch(id: HandshakeComponent.Id,
     info(s"$id: SyncBehaviour created in state: $initState")
 
     when(Waiting) {
-      case Req(inp, reqCount) if inps contains inp =>
+      case Req(inp, oldReqCount) if inps contains inp =>
+        val reqCount = oldReqCount + 1
         if (reqCount == inps.size) {
           info(s"$id: got all requests, activating `out` now")
           request(out)
           goto(Calling) using 0
         } else {
-          info(s"$id: got ${reqCount + 1} of ${inps.size} requests")
-          stay using reqCount + 1
+          info(s"$id: got $reqCount of ${inps.size} requests")
+          stay using reqCount
         }
     }
 
