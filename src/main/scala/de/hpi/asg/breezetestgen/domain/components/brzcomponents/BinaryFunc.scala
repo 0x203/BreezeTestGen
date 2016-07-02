@@ -1,10 +1,10 @@
 package de.hpi.asg.breezetestgen.domain.components.brzcomponents
 
-import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.domain.Data
 import de.hpi.asg.breezetestgen.domain.components.BrzComponent._
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, BrzComponentBehaviour, HandshakeComponent}
 import de.hpi.asg.breezetestgen.testing.TestEvent
+import de.hpi.asg.breezetestgen.util.Loggable
 
 object BinaryFunc extends Loggable {
   def operate(operator: String)(a: Data, b: Data): Data = {

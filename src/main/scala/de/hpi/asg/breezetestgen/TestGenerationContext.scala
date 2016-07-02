@@ -5,6 +5,7 @@ import java.util.concurrent.TimeoutException
 import com.typesafe.config._
 import de.hpi.asg.breezetestgen.domain.Netlist
 import de.hpi.asg.breezetestgen.testgeneration._
+import de.hpi.asg.breezetestgen.util.Loggable
 
 import scala.concurrent.duration.Duration
 

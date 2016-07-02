@@ -1,6 +1,5 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
-import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.actors.HandshakeActor
 import de.hpi.asg.breezetestgen.actors.HandshakeActor.Decision
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.{DecisionPossibilities, NormalFlowReaction}
@@ -9,6 +8,7 @@ import de.hpi.asg.breezetestgen.domain.{Netlist, Signal}
 import de.hpi.asg.breezetestgen.testgeneration.constraintsolving.ConstraintVariable
 import de.hpi.asg.breezetestgen.testing.TestEvent
 import de.hpi.asg.breezetestgen.testing.coverage.ChannelActivationCoverage
+import de.hpi.asg.breezetestgen.util.Loggable
 
 class TestGenerator(val netlist: Netlist, maxLoopExecs: Int) extends Decider with Loggable {
   import TestGenerator._

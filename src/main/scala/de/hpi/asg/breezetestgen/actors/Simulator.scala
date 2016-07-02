@@ -1,10 +1,10 @@
 package de.hpi.asg.breezetestgen.actors
 
 import akka.actor.{Actor, ActorRef, Props}
-import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.domain._
 import de.hpi.asg.breezetestgen.testing.TestRunner._
 import de.hpi.asg.breezetestgen.testing._
+import de.hpi.asg.breezetestgen.util.Loggable
 
 object Simulator {
   case class RunTest(test: Test)

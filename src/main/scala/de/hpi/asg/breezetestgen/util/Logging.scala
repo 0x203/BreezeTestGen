@@ -1,8 +1,8 @@
-package de.hpi.asg.breezetestgen
+package de.hpi.asg.breezetestgen.util
 
 import de.uni_potsdam.hpi.asg.common.io.LoggerHelper
 import org.apache.logging.log4j.message.{Message, ParameterizedMessageFactory}
-import org.apache.logging.log4j.{Logger, LogManager}
+import org.apache.logging.log4j.{LogManager, Logger}
 
 // Inspired by:: http://stackoverflow.com/a/981942/2148890
 

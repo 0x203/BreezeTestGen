@@ -4,6 +4,7 @@ import java.io.File
 
 import de.hpi.asg.breezetestgen.testgeneration.{CompleteCoverage, GeneratedTest, GenerationError, PartialCoverage}
 import de.hpi.asg.breezetestgen.testing.JsonFromTo
+import de.hpi.asg.breezetestgen.util.Logging
 
 object Main {
   val logger = Logging.getLogger(this)

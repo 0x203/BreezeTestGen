@@ -1,12 +1,12 @@
 package de.hpi.asg.breezetestgen.actors
 
 import akka.actor.{Actor, ActorRef, Terminated}
-import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.domain._
 import components.BrzComponentBehaviour.{DecisionRequired, NormalFlowReaction}
 import de.hpi.asg.breezetestgen.testgeneration.TestGenerator
 import de.hpi.asg.breezetestgen.actors.HandshakeActor.{GetState, MyState}
 import de.hpi.asg.breezetestgen.testgeneration.TestGenerator._
+import de.hpi.asg.breezetestgen.util.Loggable
 
 import scala.collection.mutable
 

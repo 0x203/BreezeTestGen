@@ -3,8 +3,9 @@ package de.hpi.asg.breezetestgen.actors
 import akka.actor.{ActorRef, FSM}
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponentBehaviour, HandshakeComponent}
 import HandshakeComponent.{Id => CompId}
-import de.hpi.asg.breezetestgen.{Loggable, domain}
+import de.hpi.asg.breezetestgen.domain
 import de.hpi.asg.breezetestgen.testing.TestEvent
+import de.hpi.asg.breezetestgen.util.Loggable
 import domain.Channel
 
 object HandshakeActor {

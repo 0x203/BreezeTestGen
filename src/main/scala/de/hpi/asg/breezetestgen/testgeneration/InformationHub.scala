@@ -1,6 +1,5 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
-import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.testgeneration.constraintsolving._
 import de.hpi.asg.breezetestgen.actors.HandshakeActor
 import de.hpi.asg.breezetestgen.actors.HandshakeActor.Decision
@@ -10,6 +9,7 @@ import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent
 import de.hpi.asg.breezetestgen.testgeneration.TestGenerator.SleepingExecution
 import de.hpi.asg.breezetestgen.testing.coverage.{ChannelActivationCoverage, Coverage}
 import de.hpi.asg.breezetestgen.testing.TestEvent
+import de.hpi.asg.breezetestgen.util.Loggable
 
 /** Central place for gathering information according a single a test/simulation run.
   *

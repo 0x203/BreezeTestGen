@@ -1,11 +1,11 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
-import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.domain.{Netlist, SignalFromPassive}
 import de.hpi.asg.breezetestgen.domain.components.BrzComponentBehaviour.DecisionPossibilities
 import de.hpi.asg.breezetestgen.domain.components.HandshakeComponent
 import de.hpi.asg.breezetestgen.testgeneration.TestGenerator._
 import de.hpi.asg.breezetestgen.testgeneration.constraintsolving.ConstraintVariable
+import de.hpi.asg.breezetestgen.util.Loggable
 
 /** Responsible for making decisions for appropriate components, i.e. Case.
   */

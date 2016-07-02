@@ -1,13 +1,13 @@
 package de.hpi.asg.breezetestgen.actors
 
 import akka.actor.{ActorRef, Props, Terminated}
-import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.actors.HandshakeActor.{Decision, GetState, MyState}
 import de.hpi.asg.breezetestgen.domain
 import de.hpi.asg.breezetestgen.domain.Channel.{CompEndpoint, PortEndpoint}
 import de.hpi.asg.breezetestgen.domain._
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, BrzComponentBehaviour, HandshakeComponent}
 import de.hpi.asg.breezetestgen.testing.TestEvent
+import de.hpi.asg.breezetestgen.util.Loggable
 
 
 class NetlistActor(runId: Int,

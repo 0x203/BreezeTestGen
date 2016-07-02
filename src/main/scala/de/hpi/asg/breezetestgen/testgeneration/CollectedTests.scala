@@ -1,7 +1,7 @@
 package de.hpi.asg.breezetestgen.testgeneration
 
-import de.hpi.asg.breezetestgen.Loggable
 import de.hpi.asg.breezetestgen.testing.coverage.Coverage
+import de.hpi.asg.breezetestgen.util.Loggable
 
 
 class CollectedTests(private val emptyCoverage: Coverage) extends Loggable {
