@@ -54,7 +54,7 @@ object Main {
   private def writeOut(tests: Set[GeneratedTest]): Unit =
     //TODO: write to output file(s)
     for(test <- tests) {
-      println(s"${test.coverage.percentageCovered}% with: ${JsonFromTo.toJson(test.test)}")
+      println(s"${test.coverage.percentageCovered}% with: ${JsonFromTo.testToJsonString(test.test)}")
     }
 }
 

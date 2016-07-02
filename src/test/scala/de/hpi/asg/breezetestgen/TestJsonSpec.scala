@@ -14,8 +14,8 @@ class TestJsonSpec extends UnitTest {
   }
 
   "JSON export and import" should "produce the same test again" in {
-    val gcdJson = JsonFromTo.toJson(gcdTest)
-    val gcdAgainO = JsonFromTo.fromJson(gcdJson)
+    val gcdJson = JsonFromTo.testToJsonString(gcdTest)
+    val gcdAgainO = JsonFromTo.testFromJson(gcdJson)
     assert(gcdAgainO.isDefined)
     val gcdAgain = gcdAgainO.get
 

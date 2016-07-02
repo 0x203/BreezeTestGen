@@ -2,6 +2,7 @@ package de.hpi.asg.breezetestgen.testing
 
 import de.hpi.asg.breezetestgen.domain._
 import de.hpi.asg.breezetestgen.util
+import net.liftweb.json.compactRender
 import net.liftweb.json.{CustomSerializer, DefaultFormats}
 import net.liftweb.json.JsonAST._
 import net.liftweb.json.Extraction.decompose
@@ -15,13 +16,20 @@ import scalax.collection.io.json.descriptor.predefined.Di
 /** Helps transforming an instance of a test graph to a json representation and the other way round
   */
 object JsonFromTo {
-  def toJson(test: Test): String = {
-    val testWithIds = addIDs(test)
-
-    testWithIds.toJson(desc)
+  def testToJsonString(test: Test): String = {
+    val testJsonAst = testToJsonAst(test)
+    compactRender(testJsonAst)
   }
 
-  def fromJson(testString: String): Option[Test] = {
+  def testToJsonAst(test: Test) = {
+    val testWithIds = addIDs(test)
+
+    import scalax.collection.io.json.exp.Export
+    val export = new Export[TestEventWithID, DiEdge](testWithIds, desc)
+    export.jsonAST(List(export.jsonASTNodes, export.jsonASTEdges))
+  }
+
+  def testFromJson(testString: String): Option[Test] = {
     Some(scalax.collection.Graph.fromJson[TestEventWithID,DiEdge](testString, desc)
     ).map(removeIDs)
   }
@@ -30,7 +38,7 @@ object JsonFromTo {
 
   /** adds an ID to an IOEvent in order to be addressable by edges */
   private case class TestEventWithID(id: Int, orig: TestEvent)
-  // note that this seems a bit stragne since TestEvents got their own ID in the meantime
+  // note that this seems a bit strange since TestEvents got their own ID in the meantime
   // still, newly created IDs are smaller, cause they just need to be unique for within one test
 
   /** transform a testgraph without IDs to one with IDs */
