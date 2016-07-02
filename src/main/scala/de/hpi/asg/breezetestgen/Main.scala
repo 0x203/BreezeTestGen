@@ -10,7 +10,7 @@ import de.hpi.asg.breezetestgen.util.Logging
 object Main {
   val logger = Logging.getLogger(this)
   case class Config(breezeFile: File = new File("in.breeze"),
-                    testFiles: Seq[File] = Seq.empty,  // currently ignored
+                    testsuiteOutputO: Option[File] = None,
                     logFile: File = new File("simulator.log"),
                     logLevel: Int = 2,
                     debug: Boolean = false)
@@ -27,8 +27,8 @@ object Main {
       c.copy(debug = true) }
     arg[File]("<breezeFile>") action { (x, c) =>
       c.copy(breezeFile = x) } text "Breeze Netlist to simulate"
-    arg[File]("<testFile>...") unbounded() optional() action { (x, c) =>
-      c.copy(testFiles = c.testFiles :+ x) } text "Tests to run"
+    arg[File]("<testsuiteOutput>...") optional() action { (x, c) =>
+      c.copy(testsuiteOutputO = Some(x)) } text "File to write the generated output into"
     opt[File]("logFile") optional() valueName "<file>" action { (x, c) =>
       c.copy(logFile = x) } text "file to log into"
 
@@ -52,15 +52,22 @@ object Main {
       }
     } match {
       case Some((config, netlist, tests)) =>
-        val rendered = JsonFromTo.testSuiteToJsonString(netlist, tests, renderCompact = false)
+        config.testsuiteOutputO match {
+          case Some(outfile) =>
+            val rendered = JsonFromTo.testSuiteToJsonString(netlist, tests, renderCompact = false)
 
-        import java.nio.file.{Paths, Files}
-        import java.nio.charset.StandardCharsets
+            import java.nio.file.{Paths, Files}
+            import java.nio.charset.StandardCharsets
 
-        Files.write(
-          Paths.get("testsuite.json"),
-          rendered.getBytes(StandardCharsets.UTF_8)
-        )
+            Files.write(
+              Paths.get(outfile.getPath),
+              rendered.getBytes(StandardCharsets.UTF_8)
+            )
+          case None =>
+            println(
+              JsonFromTo.testSuiteToJsonString(netlist, tests, renderCompact = true)
+            )
+        }
       case None => sys.exit(-1)
     }
 }
