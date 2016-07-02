@@ -1,9 +1,10 @@
 package de.hpi.asg.breezetestgen.testing
 
 import de.hpi.asg.breezetestgen.domain._
+import de.hpi.asg.breezetestgen.testgeneration.GeneratedTest
 import de.hpi.asg.breezetestgen.util
-import net.liftweb.json.compactRender
-import net.liftweb.json.{CustomSerializer, DefaultFormats}
+import net.liftweb.json.{CustomSerializer, DefaultFormats, compactRender}
+import net.liftweb.json.Serialization.{read, write}
 import net.liftweb.json.JsonAST._
 import net.liftweb.json.Extraction.decompose
 
@@ -16,21 +17,30 @@ import scalax.collection.io.json.descriptor.predefined.Di
 /** Helps transforming an instance of a test graph to a json representation and the other way round
   */
 object JsonFromTo {
+  def testSuiteToJsonString(netlist: Netlist, tests: Set[GeneratedTest]): String = {
+    require(tests.nonEmpty, "Cannot produce a testsuite without tests.")
+    val wholeCoverage = tests.map(_.coverage).reduce(_ merge _)
+    val testsuite = Testsuite(netlist.id.toString, wholeCoverage.percentageCovered, tests)
+
+    implicit val formats = DefaultFormats + new GenTestSerializer()
+    write(testsuite)
+  }
+
   def testToJsonString(test: Test): String = {
     val testJsonAst = testToJsonAst(test)
     compactRender(testJsonAst)
   }
 
-  def testToJsonAst(test: Test) = {
+  def testToJsonAst(test: Test): JObject = {
     val testWithIds = addIDs(test)
 
     import scalax.collection.io.json.exp.Export
-    val export = new Export[TestEventWithID, DiEdge](testWithIds, desc)
+    val export = new Export[TestEventWithID, DiEdge](testWithIds, testDescriptor)
     export.jsonAST(List(export.jsonASTNodes, export.jsonASTEdges))
   }
 
   def testFromJson(testString: String): Option[Test] = {
-    Some(scalax.collection.Graph.fromJson[TestEventWithID,DiEdge](testString, desc)
+    Some(scalax.collection.Graph.fromJson[TestEventWithID,DiEdge](testString, testDescriptor)
     ).map(removeIDs)
   }
 
@@ -106,6 +116,21 @@ object JsonFromTo {
     })
   )
 
+  case class Testsuite(name: String, percentageCovered: Double, tests: Set[GeneratedTest])
+
+  class GenTestSerializer extends CustomSerializer[GeneratedTest](format => (
+    {
+      case JObject(JField("coverage", JDouble(cov)) :: JField("test", JObject(test)) :: Nil) =>
+        throw new NotImplementedError("cannot parse tests yet")
+    },
+    {
+      case GeneratedTest(test, coverage) =>
+        JObject(
+          JField("coverage", JDouble(coverage.percentageCovered)) +: testToJsonAst(test).obj
+        )
+    }
+    ))
+
   private val nodeDescriptor = new NodeDescriptor[TestEventWithID](
     typeId = "TestEvent",
     customSerializers = Seq(new TestEventWithIDSerializer)
@@ -114,7 +139,7 @@ object JsonFromTo {
       case TestEventWithID(id, _) => id.toString
     }
   }
-  private val desc = new Descriptor[TestEventWithID](
+  private val testDescriptor = new Descriptor[TestEventWithID](
     defaultNodeDescriptor = nodeDescriptor,
     defaultEdgeDescriptor = Di.descriptor[TestEventWithID](Some(new EdgeSerializer))
   )

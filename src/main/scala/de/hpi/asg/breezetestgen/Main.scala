@@ -2,6 +2,7 @@ package de.hpi.asg.breezetestgen
 
 import java.io.File
 
+import de.hpi.asg.breezetestgen.domain.Netlist
 import de.hpi.asg.breezetestgen.testgeneration.{CompleteCoverage, GeneratedTest, GenerationError, PartialCoverage}
 import de.hpi.asg.breezetestgen.testing.JsonFromTo
 import de.hpi.asg.breezetestgen.util.Logging
@@ -38,12 +39,12 @@ object Main {
     case Some(config) =>
       Logging.initLogger(config.logLevel, config.logFile, debugMode = config.debug)
       context.generateTestsForFile(config.breezeFile) match {
-        case CompleteCoverage(tests) =>
+        case CompleteCoverage(netlist, tests) =>
           logger.info("Generated test completely covering the whole netlist!")
-          writeOut(tests)
-        case PartialCoverage(tests) =>
+          writeOut(netlist, tests)
+        case PartialCoverage(netlist, tests) =>
           logger.info("Generated some tests, but without complete coverage.")
-          writeOut(tests)
+          writeOut(netlist, tests)
         case GenerationError(reason) =>
           logger.error(s"Something went wrong: $reason")
       }
@@ -51,10 +52,12 @@ object Main {
       sys.exit(-1)
   }
 
-  private def writeOut(tests: Set[GeneratedTest]): Unit =
+  private def writeOut(netlist: Netlist, tests: Set[GeneratedTest]): Unit ={
     //TODO: write to output file(s)
     for(test <- tests) {
       println(s"${test.coverage.percentageCovered}% with: ${JsonFromTo.testToJsonString(test.test)}")
     }
+    println(JsonFromTo.testSuiteToJsonString(netlist, tests))
+  }
 }
 

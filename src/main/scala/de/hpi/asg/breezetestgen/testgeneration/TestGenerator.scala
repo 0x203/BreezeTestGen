@@ -104,12 +104,12 @@ class TestGenerator(val netlist: Netlist, maxLoopExecs: Int) extends Decider wit
       case Done =>
         val tests = collectedTests.testCollection
         info(s"Reached complete coverage with ${tests.size} tests.")
-        CompleteCoverage(tests)
+        CompleteCoverage(netlist, tests)
 
       case AbortGeneration =>
         val testsSoFar = collectedTests.testCollection
         info(s"Aborting test generation having ${testsSoFar.size} tests generated so far.")
-        PartialCoverage(testsSoFar)
+        PartialCoverage(netlist, testsSoFar)
 
       case GenerationProblem =>
         info("Somewhere a problem occurred.")
