@@ -30,18 +30,22 @@ trait Decider extends Loggable {
 
   def onWholeState(implicit runId: Int, state: Netlist.State): List[TestGenerationAction] = {
     info(s"Got state of main netlist:$runId: $state")
-    val wfs = waitingForState.remove(runId).get
+    waitingForState.remove(runId) match {
+      case Some(wfs) =>
+        val ids: Map[ConstraintVariable, Int] = wfs.possibilities.map{case (cv, _) => cv -> nextRunId()}
 
-    val ids: Map[ConstraintVariable, Int] = wfs.possibilities.map{case (cv, _) => cv -> nextRunId()}
+          // add all to backlog
+        backlog ++= wfs.sleepingExecutions.map{ case (cv, r) => ids(cv) -> (r, state) }
 
-    // add all to backlog
-    backlog ++= wfs.sleepingExecutions.map{ case (cv, r) => ids(cv) -> (r, state) }
-
-    // decide for some possibilities and resume them all
-    takeAll(wfs.possibilities)
-      .map(ids)
-      .map(resumeTest)
-      .fold(StopMainNetlist(runId) :: Nil)(_ ++ _)
+          // decide for some possibilities and resume them all
+        takeAll(wfs.possibilities)
+        .map(ids)
+        .map(resumeTest)
+        .fold(StopMainNetlist(runId) :: Nil)(_ ++ _)
+      case None =>
+        warn("Got state I wasn't waiting for")
+        Nil
+    }
   }
 
   private def decideForOne(possibilities: DecisionPossibilities): Set[ConstraintVariable] = {
