@@ -50,8 +50,8 @@ object Main {
           logger.error(s"Something went wrong: $reason")
           None
       }
-    }.map{
-      case (config, netlist, tests) =>
+    } match {
+      case Some((config, netlist, tests)) =>
         val rendered = JsonFromTo.testSuiteToJsonString(netlist, tests, renderCompact = false)
 
         import java.nio.file.{Paths, Files}
@@ -61,6 +61,7 @@ object Main {
           Paths.get("testsuite.json"),
           rendered.getBytes(StandardCharsets.UTF_8)
         )
+      case None => sys.exit(-1)
     }
 }
 
