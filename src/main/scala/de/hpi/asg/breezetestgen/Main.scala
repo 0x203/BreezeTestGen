@@ -35,29 +35,32 @@ object Main {
     help("help") text "Generates tests out of Breeze netlists"
   }
 
-  def main (args: Array[String]) = parser.parse(args, Config()) match {
-    case Some(config) =>
+  def main (args: Array[String]): Unit =
+    parser.parse(args, Config()).flatMap {
+    case config =>
       Logging.initLogger(config.logLevel, config.logFile, debugMode = config.debug)
       context.generateTestsForFile(config.breezeFile) match {
         case CompleteCoverage(netlist, tests) =>
           logger.info("Generated test completely covering the whole netlist!")
-          writeOut(netlist, tests)
+          Some(config, netlist, tests)
         case PartialCoverage(netlist, tests) =>
           logger.info("Generated some tests, but without complete coverage.")
-          writeOut(netlist, tests)
+          Some(config, netlist, tests)
         case GenerationError(reason) =>
           logger.error(s"Something went wrong: $reason")
+          None
       }
-    case None =>
-      sys.exit(-1)
-  }
+    }.map{
+      case (config, netlist, tests) =>
+        val rendered = JsonFromTo.testSuiteToJsonString(netlist, tests, renderCompact = false)
 
-  private def writeOut(netlist: Netlist, tests: Set[GeneratedTest]): Unit ={
-    //TODO: write to output file(s)
-    for(test <- tests) {
-      println(s"${test.coverage.percentageCovered}% with: ${JsonFromTo.testToJsonString(test.test)}")
+        import java.nio.file.{Paths, Files}
+        import java.nio.charset.StandardCharsets
+
+        Files.write(
+          Paths.get("testsuite.json"),
+          rendered.getBytes(StandardCharsets.UTF_8)
+        )
     }
-    println(JsonFromTo.testSuiteToJsonString(netlist, tests))
-  }
 }
 

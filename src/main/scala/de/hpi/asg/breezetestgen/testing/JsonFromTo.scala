@@ -3,8 +3,7 @@ package de.hpi.asg.breezetestgen.testing
 import de.hpi.asg.breezetestgen.domain._
 import de.hpi.asg.breezetestgen.testgeneration.GeneratedTest
 import de.hpi.asg.breezetestgen.util
-import net.liftweb.json.{CustomSerializer, DefaultFormats, compactRender}
-import net.liftweb.json.Serialization.{read, write}
+import net.liftweb.json.{CustomSerializer, DefaultFormats, compact, pretty}
 import net.liftweb.json.JsonAST._
 import net.liftweb.json.Extraction.decompose
 
@@ -17,7 +16,7 @@ import scalax.collection.io.json.descriptor.predefined.Di
 /** Helps transforming an instance of a test graph to a json representation and the other way round
   */
 object JsonFromTo {
-  def testSuiteToJsonString(netlist: Netlist, tests: Set[GeneratedTest]): String = {
+  def testSuiteToJsonString(netlist: Netlist, tests: Set[GeneratedTest], renderCompact: Boolean = true): String = {
     require(tests.nonEmpty, "Cannot produce a testsuite without tests.")
     val wholeCoverage = tests.map(_.coverage).reduce(_ merge _)
     val renderedPorts = netlist.ports.values.toSeq.sortWith(_.id > _.id).map(RenderedPort.fromDomainPort)
@@ -25,7 +24,11 @@ object JsonFromTo {
     val testsuite = Testsuite(netlist.name,wholeCoverage.percentageCovered, renderedPorts, tests)
 
     implicit val formats = DefaultFormats + new GenTestSerializer()
-    write(testsuite)
+    val decomposed = render(decompose(testsuite))
+    if(renderCompact)
+      compact(decomposed)
+    else
+      pretty(decomposed)
   }
 
   def testToJsonString(test: Test): String = {
