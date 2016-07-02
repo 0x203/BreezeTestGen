@@ -16,6 +16,7 @@ object Netlist {
 
 /** data container for a whole Netlist */
 case class Netlist(id: Netlist.Id,
+                   name: String,
                    ports: Map[Port.Id, Port],
                    channels: Map[Channel.Id, Channel[Channel.Endpoint]],
                   //TODO: component should map to HandshakeComponent, not BrzComponent

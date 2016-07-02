@@ -20,7 +20,7 @@ object JsonFromTo {
   def testSuiteToJsonString(netlist: Netlist, tests: Set[GeneratedTest]): String = {
     require(tests.nonEmpty, "Cannot produce a testsuite without tests.")
     val wholeCoverage = tests.map(_.coverage).reduce(_ merge _)
-    val testsuite = Testsuite(netlist.id.toString, wholeCoverage.percentageCovered, tests)
+    val testsuite = Testsuite(netlist.name, wholeCoverage.percentageCovered, tests)
 
     implicit val formats = DefaultFormats + new GenTestSerializer()
     write(testsuite)

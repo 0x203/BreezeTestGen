@@ -22,12 +22,13 @@ object BreezeTransformer {
       lastOption.collectFirst{case a: AbstractBreezeNetlist=> a}.map(transformNetlist(_, Netlist.TopLevelId))
 
   def transformNetlist(baseNetlist: AbstractBreezeNetlist, id: Netlist.Id): Netlist = {
+    val name = baseNetlist.getName
     val ports: Map[Port.Id, Port] = extractPorts(baseNetlist)
 
     val channels: Map[Channel.Id, Channel[Channel.Endpoint]] = extractChannels(id, baseNetlist)
     val components: Map[HandshakeComponent.Id, BrzComponent] = extractComponents(id, baseNetlist)
 
-    Netlist(id, ports, channels, components)
+    Netlist(id, name, ports, channels, components)
   }
 
   private def extractPorts(netlist: AbstractBreezeNetlist): Map[Port.Id, Port] = {
