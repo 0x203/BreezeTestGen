@@ -20,7 +20,9 @@ object JsonFromTo {
   def testSuiteToJsonString(netlist: Netlist, tests: Set[GeneratedTest]): String = {
     require(tests.nonEmpty, "Cannot produce a testsuite without tests.")
     val wholeCoverage = tests.map(_.coverage).reduce(_ merge _)
-    val testsuite = Testsuite(netlist.name, wholeCoverage.percentageCovered, tests)
+    val renderedPorts = netlist.ports.values.toSeq.sortWith(_.id > _.id).map(RenderedPort.fromDomainPort)
+
+    val testsuite = Testsuite(netlist.name,wholeCoverage.percentageCovered, renderedPorts, tests)
 
     implicit val formats = DefaultFormats + new GenTestSerializer()
     write(testsuite)
@@ -116,7 +118,28 @@ object JsonFromTo {
     })
   )
 
-  case class Testsuite(name: String, percentageCovered: Double, tests: Set[GeneratedTest])
+  case class Testsuite(name: String, percentageCovered: Double, ports: Seq[RenderedPort], tests: Set[GeneratedTest])
+  case class RenderedPort(activeSense: Boolean,
+                          direction: String,
+                          name: String,
+                          channel: Channel.Id,
+                          dataWidthO: Option[Int])
+  object RenderedPort {
+    def fromDomainPort(p: Port): RenderedPort = {
+      val renderedPort = RenderedPort(
+        p.sense == Port.Active,
+        p.direction.toString.toLowerCase,
+        p.name,
+        p.channelId,
+        None
+      )
+
+      p match {
+        case s: SyncPort => renderedPort
+        case s: DataPort => renderedPort.copy(dataWidthO = Some(s.bitCount))
+      }
+    }
+  }
 
   class GenTestSerializer extends CustomSerializer[GeneratedTest](format => (
     {
