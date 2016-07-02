@@ -1,7 +1,7 @@
 package de.hpi.asg.breezetestgen
 
 import com.typesafe.config.ConfigFactory
-import de.hpi.asg.breezetestgen.domain.Netlist
+import de.hpi.asg.breezetestgen.domain.{BreezeTransformer, Netlist}
 
 package object fixtures {
   implicit val config = ConfigFactory.load()

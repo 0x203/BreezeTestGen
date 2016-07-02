@@ -1,7 +1,6 @@
-package de.hpi.asg.breezetestgen
+package de.hpi.asg.breezetestgen.domain
 
 import com.typesafe.config.Config
-import de.hpi.asg.breezetestgen.domain._
 import de.hpi.asg.breezetestgen.domain.components.{BrzComponent, HandshakeComponent}
 import de.uni_potsdam.hpi.asg.common.breeze.model._
 import de.uni_potsdam.hpi.asg.common.io.WorkingdirGenerator

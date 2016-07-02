@@ -3,7 +3,7 @@ package de.hpi.asg.breezetestgen
 import java.util.concurrent.TimeoutException
 
 import com.typesafe.config._
-import de.hpi.asg.breezetestgen.domain.Netlist
+import de.hpi.asg.breezetestgen.domain.{BreezeTransformer, Netlist}
 import de.hpi.asg.breezetestgen.testgeneration._
 import de.hpi.asg.breezetestgen.util.Loggable
 
