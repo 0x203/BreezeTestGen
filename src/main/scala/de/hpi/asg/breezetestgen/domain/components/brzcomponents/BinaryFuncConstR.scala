@@ -30,19 +30,18 @@ class BinaryFuncConstR(id: HandshakeComponent.Id,
   class BinaryFuncConstRBehaviour(initState: HandshakeComponent.State[C, D]) extends BrzComponentBehaviour[C, D](initState) {
     import BinaryFuncConstRBehaviour._
 
-    info(s"BinaryFuncConstRBehaviour created in state:  $initState")
+    info(s"$id: BinaryFuncConstRBehaviour created in state:  $initState")
 
     when(Idle) {
       case Req(`out`, _) =>
-        info("Activated. Requesting A...")
+        info(s"$id: Activated. Requesting A...")
         request(inpA)
         goto(Waiting)
     }
 
     when(Waiting) {
       case DataAck(`inpA`, aData, _) =>
-        info(s"Got data on inpA: $aData")
-        //TODO: add constraints here
+        info(s"$id: Got data on inpA: $aData")
         dataAcknowledge(out, operate(aData))
         goto(Idle)
     }

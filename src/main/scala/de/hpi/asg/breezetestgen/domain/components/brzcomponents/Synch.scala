@@ -42,6 +42,7 @@ class Synch(id: HandshakeComponent.Id,
 
     when(Calling) {
       case Ack(`out`, _) =>
+        info(s"$id: Acknowledged, forwarding this to $inps")
         for (inp <- inps)
           acknowledge(inp)
         goto(Waiting) using 0

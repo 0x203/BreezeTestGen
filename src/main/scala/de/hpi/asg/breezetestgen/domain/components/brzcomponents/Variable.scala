@@ -33,7 +33,7 @@ class Variable(id: HandshakeComponent.Id,
 
     import VariableBehaviour._
 
-    info(s"VariableBehaviour created in state:  $initState")
+    info(s"$id: VariableBehaviour created in state:  $initState")
 
     when(Idle) {
       case DataReq(`write`, data, _) =>
@@ -48,10 +48,10 @@ class Variable(id: HandshakeComponent.Id,
             info(s"$id: selecting $range of bits from data $data")
             data.selectBits(range)
           case None =>
-            error("could not find specified range!")
+            error(s"$id: could not find specified range!")
             data
         }
-        info(s"$name is read: $filteredData")
+        info(s"$id: $name is read: $filteredData")
         dataAcknowledge(reader, filteredData)
         stay
     }

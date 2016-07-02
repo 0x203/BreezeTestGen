@@ -23,11 +23,11 @@ class Constant(id: HandshakeComponent.Id,
   class ConstantBehaviour(initState: HandshakeComponent.State[C, D]) extends BrzComponentBehaviour[C, D](initState) {
     import ConstantBehaviour._
 
-    info(s"ConstantBehaviour created with value: $value")
+    info(s"$id: ConstantBehaviour created with value: $value")
 
     when(Idle) {
       case Req(`out`, _) =>
-        info(s"Requested ${value.value}!")
+        info(s"$id: Requested ${value.value}!")
         dataAcknowledge(out, value)
         stay
     }

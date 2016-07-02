@@ -57,7 +57,7 @@ class BinaryFunc(id: HandshakeComponent.Id,
   class BinaryFuncBehaviour(initState: HandshakeComponent.State[C, D]) extends BrzComponentBehaviour[C, D](initState) {
     import BinaryFuncBehaviour._
 
-    info(s"BinaryFuncBehaviour created in state:  $initState")
+    info(s"$id: BinaryFuncBehaviour created in state:  $initState")
 
     def inputsAvailable(a: Data, b: Data, tes: Set[TestEvent]): State = {
       mergeAfter(tes)
@@ -67,7 +67,7 @@ class BinaryFunc(id: HandshakeComponent.Id,
 
     when(Idle) {
       case Req(`out`, _) =>
-        info("Activated. Requesting A & B...")
+        info(s"$id: Activated. Requesting A & B...")
         request(inpA)
         request(inpB)
         goto(Waiting) using InputsAndTestEvent.fresh()
@@ -76,7 +76,7 @@ class BinaryFunc(id: HandshakeComponent.Id,
     when(Waiting) {
       case DataAck(`inpA`, aData, InputsAndTestEvent(None, b, tes)) =>
         val newTEs = tes + testEvent
-        info(s"Got data on inpA: $aData")
+        info(s"$id: Got data on inpA: $aData")
         b match {
           case Some(bData) => inputsAvailable(aData, bData, tes)
           case None =>
@@ -85,7 +85,7 @@ class BinaryFunc(id: HandshakeComponent.Id,
 
       case DataAck(`inpB`, bData, InputsAndTestEvent(a, None, tes)) =>
         val newTEs = tes + testEvent
-        info(s"Got data on inpB: $bData")
+        info(s"$id: Got data on inpB: $bData")
         a match {
           case Some(aData) => inputsAvailable(aData, bData, tes)
           case None =>

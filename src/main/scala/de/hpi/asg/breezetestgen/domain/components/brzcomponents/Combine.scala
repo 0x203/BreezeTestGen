@@ -24,9 +24,9 @@ class Combine(id: HandshakeComponent.Id,
 
   def combine(lsData: Data, msData: Data): Data = {
     if(lsData.bitCount != lsInputWidth)
-      error(s"got ${lsData.bitCount} bits on lsInp, expected $lsInputWidth")
+      error(s"$id: got ${lsData.bitCount} bits on lsInp, expected $lsInputWidth")
     else if(msData.bitCount != msInputWidth)
-      error(s"got ${msData.bitCount} bits on msInp, expected $msInputWidth")
+      error(s"$id: got ${msData.bitCount} bits on msInp, expected $msInputWidth")
 
     lsData.combineWithMoreSignificant(msData)
   }
@@ -46,7 +46,7 @@ class Combine(id: HandshakeComponent.Id,
 
     when(Idle) {
       case Req(`out`, _) =>
-        info(s"Requested!")
+        info(s"$id: Requested!")
         request(lsInp)
         request(msInp)
         goto(Fetching) using None

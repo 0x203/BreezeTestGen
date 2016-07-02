@@ -44,7 +44,7 @@ class Adapt(id: HandshakeComponent.Id,
         info(s"$id Got input data: $inData")
 
         if ((inData.bitCount != inWidth) | (inData.isSigned != inSigned))
-          error(s"Expecting bitcount $inWidth and signed $inSigned; got ${inData.bitCount} and ${inData.isSigned}")
+          error(s"$id: Expecting bitcount $inWidth and signed $inSigned; got ${inData.bitCount} and ${inData.isSigned}")
 
         val outData = inData.adapt(outWidth, outSigned, inWidth, inSigned)
         dataAcknowledge(out, outData)

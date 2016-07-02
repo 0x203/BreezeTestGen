@@ -26,18 +26,18 @@ class CallMux(id: HandshakeComponent.Id,
 
     import CallMuxBehaviour._
 
-    info(s"CallMuxBehaviour created in state:  $initState")
+    info(s"$id: CallMuxBehaviour created in state:  $initState")
 
     when(Idle) {
       case DataReq(inp, data, _) if inps contains inp =>
-        info("Requested!")
+        info(s"$id: Requested!")
         dataRequest(out, data)
         goto(Called) using Some(inp)
     }
 
     when(Called) {
       case Ack(`out`, Some(writer)) =>
-        info("Acknowledged")
+        info(s"$id: Acknowledged")
         acknowledge(writer)
         goto(Idle) using None
     }

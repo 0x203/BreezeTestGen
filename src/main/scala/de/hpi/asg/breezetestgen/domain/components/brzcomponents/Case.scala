@@ -50,20 +50,20 @@ class Case(id: HandshakeComponent.Id,
   class CaseBehaviour(initState: HandshakeComponent.State[C, D]) extends BrzComponentBehaviour[C, D](initState) {
     import CaseBehaviour._
 
-    info(s"CaseBehaviour created in state:  $initState")
+    info(s"$id: CaseBehaviour created in state:  $initState")
 
     when(Idle) {
       case DataReq(`inp`, data, _) =>
-        info(s"Activated with data $data")
+        info(s"$id: Activated with data $data")
         val possibilities = selector.usableValueConstraints(data).mapValues{ index => () => {
           val out = outs(index)
-          info(s"Index $index maps to channel $out")
+          info(s"$id: Index $index maps to channel $out")
           request(out)
           goto(Called)
         }}.view.force
 
         val alternative = selector.unusableConstraints(data).map{c => c -> (() => {
-          info("No index matched this constant")
+          info(s"$id: No index matched this constant")
           acknowledge(inp)
           stay
         })}
@@ -73,7 +73,7 @@ class Case(id: HandshakeComponent.Id,
 
     when(Called) {
       case Ack(out, _) if outs contains out =>
-        info("Returning...")
+        info(s"$id: Returning...")
         acknowledge(inp)
         goto(Idle)
     }

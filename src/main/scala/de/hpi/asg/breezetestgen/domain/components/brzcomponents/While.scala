@@ -28,11 +28,11 @@ class While(id: HandshakeComponent.Id,
 
     import WhileBehaviour._
 
-    info(s"WhileBehaviour created in state:  $initState")
+    info(s"$id: WhileBehaviour created in state:  $initState")
 
     when(Idle) {
       case Req(`activate`, _) =>
-        info("Requested!")
+        info(s"$id: Requested!")
         request(guard)
         goto(Evaluating)
     }
@@ -41,12 +41,12 @@ class While(id: HandshakeComponent.Id,
       case DataAck(`guard`, x, _) =>
         decideBetween(Map(
           x.isFalsy -> (() => {
-            info("guard was false. returning...")
+            info(s"$id: guard was false. returning...")
             acknowledge(activate)
             goto(Idle)
           }),
           x.isTruthy -> (() => {
-            info("guard was true. entering loop...")
+            info(s"$id: guard was true. entering loop...")
             request(out)
             goto(Executing)
           })
@@ -55,7 +55,7 @@ class While(id: HandshakeComponent.Id,
 
     when(Executing) {
       case Ack(`out`, _) =>
-        info("Loop body finished. Evaluating again...")
+        info(s"$id: Loop body finished. Evaluating again...")
         request(guard)
         goto(Evaluating)
     }

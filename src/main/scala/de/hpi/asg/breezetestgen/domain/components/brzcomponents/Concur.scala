@@ -30,11 +30,11 @@ class Concur(id: HandshakeComponent.Id,
   class ConcurBehaviour(initState: HandshakeComponent.State[C, D]) extends BrzComponentBehaviour[C, D](initState) {
     import ConcurBehaviour._
 
-    info(s"ConcurBehaviour created in state: $initState")
+    info(s"$id: ConcurBehaviour created in state: $initState")
 
     when(Idle) {
       case Req(`activate`, _) =>
-        info("Requested!")
+        info("$id: Requested!")
         outs.foreach{request(_)}
         goto(Called) using Some(Requests(outs.size, testEvent, Set.empty))
     }

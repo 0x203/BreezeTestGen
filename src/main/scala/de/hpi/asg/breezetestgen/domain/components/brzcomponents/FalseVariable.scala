@@ -32,7 +32,7 @@ class FalseVariable(id: HandshakeComponent.Id,
 
     when(Idle) {
       case DataReq(`write`, newData, _) =>
-        info(s"Got Data: $newData!")
+        info(s"$id: Got Data: $newData!")
         request(signal)
         goto(Active) using Option(newData)
     }

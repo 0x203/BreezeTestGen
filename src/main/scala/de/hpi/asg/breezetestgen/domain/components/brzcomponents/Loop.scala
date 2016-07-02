@@ -25,18 +25,18 @@ class Loop(id: HandshakeComponent.Id,
   class LoopBehaviour(initState: HandshakeComponent.State[C, D]) extends BrzComponentBehaviour[C, D](initState) {
     import LoopBehaviour._
 
-    info(s"LoopBehaviour created in state: $initState")
+    info(s"$id: LoopBehaviour created in state: $initState")
 
     when(Idle) {
       case Req(`activate`, _) =>
-        info(s"Requested!")
+        info(s"$id: Requested!")
         request(out)
         goto(Called)
     }
 
     when(Called) {
       case Ack(`out`, _) =>
-        info("Acknowledged! Requesting again...")
+        info(s"$id: Acknowledged! Requesting again...")
         request(out)
         stay
     }
