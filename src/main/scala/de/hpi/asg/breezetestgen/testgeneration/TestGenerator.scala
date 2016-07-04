@@ -72,7 +72,7 @@ class TestGenerator(val netlist: Netlist, maxLoopExecs: Int) extends Decider wit
 
   protected def runIsOver(runId: Int): List[TestGenerationAction] = {
     informationHubs -= runId
-    warn(s"$runId is over")
+    info(s"$runId is over")
     if(backlog.nonEmpty) {
       //TODO decide more intelligent here
       val id = backlog.keySet.head
