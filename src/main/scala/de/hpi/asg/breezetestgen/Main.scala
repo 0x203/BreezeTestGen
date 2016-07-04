@@ -39,7 +39,12 @@ object Main {
     parser.parse(args, Config()).flatMap {
     case config =>
       Logging.initLogger(config.logLevel, config.logFile, debugMode = config.debug)
-      context.generateTestsForFile(config.breezeFile) match {
+      val startTime = System.currentTimeMillis()
+      val generationResult = context.generateTestsForFile(config.breezeFile)
+      val endTime = System.currentTimeMillis()
+      logger.warn(s"Time elapsed while generating tests: ${endTime - startTime}ms")
+
+      generationResult match {
         case CompleteCoverage(netlist, tests) =>
           logger.info("Generated test completely covering the whole netlist!")
           Some(config, netlist, tests)
