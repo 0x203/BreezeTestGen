@@ -28,3 +28,5 @@ libraryDependencies ++= Seq(
   "org.apache.logging.log4j" % "log4j-core" % "2.1",  // for logging compatible with asgcommon
   "org.apache.logging.log4j" % "log4j-api" % "2.1"    //for logging
 )
+
+publishTo := Some(Resolver.file("file",  new File(s"releases/" )) )
