@@ -48,7 +48,7 @@ class Variable(id: HandshakeComponent.Id,
             info(s"$id: selecting $range of bits from data $data")
             data.selectBits(range)
           case None =>
-            error(s"$id: could not find specified range!")
+            warn(s"$id: could not find specified range for index ${reads.indexOf(reader)}! Will return whole data word.")
             data
         }
         info(s"$id: $name is read: $filteredData")
